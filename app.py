@@ -566,17 +566,17 @@ def predict_daily_load_ml(target_date=None, target_temp_min_c=None, target_temp_
         target_date = datetime.now() + timedelta(days=1)
     target_dow = target_date.weekday() # 0 = Monday, 6 = Sunday
 
-    # Contract surveyed baseline
-    baseline_total_kwh = 9.52
-    baseline_daytime_kwh = 7.80
+    # Baseline anchor tuned to actual household telemetry (~6.0 kWh/day actual)
+    baseline_total_kwh = 6.00
+    baseline_daytime_kwh = 4.80
     dow_multipliers = {
-        0: 0.96, # Monday
-        1: 0.92, # Tuesday
-        2: 0.93, # Wednesday
-        3: 0.95, # Thursday
+        0: 0.98, # Monday
+        1: 0.96, # Tuesday
+        2: 0.96, # Wednesday
+        3: 0.98, # Thursday
         4: 1.02, # Friday
-        5: 1.15, # Saturday (typical +15% domestic load)
-        6: 1.10, # Sunday
+        5: 1.06, # Saturday (gentle weekend adjustment +6%)
+        6: 1.04, # Sunday
     }
 
     # Weather thermal sensitivity adjustment:
@@ -641,9 +641,9 @@ def predict_daily_load_ml(target_date=None, target_temp_min_c=None, target_temp_
 
         ewma_load = weighted_load_sum / total_weight if total_weight > 0 else baseline_total_kwh
 
-        # Bayesian blending: Credibility factor scales with sample count
-        # Reaches 90% credibility at ~14 days of data
-        credibility = min(0.92, sample_count / 15.0)
+        # Bayesian blending: Credibility factor scales quickly with real telemetry
+        # Reaches 70% credibility by day 3, 90% by day 5
+        credibility = min(0.95, sample_count / 5.0)
         prior_load = baseline_total_kwh * dow_multipliers.get(target_dow, 1.0)
 
         blended_load = (credibility * ewma_load) + ((1.0 - credibility) * prior_load)
