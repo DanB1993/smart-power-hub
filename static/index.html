@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solar & Home Energy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0d14;
+      --bg-gradient: radial-gradient(circle at 50% 0%, #161b2e 0%, #0b0d14 75%);
+      --surface: #131722;
+      --surface-elevated: #1a2030;
+      --surface-glass: rgba(19, 23, 34, 0.75);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.16);
+      --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
+      --card-hover-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.6), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+
+      --text: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+
+      --solar: #f59e0b;
+      --solar-soft: rgba(245, 158, 11, 0.14);
+      --battery: #10b981;
+      --battery-soft: rgba(16, 185, 129, 0.14);
+      --home: #38bdf8;
+      --home-soft: rgba(56, 189, 248, 0.14);
+      --grid: #818cf8;
+      --grid-soft: rgba(129, 140, 248, 0.14);
+      --grid-import: #fb7185;
+      --grid-export: #c084fc;
+      --hue: #facc15;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: var(--bg-gradient);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 100vw;
+      margin: 0;
+      padding: 20px 28px 48px;
+      box-sizing: border-box;
+    }
+
+    @media (min-width: 1920px) {
+      .shell {
+        padding: 24px 40px 60px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .shell { padding: 12px 14px 32px; }
+    }
+
+    /* ==========================================
+       TOP NAVIGATION BAR
+       ========================================== */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--solar-soft);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--solar);
+    }
+
+    .brand-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .dot-sep {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    /* Segmented Pill Switcher */
+    .segmented {
+      display: inline-flex;
+      background: var(--surface);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .seg-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 7px 16px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .seg-btn:hover {
+      color: var(--text);
+    }
+
+    .seg-btn.active {
+      background: var(--surface-elevated);
+      color: var(--text);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Status Pill */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 7px 13px;
+      border-radius: 999px;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--battery);
+      box-shadow: 0 0 8px var(--battery);
+    }
+
+    .live-dot.error {
+      background: var(--grid-import);
+      box-shadow: 0 0 8px var(--grid-import);
+    }
+
+    /* ==========================================
+       METRIC CARDS (FLUID RESPONSIVE BENTO)
+       ========================================== */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 1400px) {
+      .metrics-row { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 900px) {
+      .metrics-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 580px) {
+      .metrics-row { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 24px;
+      box-shadow: var(--card-shadow);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .card:hover {
+      border-color: var(--border-hover);
+      box-shadow: var(--card-hover-shadow);
+      transform: translateY(-2px);
+    }
+
+    .metric-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .metric-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .metric-icon {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .pill-tag {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 8px;
+      background: var(--surface-elevated);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      letter-spacing: 0.01em;
+      cursor: help;
+    }
+
+    /* Informative Tooltip helper */
+    [data-tooltip] {
+      position: relative;
+      cursor: help;
+    }
+
+    [data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e2436;
+      color: #f3f4f6;
+      padding: 6px 10px;
+      font-size: 0.73rem;
+      font-weight: 500;
+      line-height: 1.35;
+      white-space: normal;
+      width: max-content;
+      max-width: 240px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+      z-index: 100;
+      pointer-events: none;
+      text-align: center;
+      letter-spacing: normal;
+      text-transform: none;
+    }
+
+    .metric-number {
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+
+    .metric-unit {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-left: 5px;
+    }
+
+    .bar-bg {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .metric-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .metric-footer strong {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    /* ==========================================
+       MAIN SPLIT: FLOW DIAGRAM + CHART (FLUID)
+       ========================================== */
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: minmax(360px, 420px) 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 2200px) {
+      .workspace-grid {
+        grid-template-columns: 460px 1fr;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .workspace-grid { grid-template-columns: 1fr; }
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .card-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Clean Cross Energy Flow Diagram */
+    .flow-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 0;
+    }
+
+    .flow-svg {
+      width: 100%;
+      max-width: 340px;
+      height: 320px;
+    }
+
+    .track-line {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.07);
+      stroke-width: 2.5;
+    }
+
+    .active-line {
+      fill: none;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-dasharray: 6 8;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      will-change: stroke-dashoffset, opacity;
+    }
+
+    #flow-pv {
+      stroke: #f59e0b !important;
+    }
+
+    #flow-grid {
+      stroke: #818cf8;
+    }
+
+    #flow-load {
+      stroke: #38bdf8 !important;
+    }
+
+    #flow-bat {
+      stroke: #10b981 !important;
+    }
+
+    .active-line.anim-fwd {
+      opacity: 1 !important;
+      animation: flowFwd 0.85s linear infinite !important;
+    }
+
+    .active-line.anim-rev {
+      opacity: 1 !important;
+      animation: flowRev 0.85s linear infinite !important;
+    }
+
+    @keyframes flowFwd {
+      from { stroke-dashoffset: 0; }
+      to { stroke-dashoffset: -30; }
+    }
+
+    @keyframes flowRev {
+      from { stroke-dashoffset: 0; }
+      to { stroke-dashoffset: 30; }
+    }
+
+    /* Time Range Buttons */
+    .range-pills {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .range-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .range-btn.active {
+      background: var(--surface-elevated);
+      color: var(--text);
+    }
+
+    /* ==========================================
+       PAGE 2: DEVICE USAGE & HUE
+       ========================================== */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .forecast-strip {
+      display: grid;
+      grid-template-columns: minmax(260px, 320px) 1fr minmax(280px, 340px);
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 1300px) {
+      .forecast-strip { grid-template-columns: minmax(260px, 320px) 1fr; }
+    }
+    @media (max-width: 900px) {
+      .forecast-strip { grid-template-columns: 1fr; }
+    }
+
+    .solar-forecast-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 24px;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .solar-forecast-card:hover {
+      border-color: var(--border-hover);
+      box-shadow: var(--card-hover-shadow);
+      transform: translateY(-2px);
+    }
+
+    .hourly-forecast-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 4px 2px 8px 2px;
+      scrollbar-width: thin;
+    }
+
+    .hourly-forecast-scroll::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .hourly-forecast-scroll::-webkit-scrollbar-thumb {
+      background: var(--border-hover);
+      border-radius: 4px;
+    }
+
+    .hourly-pill {
+      flex: 0 0 auto;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      text-align: center;
+      min-width: 68px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: border-color 0.15s;
+    }
+
+    .hourly-pill:hover {
+      border-color: var(--border-hover);
+    }
+
+    .hourly-pill.sunny {
+      border-color: rgba(245, 158, 11, 0.35);
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.06), var(--bg));
+    }
+
+    .hourly-pill-time {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .hourly-pill-icon {
+      font-size: 1.15rem;
+      line-height: 1.2;
+    }
+
+    .hourly-pill-watts {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--solar);
+    }
+
+    .hourly-pill-temp {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+
+    .stacked-bar {
+      width: 100%;
+      height: 12px;
+      background: var(--bg);
+      border-radius: 999px;
+      overflow: hidden;
+      display: flex;
+      margin: 14px 0;
+    }
+
+    .stacked-seg {
+      height: 100%;
+      transition: width 0.4s ease;
+    }
+
+    .legend-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* Room Quick Cards */
+    .rooms-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .rooms-strip { grid-template-columns: 1fr; }
+    }
+
+    .room-tile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .room-tile:hover {
+      border-color: var(--border-hover);
+      box-shadow: var(--card-hover-shadow);
+      transform: translateY(-2px);
+    }
+
+    .room-tile.active {
+      border-color: rgba(250, 204, 21, 0.4);
+      background: linear-gradient(180deg, rgba(250, 204, 21, 0.06), var(--surface));
+    }
+
+    .room-tile-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .room-tile-sub {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* Clean Device List Tables */
+    .device-columns {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 1100px) {
+      .device-columns { grid-template-columns: 1fr; }
+    }
+
+    .list-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+
+    .list-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .list-item.lit {
+      border-color: rgba(250, 204, 21, 0.3);
+    }
+
+    .list-item-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .item-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .item-room-tag {
+      font-size: 0.66rem;
+      font-weight: 500;
+      padding: 1px 7px;
+      border-radius: 4px;
+      background: var(--surface-elevated);
+      color: var(--text-secondary);
+    }
+
+    .item-meta {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .item-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .watt-readout {
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      min-width: 60px;
+      text-align: right;
+    }
+
+    /* Modern Toggle Switch */
+    .toggle {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-track {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-hover);
+      border-radius: 999px;
+      transition: 0.2s;
+    }
+
+    .toggle-track:before {
+      content: "";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      left: 3px;
+      bottom: 3px;
+      background: var(--text-secondary);
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .toggle input:checked + .toggle-track {
+      background: rgba(250, 204, 21, 0.2);
+      border-color: var(--hue);
+    }
+
+    .toggle input:checked + .toggle-track:before {
+      transform: translateX(16px);
+      background: var(--hue);
+    }
+
+    .toggle input:checked + .toggle-track.green {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--battery);
+    }
+
+    .toggle input:checked + .toggle-track.green:before {
+      background: var(--battery);
+    }
+
+    .dimmer-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .dimmer-slider {
+      flex: 1;
+      height: 4px;
+      accent-color: var(--hue);
+      cursor: pointer;
+    }
+
+    /* Compact Add Form */
+    .inline-form {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .field {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 11px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .field:focus {
+      border-color: var(--home);
+    }
+
+    .btn-add {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border-hover);
+      color: var(--text);
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-add:hover {
+      border-color: var(--home);
+      color: var(--home);
+    }
+
+    .btn-remove {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 2px 4px;
+    }
+
+    .btn-remove:hover {
+      color: var(--grid-import);
+    }
+
+    /* Clean Modal Overlay */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 6, 10, 0.78);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1000;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-dialog {
+      background: var(--surface);
+      border: 1px solid var(--border-hover);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 720px;
+      max-height: 86vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65);
+      overflow: hidden;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-body {
+      padding: 20px 22px;
+      overflow-y: auto;
+    }
+
+    .btn-close-modal {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-close-modal:hover {
+      color: var(--text);
+      border-color: var(--border-hover);
+    }
+
+    /* ==========================================
+       MOBILE & TABLET RESPONSIVE REFINEMENTS
+       ========================================== */
+    @media (max-width: 900px) {
+      .shell {
+        padding: 14px 16px 36px;
+      }
+      .topbar {
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+      .card {
+        padding: 18px 20px;
+      }
+      .metric-number {
+        font-size: 1.85rem;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+        padding-bottom: 16px;
+      }
+      .brand {
+        flex-wrap: wrap;
+      }
+      .brand-meta {
+        flex-wrap: wrap;
+        row-gap: 4px;
+        column-gap: 6px;
+      }
+      .segmented {
+        width: 100%;
+        display: flex;
+      }
+      .seg-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 8px 12px;
+      }
+      .status-bar {
+        align-self: flex-start;
+        width: 100%;
+        justify-content: space-between;
+        box-sizing: border-box;
+      }
+      #appliance-advisory-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      #appliance-advisory-card > div:first-child {
+        width: 100%;
+      }
+      #adv-savings-note {
+        text-align: left;
+        width: 100%;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .card-header {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .range-pills {
+        margin-top: 4px;
+      }
+      .solar-forecast-card {
+        padding: 18px 18px;
+      }
+      .modal-backdrop {
+        padding: 12px;
+      }
+      .modal-dialog {
+        max-width: 100%;
+        max-height: 92vh;
+        border-radius: 12px;
+      }
+      .modal-head, .modal-body {
+        padding: 14px 16px;
+      }
+      .inline-form {
+        flex-direction: column;
+      }
+      .inline-form .field {
+        width: 100% !important;
+        box-sizing: border-box;
+      }
+      .inline-form .btn-add {
+        width: 100%;
+      }
+      .rooms-strip#hue-rooms-container {
+        grid-template-columns: 1fr !important;
+      }
+      .list-item-main {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .legend-row {
+        gap: 12px 18px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .metric-number {
+        font-size: 1.65rem;
+      }
+      .flow-svg {
+        max-width: 100%;
+        height: auto;
+        aspect-ratio: 340 / 320;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="shell">
+    <!-- Top Header -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2"></path><path d="M12 20v2"></path>
+            <path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path>
+            <path d="M2 12h2"></path><path d="M20 12h2"></path>
+            <path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name">Home Energy Monitor</div>
+          <div class="brand-meta">
+            <span class="mono" id="hdr-model">H1-3.7-E-G2-WL</span>
+            <span class="dot-sep"></span>
+            <span id="hdr-workmode">Self-Use</span>
+            <span class="dot-sep"></span>
+            <span id="hdr-state" style="color:var(--battery)">On-Grid</span>
+            <span class="dot-sep"></span>
+            <span id="hdr-octopus" style="color:var(--grid);display:flex;align-items:center;gap:4px">
+              Octopus Go: <strong class="mono" id="hdr-octo-rate">--.-p</strong>
+              <span class="pill-tag mono" id="hdr-octo-pill" style="font-size:0.65rem;padding:1px 6px">Peak</span>
+            </span>
+            <span class="dot-sep"></span>
+            <span id="hdr-weather" style="color:var(--text-secondary);display:flex;align-items:center;gap:4px">
+              <span id="hdr-weather-icon">🌤️</span>
+              <span class="mono" id="hdr-weather-temp">--°C</span>
+              <span id="hdr-weather-desc" style="color:var(--text-muted)">--</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Segmented Page Navigation -->
+      <div class="segmented">
+        <button class="seg-btn active" id="tab-overview" onclick="switchView('overview')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Overview
+        </button>
+        <button class="seg-btn" id="tab-devices" onclick="switchView('devices')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
+          Devices & Lights
+        </button>
+      </div>
+
+      <!-- Live Poll Status -->
+      <div class="status-bar">
+        <span class="live-dot" id="status-dot"></span>
+        <span class="mono" id="last-updated-txt">--:--:--</span>
+        <span style="color:var(--border-hover)">|</span>
+        <span class="mono" id="countdown" style="color:var(--text-muted)">10s</span>
+      </div>
+    </header>
+
+    <!-- ==========================================
+         VIEW 1: SOLAR & ENERGY OVERVIEW
+         ========================================== -->
+    <main id="view-overview" class="view active">
+      <!-- 4-Card KPI Row -->
+      <section class="metrics-row">
+        <!-- Solar PV -->
+        <div class="card">
+          <div class="metric-top">
+            <span class="metric-title">
+              <span class="metric-icon" style="background:var(--solar)"></span>
+              Solar Generation
+            </span>
+            <span class="pill-tag mono" id="kpi-pv-pct">0%</span>
+          </div>
+          <div class="metric-number mono" style="color:var(--solar)">
+            <span id="kpi-pv-w">0</span><span class="metric-unit">W</span>
+          </div>
+          <div class="bar-bg">
+            <div class="bar-fill" id="kpi-pv-bar" style="width:0%;background:var(--solar)"></div>
+          </div>
+          <div class="metric-footer">
+            <span>Today <strong class="mono" id="kpi-pv-today">0.0 kWh</strong></span>
+            <span></span>
+          </div>
+        </div>
+
+        <!-- Battery -->
+        <div class="card">
+          <div class="metric-top">
+            <span class="metric-title">
+              <span class="metric-icon" style="background:var(--battery)"></span>
+              Battery Storage
+            </span>
+            <span class="pill-tag mono" id="kpi-bat-dir">Idle</span>
+          </div>
+          <div class="metric-number mono" style="color:var(--battery);display:flex;align-items:baseline;justify-content:space-between">
+            <div><span id="kpi-bat-soc">0</span><span class="metric-unit">%</span></div>
+            <div class="mono" id="kpi-bat-eta" style="font-size:0.75rem;font-weight:600;color:var(--text-secondary)">Holding</div>
+          </div>
+          <div class="bar-bg">
+            <div class="bar-fill" id="kpi-bat-bar" style="width:0%;background:var(--battery)"></div>
+          </div>
+          <div class="metric-footer">
+            <span>Flow <strong class="mono" id="kpi-bat-w">0 W</strong></span>
+            <span id="kpi-bat-eta-sub" style="color:var(--text-muted);font-size:0.72rem">Min Reserve <strong class="mono" id="kpi-bat-min">10%</strong></span>
+          </div>
+        </div>
+
+        <!-- Home Load -->
+        <div class="card">
+          <div class="metric-top">
+            <span class="metric-title">
+              <span class="metric-icon" style="background:var(--home)"></span>
+              Home Load
+            </span>
+            <span class="pill-tag mono" id="kpi-self-pill">0% Green</span>
+          </div>
+          <div class="metric-number mono" style="color:var(--home)">
+            <span id="kpi-load-w">0</span><span class="metric-unit">W</span>
+          </div>
+          <div class="bar-bg">
+            <div class="bar-fill" id="kpi-load-bar" style="width:0%;background:var(--home)"></div>
+          </div>
+          <div class="metric-footer">
+            <span>Today <strong class="mono" id="kpi-load-today">0.0 kWh</strong></span>
+            <span>Est. Yr <strong class="mono" id="kpi-load-yearly" style="color:var(--text)" title="Projected annual consumption based on daily usage">3,500 kWh</strong></span>
+          </div>
+        </div>
+
+        <!-- Grid -->
+        <div class="card">
+          <div class="metric-top">
+            <span class="metric-title">
+              <span class="metric-icon" style="background:var(--grid)"></span>
+              Grid Power
+            </span>
+            <span class="pill-tag mono" id="kpi-grid-badge">Idle</span>
+          </div>
+          <div class="metric-number mono" id="kpi-grid-color" style="color:var(--grid)">
+            <span id="kpi-grid-w">0</span><span class="metric-unit">W</span>
+          </div>
+          <div class="bar-bg">
+            <div class="bar-fill" id="kpi-grid-bar" style="width:0%;background:var(--grid)"></div>
+          </div>
+          <div class="metric-footer">
+            <span>Import <strong class="mono" id="kpi-grid-in">0.0 kWh</strong></span>
+            <span>Export <strong class="mono" id="kpi-grid-out">0.0 kWh</strong></span>
+          </div>
+        </div>
+
+        <!-- Octopus Tariff Savings & Cost -->
+        <div class="card">
+          <div class="metric-top">
+            <span class="metric-title" data-tooltip="Financial savings from solar self-consumption and battery shifting on Octopus Go vs standard grid rate (26p/kWh)">
+              <span class="metric-icon" style="background:#10b981"></span>
+              Octopus Savings
+            </span>
+            <span class="pill-tag mono" id="kpi-savings-rate-tag" data-tooltip="Live savings rate based on currently avoided grid peak costs">+0.0p/h</span>
+          </div>
+          <div class="metric-number mono" style="color:#10b981;display:flex;align-items:baseline;justify-content:space-between">
+            <div data-tooltip="Money saved today compared to standard 26p flat electricity tariff">
+              <span style="font-size:1.15rem;vertical-align:top;margin-right:2px">£</span><span id="kpi-saved-today">0.00</span>
+              <span style="font-size:0.75rem;font-weight:500;color:var(--text-muted);margin-left:4px">saved</span>
+            </div>
+            <div style="font-size:0.78rem;color:var(--text-secondary)" data-tooltip="Cumulative estimated savings from solar generation and battery load shifting">
+              Lifetime: <strong class="mono" id="kpi-saved-lifetime" style="color:#10b981">£0.00</strong>
+            </div>
+          </div>
+          <div class="bar-bg">
+            <div class="bar-fill" id="kpi-saved-bar" style="width:100%;background:linear-gradient(90deg, #10b981, #06b6d4)"></div>
+          </div>
+          <div class="metric-footer">
+            <span data-tooltip="Total electricity cost today, including overnight 9.4p charging and daily 48.9p standing charge">
+              Today Cost <strong class="mono" id="kpi-cost-today" style="color:var(--text)">£0.00</strong>
+            </span>
+            <span data-tooltip="Current electricity burn rate based on live house consumption and active tariff">
+              Burn <strong class="mono" id="kpi-cost-live" style="color:var(--text-secondary)">0.0p/h</strong>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Smart Appliance Recommendation Advisory Banner -->
+      <section class="card" id="appliance-advisory-card" style="margin-bottom:20px;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(90deg, rgba(16,185,129,0.08), var(--surface));border-color:rgba(16,185,129,0.28)">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div id="adv-icon" style="font-size:1.6rem;width:44px;height:44px;border-radius:12px;background:var(--surface-elevated);display:flex;align-items:center;justify-content:center;border:1px solid var(--border);box-shadow:inset 0 1px 1px rgba(255,255,255,0.05)">☀️</div>
+          <div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:0.92rem;font-weight:600" id="adv-title">Appliance Recommendation</span>
+              <span class="pill-tag mono" id="adv-badge" style="font-size:0.7rem;color:#10b981;border-color:rgba(16,185,129,0.3)">Checking...</span>
+            </div>
+            <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:3px" id="adv-action">Calculating best running time based on solar & Octopus rates...</div>
+          </div>
+        </div>
+        <div class="mono" style="font-size:0.78rem;color:var(--text-muted);text-align:right" id="adv-savings-note">
+          Optimised for Octopus Go
+        </div>
+      </section>
+
+      <!-- Main Split: Flow Diagram + History Chart -->
+      <section class="workspace-grid">
+        <!-- Left: Clean Cross Flow Diagram -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Live Power Flow</div>
+              <div class="card-subtitle">Real-time routing across inverter bus</div>
+            </div>
+          </div>
+
+          <div class="flow-wrap">
+            <svg class="flow-svg" viewBox="0 0 340 320">
+              <!-- Orthogonal Cross Lines -->
+              <!-- Top (Solar 170,56) -> Center (170,160) -->
+              <!-- Top (Solar 170,52) -> Center (170,160) -->
+              <line x1="170" y1="80" x2="170" y2="138" class="track-line" />
+              <line id="flow-pv" x1="170" y1="80" x2="170" y2="138" class="active-line" stroke="#f59e0b" />
+
+              <!-- Left (Grid 52,160) -> Center (170,160) -->
+              <line x1="84" y1="160" x2="142" y2="160" class="track-line" />
+              <line id="flow-grid" x1="84" y1="160" x2="142" y2="160" class="active-line" stroke="#818cf8" />
+
+              <!-- Center (170,160) -> Right (Home 288,160) -->
+              <line x1="198" y1="160" x2="256" y2="160" class="track-line" />
+              <line id="flow-load" x1="198" y1="160" x2="256" y2="160" class="active-line" stroke="#38bdf8" />
+
+              <!-- Center (170,160) -> Bottom (Battery 170,268) -->
+              <line x1="170" y1="184" x2="170" y2="236" class="track-line" />
+              <line id="flow-bat" x1="170" y1="184" x2="170" y2="236" class="active-line" stroke="#10b981" />
+
+              <!-- TOP: SOLAR -->
+              <g transform="translate(170, 52)">
+                <circle r="34" fill="var(--bg)" stroke="var(--solar)" stroke-width="1.8" />
+                <text y="-6" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600" letter-spacing="0.05em">SOLAR</text>
+                <text y="11" id="svg-pv-w" text-anchor="middle" fill="var(--solar)" font-size="12.5" font-weight="700" class="mono">0 W</text>
+              </g>
+
+              <!-- LEFT: GRID -->
+              <g transform="translate(52, 160)">
+                <circle r="34" fill="var(--bg)" stroke="var(--grid)" stroke-width="1.8" />
+                <text y="-6" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600" letter-spacing="0.05em">GRID</text>
+                <text y="11" id="svg-grid-w" text-anchor="middle" fill="var(--grid)" font-size="12" font-weight="700" class="mono">0 W</text>
+              </g>
+
+              <!-- CENTER: INVERTER HUB -->
+              <g transform="translate(170, 160)">
+                <rect x="-30" y="-26" width="60" height="52" rx="12" fill="var(--surface-elevated)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" />
+                <text y="-4" text-anchor="middle" fill="var(--text-muted)" font-size="8.5" font-weight="600" letter-spacing="0.04em">HUB</text>
+                <text y="11" id="svg-inv-w" text-anchor="middle" fill="var(--text)" font-size="11.5" font-weight="700" class="mono">0 W</text>
+              </g>
+
+              <!-- RIGHT: HOME -->
+              <g transform="translate(288, 160)">
+                <circle r="34" fill="var(--bg)" stroke="var(--home)" stroke-width="1.8" />
+                <text y="-6" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600" letter-spacing="0.05em">HOME</text>
+                <text y="11" id="svg-load-w" text-anchor="middle" fill="var(--home)" font-size="12.5" font-weight="700" class="mono">0 W</text>
+              </g>
+
+              <!-- BOTTOM: BATTERY -->
+              <g transform="translate(170, 268)">
+                <circle r="34" fill="var(--bg)" stroke="var(--battery)" stroke-width="1.8" />
+                <text y="-8" id="svg-bat-soc" text-anchor="middle" fill="var(--battery)" font-size="12" font-weight="700" class="mono">0%</text>
+                <text y="9" id="svg-bat-w" text-anchor="middle" fill="var(--text-secondary)" font-size="10.5" font-weight="600" class="mono">0 W</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Right: Telemetry Chart -->
+        <div class="card" style="display:flex;flex-direction:column;justify-content:space-between">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Telemetry History</div>
+              <div class="card-subtitle">Power (W) & Battery State of Charge (%)</div>
+            </div>
+            <div class="range-pills">
+              <button class="range-btn" onclick="setHistoryWindow(1, this)">1H</button>
+              <button class="range-btn active" onclick="setHistoryWindow(6, this)">6H</button>
+              <button class="range-btn" onclick="setHistoryWindow(24, this)">24H</button>
+            </div>
+          </div>
+
+          <div style="position:relative;height:315px;width:100%">
+            <canvas id="telemetryChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Weather & Solar Yield Forecast Strip -->
+      <section class="forecast-strip">
+        <!-- Tomorrow Forecast Summary Card -->
+        <div class="solar-forecast-card">
+          <div>
+            <div class="metric-top" style="margin-bottom:8px">
+              <span class="metric-title">
+                <span class="metric-icon" style="background:var(--solar)"></span>
+                Tomorrow's Solar Outlook
+              </span>
+              <span class="pill-tag mono" id="fore-tomorrow-icon" style="font-size:0.82rem">🌤️</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
+              <span class="mono" id="fore-tomorrow-yield" style="font-size:1.8rem;font-weight:700;color:var(--solar)">--.-</span>
+              <span class="metric-unit" style="font-size:1rem;color:var(--solar)">kWh</span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="fore-tomorrow-desc">
+              Predicted Generation · Clear Sky
+            </div>
+          </div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
+            <span>Temp <strong class="mono" id="fore-tomorrow-temps" style="color:var(--text)">--° / --°C</strong></span>
+            <span>Today Est <strong class="mono" id="fore-today-yield" style="color:var(--text-secondary)">--.- kWh</strong></span>
+          </div>
+        </div>
+
+        <!-- 24-Hour Solar Radiation & Weather Hourly Track -->
+        <div class="solar-forecast-card" style="overflow:hidden">
+          <div class="metric-top" style="margin-bottom:10px">
+            <div>
+              <span class="metric-title">24-Hour Solar Yield & Sunlight Timeline</span>
+              <span style="font-size:0.72rem;color:var(--text-muted);margin-left:4px">Hourly forecast from Open-Meteo local irradiance model</span>
+            </div>
+            <span class="pill-tag mono" style="font-size:0.65rem;color:var(--home)">Local Solar Track</span>
+          </div>
+          <div class="hourly-forecast-scroll" id="forecast-hourly-container">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- FoxESS Grid Force-Charge Schedule Block -->
+        <div class="solar-forecast-card">
+          <div>
+            <div class="metric-top" style="margin-bottom:8px">
+              <span class="metric-title">
+                <span class="metric-icon" style="background:var(--battery)"></span>
+                Battery Grid Charge Schedule
+              </span>
+              <span class="pill-tag mono" id="sched-octo-aligned-pill" style="color:var(--battery);border-color:rgba(16,185,129,0.3)">Aligned</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
+              <span class="mono" id="sched-p1-window" style="font-size:1.55rem;font-weight:700;color:var(--battery)">00:30 - 05:30</span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="sched-p1-status">
+              Period 1 Force-Charge · Inverter Holding Regs
+            </div>
+          </div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
+            <span>Target <strong class="mono" id="sched-target-soc" style="color:var(--text)">100% SoC</strong></span>
+            <span>Rate <strong class="mono" id="sched-rate-p" style="color:var(--battery)">9.4p/kWh</strong></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Energy Savings Optimizer Card -->
+      <section class="card" style="margin-top:20px;background:linear-gradient(180deg, rgba(129,140,248,0.07), var(--surface));border-color:rgba(129,140,248,0.28)">
+        <div class="card-header" style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:38px;height:38px;border-radius:10px;background:rgba(129,140,248,0.18);display:flex;align-items:center;justify-content:center;color:#818cf8;font-size:1.2rem;box-shadow:0 0 12px rgba(129,140,248,0.2)">⚡</div>
+            <div>
+              <div class="card-title" id="ai-insight-title" style="display:flex;align-items:center;gap:8px;font-size:0.95rem">
+                Energy Optimization & Savings
+              </div>
+              <div class="card-subtitle" id="ai-insight-sub">Real-time battery bridging, solar forecast & Octopus Go tariff calculations</div>
+            </div>
+          </div>
+          <button class="btn-refresh" id="btn-trigger-ai" onclick="triggerAiGeneration()" style="background:var(--surface-elevated);border:1px solid var(--border);color:var(--text);font-size:0.78rem;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all 0.15s">
+            <span id="ai-btn-icon">⚡</span>
+            <span id="ai-btn-txt">Recalculate</span>
+          </button>
+        </div>
+        <div id="ai-bullets-container" style="display:flex;flex-direction:column;gap:10px;font-size:0.86rem;color:var(--text);line-height:1.5;padding:6px 2px">
+          <div style="color:var(--text-secondary)">Calculating real-time savings & battery optimization...</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ==========================================
+         VIEW 2: DEVICE USAGE & HUE LIGHTS
+         ========================================== -->
+    <main id="view-devices" class="view">
+      <!-- Load Breakdown Bar Card -->
+      <section class="card load-bar-card">
+        <div class="card-header" style="margin-bottom:4px">
+          <div>
+            <div class="card-title">Household Consumption Breakdown</div>
+            <div class="card-subtitle">Comparing live inverter load against Philips Hue, Tapo Smart Plugs & tracked appliances</div>
+          </div>
+          <div class="mono" style="font-size:1.35rem;font-weight:700;color:var(--home)" id="dev-total-load">0 W</div>
+        </div>
+
+        <div class="stacked-bar">
+          <div id="seg-hue" class="stacked-seg" style="width:5%;background:var(--hue)"></div>
+          <div id="seg-tapo" class="stacked-seg" style="width:5%;background:var(--home)"></div>
+          <div id="seg-app" class="stacked-seg" style="width:45%;background:var(--battery)"></div>
+          <div id="seg-untracked" class="stacked-seg" style="width:45%;background:var(--grid)"></div>
+        </div>
+
+        <div class="legend-row">
+          <div class="legend-item">
+            <span class="legend-swatch" style="background:var(--hue)"></span>
+            <span>Hue Lighting (<strong class="mono" id="leg-hue-w">0.0 W</strong> · <span id="dev-hue-count">0/7 on</span>)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch" style="background:var(--home)"></span>
+            <span>Tapo Plugs (<strong class="mono" id="leg-tapo-w">0.0 W</strong>)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch" style="background:var(--battery)"></span>
+            <span>Baseline Appliances (<strong class="mono" id="leg-app-w">0.0 W</strong>)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch" style="background:var(--grid)"></span>
+            <span>Untracked Load (<strong class="mono" id="leg-untracked-w">0.0 W</strong>)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tapo Smart Plugs Card (Hardware Energy Monitoring) -->
+      <section class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div>
+            <div class="card-title">TP-Link Tapo Smart Plugs</div>
+            <div class="card-subtitle">Hardware energy meters (KLAP v2) · Automated in background</div>
+          </div>
+          <span class="pill-tag mono" id="tapo-status-badge" style="display:none"></span>
+        </div>
+        <div id="tapo-plugs-container"></div>
+        <div id="tapo-auth-box" style="display:none;margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--bg);border:1px solid rgba(56,189,248,0.25)">
+          <div style="font-size:0.8rem;font-weight:600;color:var(--home);margin-bottom:4px">Connect Tapo Account for Local KLAP Handshake</div>
+          <div style="font-size:0.74rem;color:var(--text-secondary);margin-bottom:10px">
+            Your <strong>P110M(UK) Desk Plug</strong> (<span class="mono">192.168.1.200</span>) has Third-Party Compatibility (KLAP v2) enabled. Enter your TP-Link Tapo login once to unlock live wattage & on/off control locally:
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input type="email" id="tapo-email" class="field" placeholder="Tapo Email" style="flex:1;min-width:180px" />
+            <input type="password" id="tapo-pass" class="field" placeholder="Tapo Password" style="flex:1;min-width:150px" />
+            <button class="btn-add" id="tapo-btn-save" onclick="saveTapoAuth()">Connect Desk Plug</button>
+          </div>
+          <div id="tapo-auth-err" style="font-size:0.74rem;color:var(--grid-import);margin-top:8px;display:none"></div>
+        </div>
+      </section>
+
+      <!-- Two-Column Lists: Hue Summary + Custom Appliances -->
+      <section class="device-columns">
+        <!-- Left: Compact Hue Summary Card (opens Modal) -->
+        <div class="card" style="display:flex;flex-direction:column;justify-content:space-between">
+          <div>
+            <div class="card-header">
+              <div>
+                <div class="card-title">Philips Hue Lighting</div>
+                <div class="card-subtitle">4 Rooms · 7 Smart Lights (<span class="mono">192.168.1.150</span>)</div>
+              </div>
+              <button class="btn-add" style="border-color:rgba(250,204,21,0.4);color:var(--hue)" onclick="openHueModal()">
+                Light Controls ↗
+              </button>
+            </div>
+            <!-- Compact Room Toggles inside card -->
+            <div class="rooms-strip" id="hue-rooms-container" style="grid-template-columns:repeat(2,1fr);margin-bottom:0"></div>
+          </div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:var(--text-secondary)">
+            <span>Bridge + Active Bulbs Draw</span>
+            <strong class="mono" style="color:var(--hue);font-size:0.9rem" id="card-hue-summary-w">0.0 W</strong>
+          </div>
+        </div>
+
+        <!-- Right: Appliances -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Baseline & Tracked Appliances</div>
+              <div class="card-subtitle">Toggle active devices to estimate load share</div>
+            </div>
+          </div>
+          <div id="appliances-container"></div>
+
+          <div class="inline-form">
+            <input type="text" id="new-app-name" class="field" placeholder="Appliance name" style="flex:1.4" />
+            <input type="text" id="new-app-room" class="field" placeholder="Room" style="flex:1" />
+            <input type="number" id="new-app-watts" class="field mono" placeholder="Watts" style="width:85px" />
+            <button class="btn-add" onclick="addAppliance()">+ Add</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Philips Hue Light Controls Modal -->
+  <div class="modal-backdrop" id="hue-modal" onclick="if(event.target===this)closeHueModal()">
+    <div class="modal-dialog">
+      <div class="modal-head">
+        <div>
+          <div class="card-title">Philips Hue Light Controls</div>
+          <div class="card-subtitle">Individual bulb dimmers & live model power estimation</div>
+        </div>
+        <button class="btn-close-modal" onclick="closeHueModal()" title="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="hue-lights-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let chartInstance = null;
+    let historyHours = 6;
+    let countdownSec = 10;
+
+    function switchView(view) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`view-${view}`).classList.add('active');
+      document.getElementById(`tab-${view}`).classList.add('active');
+      if (view === 'devices') fetchDevices();
+    }
+
+    function setText(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('telemetryChart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Solar (W)',
+              data: [],
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0.08)',
+              borderWidth: 2,
+              pointRadius: 0,
+              fill: true,
+              tension: 0.3,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Home Load (W)',
+              data: [],
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.06)',
+              borderWidth: 2,
+              pointRadius: 0,
+              fill: true,
+              tension: 0.3,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Battery SoC (%)',
+              data: [],
+              borderColor: '#10b981',
+              borderWidth: 2,
+              pointRadius: 0,
+              fill: false,
+              tension: 0.3,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              position: 'top',
+              align: 'end',
+              labels: { color: '#9ca3af', font: { family: 'Inter', size: 11 }, boxWidth: 10, usePointStyle: true }
+            },
+            tooltip: {
+              backgroundColor: '#171a24',
+              titleColor: '#f3f4f6',
+              bodyColor: '#d1d5db',
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderWidth: 1,
+              padding: 10
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#6b7280', maxTicksLimit: 7, font: { family: 'JetBrains Mono', size: 10 } },
+              grid: { display: false }
+            },
+            y: {
+              type: 'linear',
+              position: 'left',
+              ticks: { color: '#6b7280', font: { family: 'JetBrains Mono', size: 10 } },
+              grid: { color: 'rgba(255, 255, 255, 0.04)' }
+            },
+            y1: {
+              type: 'linear',
+              position: 'right',
+              min: 0,
+              max: 100,
+              ticks: { color: '#10b981', font: { family: 'JetBrains Mono', size: 10 }, callback: v => v + '%' },
+              grid: { drawOnChartArea: false }
+            }
+          }
+        }
+      });
+    }
+
+    function setFlowAnim(id, watts, reverse = false) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.remove('anim-fwd', 'anim-rev');
+      if (Math.abs(watts) >= 12) {
+        el.classList.add(reverse ? 'anim-rev' : 'anim-fwd');
+        el.style.opacity = '1';
+      } else {
+        el.style.opacity = '0';
+      }
+    }
+
+    async function fetchLive() {
+      try {
+        const res = await fetch('/api/live');
+        const d = await res.json();
+        if (!d || !d.power) return;
+
+        const dot = document.getElementById('status-dot');
+        dot.classList.toggle('error', d.status !== 'online');
+
+        if (d.last_updated) {
+          setText('last-updated-txt', new Date(d.last_updated).toLocaleTimeString());
+        }
+
+        setText('hdr-model', d.device.model);
+        setText('hdr-workmode', d.system_state.work_mode);
+        setText('hdr-state', d.system_state.inverter_state);
+
+        if (d.octopus) {
+          setText('hdr-octo-rate', `${d.octopus.current_rate_p_kwh.toFixed(1)}p`);
+          const octoPill = document.getElementById('hdr-octo-pill');
+          if (octoPill) {
+            if (d.octopus.is_off_peak) {
+              octoPill.textContent = 'Cheap Go (9.4p)';
+              octoPill.style.color = 'var(--battery)';
+              octoPill.style.borderColor = 'rgba(16,185,129,0.4)';
+            } else {
+              octoPill.textContent = 'Peak (36.6p)';
+              octoPill.style.color = 'var(--solar)';
+              octoPill.style.borderColor = 'rgba(245,158,11,0.3)';
+            }
+          }
+        }
+
+        // 1. Solar
+        const pvW = d.power.pv_total_w;
+        const pvPct = Math.min(100, Math.round((pvW / 3700) * 100));
+        setText('kpi-pv-w', pvW);
+        setText('kpi-pv-pct', `${pvPct}%`);
+        document.getElementById('kpi-pv-bar').style.width = `${pvPct}%`;
+        setText('kpi-pv-today', `${d.energy.today.solar_pv_kwh.toFixed(1)} kWh`);
+
+        // 2. Battery
+        const soc = d.battery.soc_pct;
+        const batRawW = d.battery.power_w; // neg = chg, pos = dis
+        const batAbsW = Math.abs(batRawW);
+        setText('kpi-bat-soc', soc);
+        setText('kpi-bat-dir', soc <= d.battery.min_soc_pct && batRawW >= 0 ? 'Min Reserve' : d.battery.direction);
+        setText('kpi-bat-w', batRawW < -10 ? `+${batAbsW} W` : (batRawW > 10 ? `-${batAbsW} W` : 'Idle'));
+        document.getElementById('kpi-bat-bar').style.width = `${Math.min(100, soc)}%`;
+        setText('kpi-bat-min', `${d.battery.min_soc_pct}%`);
+
+        // 3. Home Load
+        const loadW = d.power.load_w;
+        setText('kpi-load-w', loadW);
+        setText('kpi-self-pill', `${Math.round(d.power.self_sufficiency_pct)}% Self`);
+        document.getElementById('kpi-load-bar').style.width = `${Math.min(100, Math.round((loadW / 3700) * 100))}%`;
+        setText('kpi-load-today', `${d.energy.today.load_kwh.toFixed(1)} kWh`);
+        if (d.financials && d.financials.yearly_projection) {
+          const yp = d.financials.yearly_projection;
+          const diffStr = yp.diff_vs_quote_pct > 0 ? `+${yp.diff_vs_quote_pct}%` : `${yp.diff_vs_quote_pct}%`;
+          setText('kpi-load-yearly', `${yp.projected_yearly_kwh.toLocaleString()} kWh`);
+          const yrEl = document.getElementById('kpi-load-yearly');
+          if (yrEl) {
+            yrEl.title = `Projected from ${yp.avg_daily_kwh} kWh/day (${diffStr} vs ${yp.baseline_quote_kwh.toLocaleString()} kWh quote)`;
+          }
+        }
+
+        // 4. Grid
+        const gridNetW = d.power.grid_net_w;
+        const gridAbsW = Math.abs(gridNetW);
+        setText('kpi-grid-w', gridAbsW);
+        setText('kpi-grid-badge', gridNetW > 15 ? 'Importing' : (gridNetW < -15 ? 'Exporting' : 'Balanced'));
+        document.getElementById('kpi-grid-bar').style.width = `${Math.min(100, Math.round((gridAbsW / 3700) * 100))}%`;
+        setText('kpi-grid-in', `${d.energy.today.grid_import_kwh.toFixed(1)} kWh`);
+        setText('kpi-grid-out', `${d.energy.today.grid_export_kwh.toFixed(1)} kWh`);
+
+        // 5. Octopus Savings & Financials
+        if (d.financials) {
+          setText('kpi-saved-today', d.financials.today_savings_gbp.toFixed(2));
+          setText('kpi-saved-lifetime', `£${(d.financials.total_estimated_savings_gbp || 0).toFixed(2)}`);
+          setText('kpi-cost-today', `£${d.financials.today_cost_gbp.toFixed(2)}`);
+          setText('kpi-cost-live', `${d.financials.live_cost_p_hr.toFixed(1)}p/h`);
+          setText('kpi-savings-rate-tag', `+${d.financials.live_savings_p_hr.toFixed(1)}p/h saved`);
+
+          // Export Potential / Earnings
+          if (d.financials.export) {
+            const exp = d.financials.export;
+            const expText = exp.today_credit_gbp > 0
+              ? `+£${exp.today_credit_gbp.toFixed(2)} (${exp.rate_p_kwh}p)`
+              : `${exp.rate_p_kwh}p Exp Pot.`;
+            setText('kpi-export-earned', expText);
+          }
+
+          // Battery Time to Empty / Full
+          if (d.financials.battery_countdown) {
+            const bc = d.financials.battery_countdown;
+            setText('kpi-bat-eta', bc.label);
+            setText('kpi-bat-eta-sub', bc.detail);
+          }
+
+          // Appliance Advisory Banner
+          if (d.financials.appliance_advisory) {
+            const adv = d.financials.appliance_advisory;
+            setText('adv-icon', adv.icon);
+            setText('adv-title', adv.title);
+            setText('adv-action', adv.action);
+            setText('adv-savings-note', adv.savings_note);
+            const advBadge = document.getElementById('adv-badge');
+            if (advBadge) {
+              advBadge.textContent = adv.badge;
+              advBadge.style.color = adv.color;
+              advBadge.style.borderColor = `${adv.color}40`;
+            }
+          }
+        }
+
+        // 6. Weather & Solar Yield Forecast
+        if (d.weather) {
+          setText('hdr-weather-icon', d.weather.current_icon || '🌤️');
+          setText('hdr-weather-temp', `${d.weather.current_temp_c}°C`);
+          setText('hdr-weather-desc', d.weather.current_weather_desc || '');
+
+          setText('fore-tomorrow-icon', d.weather.tomorrow_icon || '🌤️');
+          setText('fore-tomorrow-yield', (d.weather.tomorrow_solar_kwh || 0).toFixed(1));
+          setText('fore-tomorrow-desc', `Tomorrow's Yield · ${d.weather.tomorrow_weather_desc || 'Sunny'}`);
+          setText('fore-tomorrow-temps', `${d.weather.tomorrow_temp_min_c}° / ${d.weather.tomorrow_temp_max_c}°C`);
+          setText('fore-today-yield', `${(d.weather.today_solar_kwh || 0).toFixed(1)} kWh`);
+
+          const hourlyEl = document.getElementById('forecast-hourly-container');
+          if (hourlyEl && Array.isArray(d.weather.hourly_forecast) && d.weather.hourly_forecast.length > 0) {
+            hourlyEl.innerHTML = d.weather.hourly_forecast.map(h => `
+              <div class="hourly-pill ${h.watts > 100 ? 'sunny' : ''}">
+                <span class="hourly-pill-time">${h.time}</span>
+                <span class="hourly-pill-icon">${h.icon}</span>
+                <span class="hourly-pill-watts mono">${h.watts > 0 ? h.watts + 'W' : '0W'}</span>
+                <span class="hourly-pill-temp mono">${h.temp_c}°</span>
+              </div>
+            `).join('');
+          }
+        }
+
+        // 7. Battery Grid Charge Schedule
+        if (d.settings && d.settings.grid_charge_schedule) {
+          const sched = d.settings.grid_charge_schedule;
+          const p1 = sched.period1 || {};
+          const pill = document.getElementById('sched-octo-aligned-pill');
+
+          if (p1.enabled) {
+            setText('sched-p1-window', `${p1.start} - ${p1.end}`);
+            if (sched.adaptive && sched.adaptive.enabled) {
+              const ml = sched.adaptive.ml_prediction;
+              const mlExtra = ml ? ` · ML ${ml.target_day_name} load: ${ml.predicted_total_kwh} kWh (${ml.confidence})` : '';
+              setText('sched-p1-status', `Adaptive · Target: ${sched.adaptive.calculated_target_soc}% SoC (${sched.adaptive.reason})${mlExtra}`);
+            } else {
+              setText('sched-p1-status', `Force-Charge active · max ${sched.current_limit_a || 40}A`);
+            }
+            if (pill) {
+              if (sched.adaptive && sched.adaptive.enabled) {
+                pill.textContent = `Adaptive (${sched.adaptive.calculated_target_soc}%)`;
+                pill.style.color = 'var(--battery)';
+                pill.style.borderColor = 'rgba(16,185,129,0.35)';
+              } else if (sched.aligned_with_octopus) {
+                pill.textContent = 'Go Aligned';
+                pill.style.color = 'var(--battery)';
+                pill.style.borderColor = 'rgba(16,185,129,0.3)';
+              } else {
+                pill.textContent = 'Custom Window';
+                pill.style.color = 'var(--solar)';
+                pill.style.borderColor = 'rgba(245,158,11,0.3)';
+              }
+            }
+          } else {
+            setText('sched-p1-window', 'Disabled');
+            setText('sched-p1-status', 'Grid charge schedule not enabled');
+            if (pill) {
+              pill.textContent = 'Disabled';
+              pill.style.color = 'var(--text-muted)';
+              pill.style.borderColor = 'var(--border)';
+            }
+          }
+
+          setText('sched-target-soc', `${sched.max_soc_target_pct || 100}% SoC`);
+          if (d.octopus) {
+            setText('sched-rate-p', `${d.octopus.off_peak_rate_p_kwh.toFixed(1)}p/kWh`);
+          }
+        }
+
+        // 8. Energy Optimization Insights
+        if (d.ai_insight) {
+          const ai = d.ai_insight;
+          const subEl = document.getElementById('ai-insight-sub');
+          const bulletsContainer = document.getElementById('ai-bullets-container');
+
+          if (ai.last_updated && subEl) {
+            subEl.textContent = `Updated ${ai.last_updated} · Tailored to your Octopus Go 9.4p/36.6p tariff`;
+          }
+
+          if (bulletsContainer && Array.isArray(ai.bullets) && ai.bullets.length > 0) {
+            bulletsContainer.innerHTML = ai.bullets.map(b => `
+              <div style="display:flex;align-items:flex-start;gap:8px">
+                <span style="color:#818cf8;font-weight:700;line-height:1.2">✦</span>
+                <span style="color:var(--text)">${b}</span>
+              </div>
+            `).join('');
+          }
+        }
+
+        // SVG Flow
+        setText('svg-pv-w', `${pvW} W`);
+        setText('svg-grid-w', `${gridAbsW} W`);
+        setText('svg-inv-w', `${d.power.inverter_w} W`);
+        setText('svg-load-w', `${loadW} W`);
+        setText('svg-bat-soc', `${soc}%`);
+        setText('svg-bat-w', `${batAbsW} W`);
+
+        // Flow line colors based on direction:
+        const gridLine = document.getElementById('flow-grid');
+        if (gridLine) {
+          const gridColor = gridNetW < -12 ? '#c084fc' : '#fb7185';
+          gridLine.setAttribute('stroke', gridColor);
+          gridLine.style.stroke = gridColor;
+        }
+
+        setFlowAnim('flow-pv', pvW, false);
+        // Grid (x1=88) -> Hub (x2=138):
+        // Import (gridNetW > 12) moves towards Hub (forward: fwd)
+        // Export (gridNetW < -12) moves from Hub towards Grid (reverse: rev)
+        setFlowAnim('flow-grid', gridNetW, gridNetW < -12);
+        setFlowAnim('flow-load', loadW, false);
+        // Center -> Bottom: forward = charging (batRawW < -12), reverse = discharging (batRawW > 12)
+        setFlowAnim('flow-bat', batRawW, batRawW > 12);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function fetchDevices() {
+      try {
+        const res = await fetch('/api/devices');
+        const d = await res.json();
+        if (!d || !d.hue) return;
+
+        const totalLoad = Math.max(1, d.house_load_w || 0);
+        const hueW = d.hue_w || 0;
+        const tapoW = d.tapo_w || 0;
+        const appW = d.appliances_w || 0;
+        const untrackedW = d.untracked_w || 0;
+        const denom = Math.max(totalLoad, hueW + tapoW + appW);
+
+        setText('dev-total-load', `${d.house_load_w} W`);
+        setText('dev-hue-count', `${d.hue.lights_on_count || 0}/${d.hue.lights_total_count || 7} on`);
+        setText('leg-hue-w', `${hueW.toFixed(1)} W`);
+        setText('card-hue-summary-w', `${hueW.toFixed(1)} W (${d.hue.lights_on_count || 0}/${d.hue.lights_total_count || 7} on)`);
+        setText('leg-tapo-w', `${tapoW.toFixed(1)} W`);
+        setText('leg-app-w', `${appW.toFixed(1)} W`);
+        setText('leg-untracked-w', `${untrackedW.toFixed(1)} W`);
+
+        const huePct = Math.max(1.5, (hueW / denom) * 100);
+        const tapoPct = (tapoW / denom) * 100;
+        const appPct = (appW / denom) * 100;
+        const untrackedPct = Math.max(0, 100 - huePct - tapoPct - appPct);
+
+        document.getElementById('seg-hue').style.width = `${huePct}%`;
+        document.getElementById('seg-tapo').style.width = `${tapoPct}%`;
+        document.getElementById('seg-app').style.width = `${appPct}%`;
+        document.getElementById('seg-untracked').style.width = `${untrackedPct}%`;
+
+        // Tapo Smart Plugs
+        if (d.tapo) {
+          const badgeEl = document.getElementById('tapo-status-badge');
+          const authBox = document.getElementById('tapo-auth-box');
+          const authErr = document.getElementById('tapo-auth-err');
+          const plugsEl = document.getElementById('tapo-plugs-container');
+
+          if (d.tapo.status === 'online') {
+            badgeEl.style.display = 'none';
+            authBox.style.display = 'none';
+          } else if (d.tapo.status === 'auth_error') {
+            badgeEl.style.display = 'inline-block';
+            badgeEl.textContent = 'Auth Error';
+            badgeEl.style.color = 'var(--grid-import)';
+            authBox.style.display = 'block';
+            if (d.tapo.error) {
+              authErr.style.display = 'block';
+              authErr.textContent = `Connection error: ${d.tapo.error}`;
+            }
+          } else {
+            badgeEl.style.display = 'inline-block';
+            badgeEl.textContent = 'Needs Tapo Login';
+            badgeEl.style.color = 'var(--solar)';
+            authBox.style.display = 'block';
+            authErr.style.display = 'none';
+          }
+
+          if (d.tapo.plugs && d.tapo.plugs.length > 0) {
+            plugsEl.innerHTML = d.tapo.plugs.map(p => {
+              const rules = (p.automation && p.automation.rules) ? p.automation.rules : {};
+              const rt = (p.automation && p.automation.runtime) ? p.automation.runtime : {};
+
+              const hasAction = rt.last_action && rt.last_action.toLowerCase() !== 'monitoring live' && rt.last_action.toLowerCase() !== 'waiting for telemetry';
+              const lastActTxt = hasAction
+                ? (rt.last_action_ts ? `${rt.last_action} (${rt.last_action_ts})` : rt.last_action)
+                : '';
+
+              const ruleParts = [];
+              if (rules.dishwasher_mode_enabled) {
+                ruleParts.push('<strong style="color:var(--battery)">Smart Dishwasher Mode:</strong> Auto-Arm & Auto-Start at 00:30 (9.4p) or on Solar (≥1.2kW)');
+                if (rt.dishwasher_armed) {
+                  ruleParts.push('<span style="color:var(--solar);font-weight:700">⏳ ARMED (Waiting for Cheap Window)</span>');
+                } else if (rt.dishwasher_running) {
+                  ruleParts.push('<span style="color:var(--battery);font-weight:700">⚡ WASHING IN PROGRESS</span>');
+                }
+              } else if (rules.night_sleep_enabled) {
+                ruleParts.push(`<strong style="color:var(--home)">Overnight Deep-Sleep:</strong> Standby cut ${rules.night_sleep_off_time || '01:00'} → Restore ${rules.night_sleep_wake_time || '07:00'} (≤${rules.night_sleep_max_active_w || 25}W safety check)`);
+              } else {
+                if (rules.workday_morning_on_enabled !== false && rules.enabled) {
+                  ruleParts.push(`ON at ${rules.workday_on_time || '07:00'} (${rules.weekdays_only !== false ? 'Mon–Fri' : 'Daily'})`);
+                }
+                if (rules.idle_cutoff_enabled !== false && rules.enabled) {
+                  ruleParts.push(`Auto-OFF if ≤ ${rules.idle_threshold_w ?? 15}W for ${rules.idle_minutes ?? 15}m`);
+                }
+                if (rules.battery_reserve_cutoff_enabled !== false && rules.enabled) {
+                  ruleParts.push(`Battery reserve cutoff ≤ ${rules.battery_reserve_soc_pct ?? 12}% SoC`);
+                }
+                if (rules.hue_room_sync_enabled && rules.enabled) {
+                  const roomNames = { '84': 'Living room', '81': 'Bedroom', '82': 'TV', '83': 'Hallway' };
+                  ruleParts.push(`Sync ON with ${roomNames[String(rules.hue_room_id)] || 'Hue'} lights`);
+                }
+              }
+              const rulesSummaryTxt = ruleParts.length > 0 ? ruleParts.join(' · ') : 'No automation rules active';
+
+              return `
+                <div class="list-item" style="${p.is_on ? 'border-color:rgba(56,189,248,0.35)' : ''}">
+                  <div class="list-item-main">
+                    <div>
+                      <div class="item-name" style="flex-wrap:wrap">
+                        <span>${p.alias || 'Tapo Plug'}</span>
+                        <span class="mono" style="font-size:0.75rem;font-weight:500;color:var(--text-muted)">
+                          Today: ${(p.today_kwh || 0).toFixed(3)} kWh · Month: ${(p.month_kwh || 0).toFixed(2)} kWh${lastActTxt ? ` · <span style="color:var(--text-secondary)">${lastActTxt}</span>` : ''}
+                        </span>
+                      </div>
+                      <div class="item-meta" style="margin-top:4px;color:var(--text-secondary)">
+                        <strong style="color:var(--home);font-weight:600">Automation:</strong> <span class="mono">${rulesSummaryTxt}</span>
+                      </div>
+                    </div>
+                    <div class="item-right">
+                      <span class="watt-readout mono" style="${p.is_on ? 'color:var(--home)' : ''}">
+                        ${p.authenticated ? `${p.watts.toFixed(1)} W` : '— W'}
+                      </span>
+                      <label class="toggle">
+                        <input type="checkbox" ${p.is_on ? 'checked' : ''} ${!p.authenticated ? 'disabled' : ''}
+                          onchange="toggleTapoPlug('${p.ip}', this.checked)" />
+                        <span class="toggle-track green"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+        }
+
+        // Rooms
+        const roomsEl = document.getElementById('hue-rooms-container');
+        if (d.hue.rooms) {
+          roomsEl.innerHTML = d.hue.rooms.map(r => `
+            <div class="room-tile ${r.any_on ? 'active' : ''}">
+              <div>
+                <div class="room-tile-name">${r.name}</div>
+                <div class="room-tile-sub mono">${r.watts.toFixed(1)} W · ${r.light_ids.length} light${r.light_ids.length > 1 ? 's' : ''}</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" ${r.any_on ? 'checked' : ''} onchange="toggleHueRoom('${r.id}', this.checked)" />
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+          `).join('');
+        }
+
+        // Individual Lights
+        const lightsEl = document.getElementById('hue-lights-container');
+        if (d.hue.lights) {
+          lightsEl.innerHTML = d.hue.lights.map(l => `
+            <div class="list-item ${l.on ? 'lit' : ''}">
+              <div class="list-item-main">
+                <div>
+                  <div class="item-name">
+                    <span>${l.name}</span>
+                    <span class="item-room-tag">${l.room}</span>
+                  </div>
+                  <div class="item-meta">${l.productname} (${l.modelid}) · Max ${l.max_watts}W</div>
+                </div>
+                <div class="item-right">
+                  <span class="watt-readout mono" style="${l.on ? 'color:var(--hue)' : ''}">${l.watts.toFixed(1)} W</span>
+                  <label class="toggle">
+                    <input type="checkbox" ${l.on ? 'checked' : ''} onchange="toggleHueLight('${l.id}', this.checked)" />
+                    <span class="toggle-track"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="dimmer-row">
+                <span class="mono" style="font-size:0.7rem;color:var(--text-muted);width:42px">${l.bri_pct}%</span>
+                <input type="range" min="1" max="254" value="${l.on ? l.bri : 1}" class="dimmer-slider"
+                  onchange="setHueBrightness('${l.id}', this.value)" />
+              </div>
+            </div>
+          `).join('');
+        }
+
+        // Appliances
+        const appEl = document.getElementById('appliances-container');
+        if (d.appliances) {
+          appEl.innerHTML = d.appliances.map(a => `
+            <div class="list-item">
+              <div class="list-item-main">
+                <div>
+                  <div class="item-name">
+                    <span>${a.name}</span>
+                    <span class="item-room-tag">${a.room}</span>
+                  </div>
+                  <div class="item-meta">Estimated draw when active: ${a.watts} W</div>
+                </div>
+                <div class="item-right">
+                  <span class="watt-readout mono" style="${a.is_on ? 'color:var(--battery)' : ''}">${a.active_watts.toFixed(0)} W</span>
+                  <label class="toggle">
+                    <input type="checkbox" ${a.is_on ? 'checked' : ''} onchange="toggleAppliance(${a.id}, this.checked)" />
+                    <span class="toggle-track green"></span>
+                  </label>
+                  <button class="btn-remove" onclick="deleteAppliance(${a.id})" title="Delete">✕</button>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function openHueModal() {
+      document.getElementById('hue-modal').classList.add('open');
+    }
+
+    function closeHueModal() {
+      document.getElementById('hue-modal').classList.remove('open');
+    }
+
+    async function toggleHueLight(id, on) {
+      await fetch('/api/hue/light', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, on }) });
+      fetchDevices();
+    }
+
+    async function setHueBrightness(id, bri) {
+      await fetch('/api/hue/light', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, bri: Number(bri) }) });
+      fetchDevices();
+    }
+
+    async function toggleHueRoom(id, on) {
+      await fetch('/api/hue/room', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, on }) });
+      fetchDevices();
+    }
+
+    async function toggleAppliance(id, is_on) {
+      await fetch('/api/appliances/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, is_on }) });
+      fetchDevices();
+    }
+
+    async function addAppliance() {
+      const name = document.getElementById('new-app-name').value.trim();
+      const room = document.getElementById('new-app-room').value.trim() || 'General';
+      const watts = parseFloat(document.getElementById('new-app-watts').value);
+      if (!name || isNaN(watts)) return;
+      await fetch('/api/appliances/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, room, watts }) });
+      document.getElementById('new-app-name').value = '';
+      document.getElementById('new-app-watts').value = '';
+      fetchDevices();
+    }
+
+    async function deleteAppliance(id) {
+      await fetch('/api/appliances/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+      fetchDevices();
+    }
+
+    async function saveTapoAuth() {
+      const username = document.getElementById('tapo-email').value.trim();
+      const password = document.getElementById('tapo-pass').value.trim();
+      if (!username || !password) return;
+      const btn = document.getElementById('tapo-btn-save');
+      btn.textContent = 'Connecting...';
+      try {
+        await fetch('/api/tapo/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+      } finally {
+        btn.textContent = 'Connect Desk Plug';
+        document.getElementById('tapo-pass').value = '';
+        fetchDevices();
+      }
+    }
+
+    async function toggleTapoPlug(ip, is_on) {
+      await fetch('/api/tapo/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ip, is_on })
+      });
+      fetchDevices();
+    }
+
+    async function fetchHistory() {
+      try {
+        const res = await fetch(`/api/history?hours=${historyHours}`);
+        const d = await res.json();
+        if (!d || !d.points || !chartInstance) return;
+
+        const labels = [];
+        const pvData = [];
+        const loadData = [];
+        const socData = [];
+
+        for (const pt of d.points) {
+          labels.push(new Date(pt.ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+          pvData.push(pt.pv_power);
+          loadData.push(pt.load_power);
+          socData.push(pt.battery_soc);
+        }
+
+        chartInstance.data.labels = labels;
+        chartInstance.data.datasets[0].data = pvData;
+        chartInstance.data.datasets[1].data = loadData;
+        chartInstance.data.datasets[2].data = socData;
+        chartInstance.update('none');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function triggerAiGeneration() {
+      const btnTxt = document.getElementById('ai-btn-txt');
+      const btnIcon = document.getElementById('ai-btn-icon');
+      if (btnTxt) btnTxt.textContent = 'Updating...';
+      if (btnIcon) btnIcon.textContent = '⏳';
+      try {
+        await fetch('/api/ai/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        await fetchLive();
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (btnTxt) btnTxt.textContent = 'Recalculate';
+        if (btnIcon) btnIcon.textContent = '⚡';
+      }
+    }
+
+    function setHistoryWindow(hours, btn) {
+      historyHours = hours;
+      document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      fetchHistory();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      fetchLive();
+      fetchHistory();
+      fetchDevices();
+
+      setInterval(() => {
+        countdownSec -= 1;
+        if (countdownSec <= 0) {
+          countdownSec = 10;
+          fetchLive();
+          fetchHistory();
+          if (document.getElementById('view-devices').classList.contains('active')) {
+            fetchDevices();
+          }
+        }
+        setText('countdown', `${countdownSec}s`);
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

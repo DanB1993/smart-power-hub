@@ -1,0 +1,36 @@
+services:
+  solar-dashboard:
+    build: .
+    image: smart-power-dashboard:latest
+    container_name: smart-power-dashboard
+    restart: unless-stopped
+    environment:
+      - INVERTER_HOST=192.168.1.100
+      - INVERTER_PORT=502
+      - INVERTER_UNIT=247
+      - HUE_HOST=192.168.1.150
+      - HUE_API_KEY=
+      - POLL_INTERVAL=10
+      - HTTP_PORT=8050
+      - DB_PATH=/data/solar_history.db
+    ports:
+      - "8050:8050"
+    volumes:
+      - solar_data:/data
+    networks:
+      - web
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.solar.rule=Host(`solar.localhost`)"
+      - "traefik.http.services.solar.loadbalancer.server.port=8050"
+
+networks:
+  web:
+    external: true
+  backend:
+    external: true
+
+volumes:
+  solar_data:
+    name: smart-power-dashboard_solar_data
