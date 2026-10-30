@@ -304,8 +304,8 @@ def init_db():
         )
     conn.commit()
 
-    # Load last 6 hours into memory buffer on startup
-    cutoff = int(time.time()) - 21600
+    # Load last 24 hours into memory buffer on startup
+    cutoff = int(time.time()) - 86400
     c.execute(
         """
         SELECT ts, pv_power, pv1_power, pv2_power, load_power, grid_power,
@@ -487,6 +487,41 @@ def prune_old_telemetry(retention_days=14):
         conn.close()
     except Exception as e:
         print(f"[DB Pruning Error] {e}")
+
+
+def get_telemetry_history(hours=6):
+    """Query telemetry points for the given number of hours from SQLite, with downsampling if needed."""
+    try:
+        cutoff = int(time.time() - hours * 3600)
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute(
+            """
+            SELECT ts, pv_power, pv1_power, pv2_power, load_power, grid_power,
+                   battery_power, battery_soc, inverter_power, pv1_voltage,
+                   pv2_voltage, grid_voltage, battery_voltage, battery_temp, inverter_temp
+            FROM telemetry
+            WHERE ts >= ?
+            ORDER BY ts ASC
+            """,
+            (cutoff,),
+        )
+        rows = c.fetchall()
+        conn.close()
+
+        # If points exceed ~1200, downsample evenly to keep browser Chart.js rendering fast
+        step = max(1, len(rows) // 1200)
+        selected_rows = rows[::step] if step > 1 else rows
+
+        cols = [
+            "ts", "pv_power", "pv1_power", "pv2_power", "load_power", "grid_power",
+            "battery_power", "battery_soc", "inverter_power", "pv1_voltage",
+            "pv2_voltage", "grid_voltage", "battery_voltage", "battery_temp", "inverter_temp"
+        ]
+        return [dict(zip(cols, r)) for r in selected_rows]
+    except Exception as e:
+        print(f"[Telemetry History Error] {e}")
+        return []
 
 
 def get_daily_history(days=30):
@@ -2442,9 +2477,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/history":
             qs = parse_qs(parsed.query)
             hours = float(qs.get("hours", ["6"])[0])
-            cutoff = int(time.time() - hours * 3600)
-            with lock:
-                points = [p for p in recent_history if p["ts"] >= cutoff]
+            # Query directly from SQLite so any requested window (1h, 6h, 24h, 48h) is fully accurate
+            points = get_telemetry_history(hours=hours)
             self.send_json({"points": points})
             return
 
