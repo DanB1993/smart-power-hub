@@ -667,9 +667,10 @@ def predict_daily_load_ml(target_date=None, target_temp_min_c=None, target_temp_
 
 
 def calculate_adaptive_target_soc(tomorrow_solar_kwh):
-    """Compute the optimal overnight target SoC and headroom based on ML load prediction and tomorrow's solar forecast.
-    Contract specification: Fox EQ5000 (9.84 kWh gross capacity)."""
+    """Compute the optimal overnight target SoC and solar headroom based on ML load prediction and tomorrow's solar forecast.
+    Contract specification: Fox EQ5000 (9.84 kWh gross capacity, ~8.86 kWh usable 10%-100%)."""
     bat_total_kwh = 9.84
+    bat_usable_kwh = 8.86
     
     # Run ML Load Prediction for tomorrow
     with lock:
@@ -683,14 +684,27 @@ def calculate_adaptive_target_soc(tomorrow_solar_kwh):
     )
     predicted_daytime_kwh = ml["predicted_daytime_kwh"]
 
-    # Estimate solar that directly offsets daytime load (85% efficiency/timing capture factor)
-    expected_solar_kwh = min(predicted_daytime_kwh, tomorrow_solar_kwh * 0.85)
-    needed_from_grid_kwh = max(1.5, predicted_daytime_kwh - expected_solar_kwh)
+    # Daytime Solar Dynamics:
+    # 1. Solar first directly offsets daytime home load (concurrent self-consumption, ~85% alignment)
+    solar_offset_kwh = min(predicted_daytime_kwh, tomorrow_solar_kwh * 0.85)
     
-    # Compute target SoC (min 40% winter baseline, max 100%)
-    target_soc = min(100, max(40, int(round((needed_from_grid_kwh / bat_total_kwh) * 100))))
-    headroom_kwh = ((100 - target_soc) / 100.0) * bat_total_kwh
-    return target_soc, needed_from_grid_kwh, headroom_kwh, ml
+    # 2. Only excess solar above daytime home consumption is available to charge the battery
+    potential_solar_surplus_kwh = max(0.0, (tomorrow_solar_kwh * 0.90) - predicted_daytime_kwh)
+
+    # 3. If there is genuine excess solar, reserve headroom so that solar isn't curtailed.
+    # Otherwise, charge to 100% on cheap off-peak electricity (9.4p) to cover daytime deficit & evening peak.
+    if potential_solar_surplus_kwh > 0.5:
+        # Leave headroom for surplus solar (clamped between 40% reserve and 95%)
+        headroom_kwh = min(potential_solar_surplus_kwh, bat_usable_kwh * 0.60)
+        target_soc = int(round(100 - (headroom_kwh / bat_total_kwh) * 100))
+        target_soc = max(40, min(95, target_soc))
+        headroom_kwh = ((100 - target_soc) / 100.0) * bat_total_kwh
+    else:
+        target_soc = 100
+        headroom_kwh = 0.0
+
+    target_charge_kwh = round((target_soc / 100.0) * bat_total_kwh, 1)
+    return target_soc, target_charge_kwh, round(headroom_kwh, 1), ml
 
 
 def generate_energy_insights():
@@ -758,10 +772,15 @@ def generate_energy_insights():
 
     # 2. Tomorrow Solar Forecast vs Overnight Battery Pre-Charge Recommendation
     target_soc, needed_grid_kwh, headroom_kwh, ml_pred = calculate_adaptive_target_soc(tomorrow_solar)
+    if headroom_kwh > 0.1:
+        strategy_desc = f"Optimal overnight charge target is {target_soc}% ({needed_grid_kwh:.1f} kWh), leaving {headroom_kwh:.1f} kWh solar headroom."
+    else:
+        strategy_desc = f"Optimal overnight charge target is {target_soc}% ({needed_grid_kwh:.1f} kWh) to avoid 36.6p peak power (all solar absorbed directly by home)."
+
     bullets.append(
         f"Tomorrow's forecast is {tomorrow_solar:.1f} kWh ({tomorrow_desc}) against an ML predicted home demand of {ml_pred['predicted_total_kwh']} kWh "
         f"({ml_pred['target_day_name']} load profile · {ml_pred['confidence']}). "
-        f"Optimal overnight charge target is {target_soc}% ({needed_grid_kwh:.1f} kWh), leaving {headroom_kwh:.1f} kWh solar headroom."
+        f"{strategy_desc}"
     )
 
     # 3. Financial Arbitrage Metric
@@ -1396,9 +1415,14 @@ def sync_foxess_octopus_schedule():
             tomorrow_solar = latest_weather.get("tomorrow_solar_kwh", 0.0)
 
         target_soc, needed_grid_kwh, headroom_kwh, ml_pred = calculate_adaptive_target_soc(tomorrow_solar)
+        if headroom_kwh > 0.1:
+            headroom_note = f"leaving {headroom_kwh:.1f} kWh solar headroom"
+        else:
+            headroom_note = "solar absorbed by house, full 100% off-peak buffer needed"
+
         reason = (
             f"ML predicts {ml_pred['predicted_total_kwh']} kWh demand ({ml_pred['target_day_name']} profile) "
-            f"vs {tomorrow_solar:.1f} kWh solar -> target {target_soc}% ({headroom_kwh:.1f} kWh solar headroom)"
+            f"vs {tomorrow_solar:.1f} kWh solar -> target {target_soc}% ({headroom_note})"
         )
 
         now = datetime.now()
