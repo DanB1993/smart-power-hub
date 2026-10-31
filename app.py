@@ -172,7 +172,7 @@ DEFAULT_TAPO_AUTO_RULES = {
     "weekdays_only": False,
     # Dishwasher Smart Auto-Arm & Off-Peak / Solar Trigger:
     "dishwasher_mode_enabled": False,
-    "dishwasher_arm_watts": 25.0,          # Watts jump indicating cycle was started & door closed
+    "dishwasher_arm_watts": 10.0,          # Watts jump indicating cycle was started & door closed (sensitive to drain pumps)
     "dishwasher_offpeak_trigger": True,    # Run automatically when Octopus Go off-peak begins (00:30)
     "dishwasher_solar_trigger": True,      # Run automatically if daytime solar surplus >= 1200W
     "dishwasher_solar_surplus_w": 1200.0,
