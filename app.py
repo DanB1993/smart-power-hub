@@ -166,8 +166,10 @@ DEFAULT_TAPO_AUTO_RULES = {
     "hue_room_sync_enabled": False,
     "hue_room_id": "84",
     "workday_morning_on_enabled": False,
-    "workday_on_time": "07:00",
-    "weekdays_only": True,
+    "workday_on_time": "06:50",            # Weekday power on time (e.g. 06:50)
+    "weekend_morning_on_enabled": False,   # Weekend power on enabled
+    "weekend_on_time": "10:00",            # Weekend power on time (e.g. 10:00)
+    "weekdays_only": False,
     # Dishwasher Smart Auto-Arm & Off-Peak / Solar Trigger:
     "dishwasher_mode_enabled": False,
     "dishwasher_arm_watts": 25.0,          # Watts jump indicating cycle was started & door closed
@@ -185,17 +187,19 @@ DEFAULT_TAPO_AUTO_RULES = {
 }
 TAPO_DEVICE_AUTO_RULES = {
     "192.168.1.200": {
-        "enabled": False,
-        "idle_cutoff_enabled": False,
+        "enabled": True,
+        "idle_cutoff_enabled": True,
         "idle_threshold_w": 15.0,
-        "idle_minutes": 15,
+        "idle_minutes": 20,
         "battery_reserve_cutoff_enabled": False,
         "battery_reserve_soc_pct": 12,
         "hue_room_sync_enabled": False,
         "hue_room_id": "84",
-        "workday_morning_on_enabled": False,
-        "workday_on_time": "07:00",
-        "weekdays_only": True,
+        "workday_morning_on_enabled": True,
+        "workday_on_time": "06:50",
+        "weekend_morning_on_enabled": True,
+        "weekend_on_time": "10:00",
+        "weekdays_only": False,
     }
 }
 recent_history = deque(maxlen=8640)  # 24 hours at 10s intervals
@@ -1774,18 +1778,29 @@ def evaluate_tapo_automation():
             except Exception as e:
                 print(f"[Tapo Hue Sync Error {ip}] {e}")
 
-        # Rule D: Smart Workday Morning Pre-Warm
-        if not is_on and rules.get("workday_morning_on_enabled", True):
+        # Rule D: Scheduled Morning Wakeup (Weekday & Weekend Support)
+        if not is_on:
             is_weekday = now_dt.weekday() < 5
-            if not rules.get("weekdays_only", True) or is_weekday:
-                target_hm = str(rules.get("workday_on_time", "07:00")).strip()
+            is_weekend = not is_weekday
+            should_schedule_wake = False
+            scheduled_wake_time = None
+
+            if is_weekday and rules.get("workday_morning_on_enabled", False):
+                should_schedule_wake = True
+                scheduled_wake_time = str(rules.get("workday_on_time", "06:50")).strip()
+            elif is_weekend and rules.get("weekend_morning_on_enabled", False):
+                should_schedule_wake = True
+                scheduled_wake_time = str(rules.get("weekend_on_time", "10:00")).strip()
+
+            if should_schedule_wake and scheduled_wake_time:
                 current_hm = now_dt.strftime("%H:%M")
                 today_str = now_dt.strftime("%Y-%m-%d")
-                if current_hm == target_hm and rt.get("last_schedule_trigger_date") != today_str:
+                if current_hm == scheduled_wake_time and rt.get("last_schedule_trigger_date") != today_str:
                     rt["last_schedule_trigger_date"] = today_str
                     try:
                         asyncio.run(_async_toggle_tapo(ip, True, user, pw))
-                        rt["last_action"] = f"Auto-ON: Scheduled wakeup ({target_hm})"
+                        day_type = "Weekday" if is_weekday else "Weekend"
+                        rt["last_action"] = f"Auto-ON: {day_type} wakeup ({scheduled_wake_time})"
                         rt["last_action_ts"] = now_dt.strftime("%H:%M:%S")
                         toggled_any = True
                         continue

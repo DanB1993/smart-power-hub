@@ -954,8 +954,17 @@
               } else if (rules.night_sleep_enabled) {
                 ruleParts.push(`<strong style="color:var(--home)">Overnight Deep-Sleep:</strong> Standby cut ${rules.night_sleep_off_time || '01:00'} → Restore ${rules.night_sleep_wake_time || '07:00'} (≤${rules.night_sleep_max_active_w || 25}W safety check)`);
               } else {
-                if (rules.workday_morning_on_enabled !== false && rules.enabled) {
-                  ruleParts.push(`ON at ${rules.workday_on_time || '07:00'} (${rules.weekdays_only !== false ? 'Mon–Fri' : 'Daily'})`);
+                if (rules.enabled) {
+                  const scheduleParts = [];
+                  if (rules.workday_morning_on_enabled) {
+                    scheduleParts.push(`Mon–Fri ${rules.workday_on_time || '06:50'}`);
+                  }
+                  if (rules.weekend_morning_on_enabled) {
+                    scheduleParts.push(`Sat–Sun ${rules.weekend_on_time || '10:00'}`);
+                  }
+                  if (scheduleParts.length > 0) {
+                    ruleParts.push(`<strong style="color:var(--home)">Auto-ON:</strong> ${scheduleParts.join(' · ')}`);
+                  }
                 }
                 if (rules.idle_cutoff_enabled !== false && rules.enabled) {
                   ruleParts.push(`Auto-OFF if ≤ ${rules.idle_threshold_w ?? 15}W for ${rules.idle_minutes ?? 15}m`);
