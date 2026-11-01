@@ -1279,52 +1279,116 @@ def calculate_daily_financials():
                 "detail": f"{round(usable_kwh_left, 1)} kWh usable energy stored",
             }
 
-    # Appliance Advisory (Dishwasher, Washing Machine, EV, Tumble Dryer)
-    # Statuses:
-    # 🟢 FREE_SOLAR: PV surplus > 1000W or battery full with PV > load
-    # 🟡 CHEAP_OFFPEAK: Octopus Go off-peak window (00:30 - 05:30)
-    # 🟠 BATTERY_POWERED: Battery > 30% and not pulling grid
-    # 🔴 PEAK_AVOID: Peak hours (36.6p), low battery -> recommend delaying until 00:30
-    if pv_w >= load_w + 800 or (pv_w > 1200 and soc_pct >= 95):
+    # Appliance Advisory (Dishwasher, Washing Machine, Tumble Dryer)
+    # Profiles:
+    # - Dishwasher: ~1.2 kWh / cycle (temp heat spike ~2kW)
+    # - Washing Machine: ~1.0 kWh / 40°C cycle (heater spike ~2kW)
+    # - Tumble Dryer: ~2.5 kWh / cotton cycle (sustained ~2.2kW heat pump / condenser)
+
+    hourly_fc = latest_weather.get("hourly_forecast", [])
+    surplus_hours = []
+    for h in hourly_fc:
+        try:
+            h_time = h.get("time", "")
+            h_watts = float(h.get("watts", 0))
+            if h_watts >= 900:
+                surplus_hours.append((h_time, h_watts))
+        except Exception:
+            pass
+
+    has_solar_window = bool(surplus_hours and (soc_pct >= 60 or latest_weather.get("today_solar_kwh", 0) >= 6.0))
+    if has_solar_window:
+        start_h = surplus_hours[0][0]
+        end_h = surplus_hours[-1][0]
+        max_h = max(surplus_hours, key=lambda x: x[1])
+        solar_window_label = f"Today {start_h} – {end_h} (Peak {max_h[0]})"
+    else:
+        solar_window_label = None
+
+    # Calculate optimal windows & costs per appliance
+    # Dishwasher (~1.2 kWh)
+    dw_rec = {
+        "name": "Dishwasher",
+        "icon": "🍽️",
+        "kwh": 1.2,
+        "best_time": solar_window_label if has_solar_window else "00:30 Tonight",
+        "cost_str": "0.0p (Free Solar)" if has_solar_window else "11.3p (9.4p Off-Peak)",
+        "peak_cost_str": "43.9p",
+        "savings_str": "Save 44p" if has_solar_window else "Save 33p",
+        "ready_now": bool(pv_w >= load_w + 800 or is_off_peak or soc_pct >= 75),
+    }
+
+    # Washing Machine (~1.0 kWh)
+    wm_rec = {
+        "name": "Washing Machine",
+        "icon": "🧺",
+        "kwh": 1.0,
+        "best_time": solar_window_label if has_solar_window else "00:30 Tonight",
+        "cost_str": "0.0p (Free Solar)" if has_solar_window else "9.4p (9.4p Off-Peak)",
+        "peak_cost_str": "36.6p",
+        "savings_str": "Save 37p" if has_solar_window else "Save 27p",
+        "ready_now": bool(pv_w >= load_w + 800 or is_off_peak or soc_pct >= 75),
+    }
+
+    # Tumble Dryer (~2.5 kWh) - heavy load!
+    td_solar_ok = bool(has_solar_window and max_h[1] >= 1800 and soc_pct >= 85)
+    td_rec = {
+        "name": "Tumble Dryer",
+        "icon": "💨",
+        "kwh": 2.5,
+        "best_time": (f"Today {max_h[0]}" if td_solar_ok else "00:30 Tonight"),
+        "cost_str": ("0.0p (High Solar)" if td_solar_ok else "23.5p (9.4p Off-Peak)"),
+        "peak_cost_str": "91.4p",
+        "savings_str": ("Save 91p" if td_solar_ok else "Save 68p"),
+        "ready_now": bool(pv_w >= load_w + 1500 or is_off_peak),
+    }
+
+    # Primary banner headline based on system conditions
+    if pv_w >= load_w + 1200 or (pv_w > 1400 and soc_pct >= 85):
         surplus = max(0, pv_w - load_w)
         appliance_advisory = {
             "status": "free_solar",
-            "badge": "100% Free Solar",
+            "badge": "Run Now · 100% Free Solar",
             "color": "#10b981",
             "icon": "☀️",
             "title": "Ideal Time to Run Appliances",
-            "action": f"Run dishwasher or washing machine now (+{surplus}W surplus solar)",
-            "savings_note": "Generates 0p grid cost · pure solar power",
+            "action": f"Solar surplus +{surplus}W: Perfect time for Dishwasher, Washer, or Dryer",
+            "savings_note": "0p electricity cost · Pure solar",
+            "appliances": [dw_rec, wm_rec, td_rec],
         }
     elif is_off_peak:
         appliance_advisory = {
             "status": "cheap_offpeak",
-            "badge": "Super Off-Peak (9.4p)",
+            "badge": "Run Now · Super Off-Peak (9.4p)",
             "color": "#38bdf8",
             "icon": "⚡",
-            "title": "Cheap Electricity Active",
-            "action": "Run high-draw appliances now before 05:30",
-            "savings_note": "Saves ~68p per cycle vs 36.6p peak rate",
+            "title": "Off-Peak Window Active (9.4p/kWh)",
+            "action": "Run Dishwasher, Washing Machine & Dryer before 05:30",
+            "savings_note": "Saves ~74% vs peak 36.6p rate",
+            "appliances": [dw_rec, wm_rec, td_rec],
         }
-    elif soc_pct >= 35 and bat_w >= 0 and grid_w < 50:
+    elif soc_pct >= 80 and bat_w >= 0 and grid_w < 50:
         appliance_advisory = {
             "status": "battery_buffered",
-            "badge": "Battery Powered",
+            "badge": "Safe to Run · Battery Buffered",
             "color": "#f59e0b",
             "icon": "🔋",
-            "title": "Covered by Battery",
-            "action": f"Battery at {soc_pct}% can cover light appliances without grid import",
+            "title": "Battery Can Cover Wash Cycles",
+            "action": f"Battery at {soc_pct}% can cover a Dishwasher or Washer without grid import",
             "savings_note": "Avoiding 36.6p grid peak",
+            "appliances": [dw_rec, wm_rec, td_rec],
         }
     else:
+        best_overall = solar_window_label if has_solar_window else "00:30 Tonight"
         appliance_advisory = {
-            "status": "delay_recommended",
-            "badge": "Peak Tariff (36.6p)",
-            "color": "#fb7185",
-            "icon": "⏳",
-            "title": "Delay High-Draw Appliances",
-            "action": "Delay dishwasher & washing machine until 00:30 tonight",
-            "savings_note": "Saves up to ~74% on running costs (9.4p vs 36.6p)",
+            "status": "scheduled_optimal",
+            "badge": f"Best Time: {best_overall}",
+            "color": "#38bdf8" if has_solar_window else "#a855f7",
+            "icon": "☀️" if has_solar_window else "🌙",
+            "title": f"Best Time to Run: {best_overall}",
+            "action": f"Plan wet appliances for {best_overall} to avoid 36.6p peak rate",
+            "savings_note": "Saves up to ~68p per appliance run",
+            "appliances": [dw_rec, wm_rec, td_rec],
         }
 
     # Export metrics (simulated or active)
