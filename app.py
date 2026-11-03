@@ -9,7 +9,7 @@ import struct
 import threading
 import time
 import urllib.request
-from collections import deque
+from collections import deque, defaultdict
 from datetime import datetime, timezone, timedelta
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from socketserver import ThreadingMixIn
@@ -679,36 +679,112 @@ def predict_daily_load_ml(target_date=None, target_temp_min_c=None, target_temp_
     }
 
 
+def get_learned_hourly_baseload():
+    """
+    ML Base Load Model: Computes the 24-hour baseline (standby/vampire) power profile
+    from recent telemetry using the 20th percentile of load power for each hour of the day.
+    Filtering by the 20th percentile isolates true continuous baseline consumption (fridge,
+    router, idle PCs, standby devices) from transient spikes (kettles, showers, cooking).
+    """
+    learned_base = {}
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute(
+            """
+            SELECT 
+                cast(strftime('%H', datetime(ts, 'unixepoch', 'localtime')) as int) as hr,
+                load_power
+            FROM telemetry
+            WHERE ts >= strftime('%s', 'now', '-14 days')
+            """
+        )
+        hr_loads = defaultdict(list)
+        for hr, load in c.fetchall():
+            if load is not None and load > 0:
+                hr_loads[hr].append(load)
+        conn.close()
+
+        for hr in range(24):
+            vals = hr_loads.get(hr, [])
+            if len(vals) >= 20:
+                vals.sort()
+                p20 = vals[int(len(vals) * 0.20)]
+                learned_base[hr] = round(p20)
+            else:
+                learned_base[hr] = 130
+    except Exception as e:
+        print(f"[ML Baseload Warning] {e}")
+        for hr in range(24):
+            learned_base[hr] = 130
+
+    return learned_base
+
+
 def calculate_adaptive_target_soc(tomorrow_solar_kwh):
-    """Compute the optimal overnight target SoC and solar headroom based on ML load prediction and tomorrow's solar forecast.
+    """Compute the optimal overnight target SoC and solar headroom using ML load prediction,
+    learned hourly baseload profiling, and tomorrow's solar forecast curve.
     Contract specification: Fox EQ5000 (9.84 kWh gross capacity, ~8.86 kWh usable 10%-100%)."""
     bat_total_kwh = 9.84
     bat_usable_kwh = 8.86
     
-    # Run ML Load Prediction for tomorrow
+    # Run ML Load Prediction for tomorrow (aggregate 24h & daytime)
     with lock:
         t_min = latest_weather.get("tomorrow_temp_min_c")
         t_max = latest_weather.get("tomorrow_temp_max_c")
 
+    target_date = datetime.now() + timedelta(days=1)
     ml = predict_daily_load_ml(
-        target_date=datetime.now() + timedelta(days=1),
+        target_date=target_date,
         target_temp_min_c=t_min,
         target_temp_max_c=t_max
     )
-    predicted_daytime_kwh = ml["predicted_daytime_kwh"]
+    predicted_total_kwh = ml["predicted_total_kwh"]
 
-    # Daytime Solar Dynamics:
-    # 1. Solar first directly offsets daytime home load (concurrent self-consumption, ~85% alignment)
-    solar_offset_kwh = min(predicted_daytime_kwh, tomorrow_solar_kwh * 0.85)
-    
-    # 2. Only excess solar above daytime home consumption is available to charge the battery
-    potential_solar_surplus_kwh = max(0.0, (tomorrow_solar_kwh * 0.90) - predicted_daytime_kwh)
+    # 1. Fetch ML-learned 24-hour baseload profile
+    learned_base = get_learned_hourly_baseload()
+    ml["hourly_baseload_watts"] = {f"{h:02d}:00": learned_base.get(h, 130) for h in range(24)}
 
-    # 3. If there is genuine excess solar, reserve headroom so that solar isn't curtailed.
-    # Otherwise, charge to 100% on cheap off-peak electricity (9.4p) to cover daytime deficit & evening peak.
-    if potential_solar_surplus_kwh > 0.5:
-        # Leave headroom for surplus solar (clamped between 40% reserve and 95%)
-        headroom_kwh = min(potential_solar_surplus_kwh, bat_usable_kwh * 0.60)
+    # 2. Compute hourly solar generation curve for tomorrow using calibrated physics model
+    calibrated_factor = get_calibrated_solar_factor()
+    hourly_watt_scale = round((calibrated_factor / 0.80) * 2.88, 2)
+    tomorrow_str = target_date.strftime("%Y-%m-%d")
+
+    projected_solar_surplus_kwh = 0.0
+    try:
+        url_om = (
+            f"https://api.open-meteo.com/v1/forecast?latitude={LATITUDE}&longitude={LONGITUDE}"
+            "&hourly=shortwave_radiation&timezone=Europe%2FLondon&forecast_days=3"
+        )
+        req = urllib.request.Request(url_om, headers={"User-Agent": "SmartPowerDashboard/2.0 (contact: user@example.com)"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            om_data = json.loads(resp.read().decode("utf-8"))
+
+        times = om_data.get("hourly", {}).get("time", [])
+        rads = om_data.get("hourly", {}).get("shortwave_radiation", [])
+
+        for t_iso, w_m2 in zip(times, rads):
+            if t_iso.startswith(tomorrow_str):
+                hr = int(t_iso.split("T")[1].split(":")[0])
+                pred_solar_w = round(w_m2 * hourly_watt_scale)
+                hr_base_w = learned_base.get(hr, 130)
+                # Any solar exceeding the learned baseload is surplus that needs battery storage
+                if pred_solar_w > hr_base_w:
+                    projected_solar_surplus_kwh += (pred_solar_w - hr_base_w) / 1000.0
+    except Exception as e:
+        print(f"[Adaptive Solar Curve Warning] {e}")
+        # Robust fallback: solar during peak midday hours above baseline
+        projected_solar_surplus_kwh = max(0.0, tomorrow_solar_kwh - 1.2)
+
+    projected_solar_surplus_kwh = round(projected_solar_surplus_kwh, 2)
+    ml["predicted_solar_surplus_kwh"] = projected_solar_surplus_kwh
+
+    # 3. Decision Matrix:
+    # If the ML model detects significant solar surplus above learned baseload,
+    # reserve battery headroom so generation is captured rather than exported to grid.
+    if projected_solar_surplus_kwh >= 0.4:
+        # Cap headroom reservation to not drop battery below 40% (ensuring evening peak security)
+        headroom_kwh = min(projected_solar_surplus_kwh, bat_usable_kwh * 0.60)
         target_soc = int(round(100 - (headroom_kwh / bat_total_kwh) * 100))
         target_soc = max(40, min(95, target_soc))
         headroom_kwh = ((100 - target_soc) / 100.0) * bat_total_kwh
