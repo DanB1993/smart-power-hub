@@ -1104,132 +1104,132 @@ def poll_weather_forecast():
     )
 
     try:
-        req = urllib.request.Request(url_om, headers={"User-Agent": "SmartPowerDashboard/2.0 (contact: user@example.com)"})
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-
-        current = data.get("current", {})
-        daily = data.get("daily", {})
-        hourly = data.get("hourly", {})
-
-        curr_temp = current.get("temperature_2m", 12.0)
-        curr_code = current.get("weathercode", 0)
-        curr_desc, curr_icon = WMO_WEATHER_CODES.get(curr_code, ("Clear", "☀️"))
-
-        rad_sums = daily.get("shortwave_radiation_sum", [4.5, 5.5, 5.5])
-        today_rad = rad_sums[0] if len(rad_sums) > 0 else 4.5
-        tomorrow_rad = rad_sums[1] if len(rad_sums) > 1 else 5.5
-
-        today_predicted_kwh = round(today_rad * calibrated_factor, 1)
-        tomorrow_predicted_kwh = round(tomorrow_rad * calibrated_factor, 1)
-
-        t_maxs = daily.get("temperature_2m_max", [15.0, 15.0])
-        t_mins = daily.get("temperature_2m_min", [8.0, 8.0])
-        w_codes = daily.get("weathercode", [0, 0])
-        tomorrow_t_max = t_maxs[1] if len(t_maxs) > 1 else 15.0
-        tomorrow_t_min = t_mins[1] if len(t_mins) > 1 else 8.0
-        tomorrow_code = w_codes[1] if len(w_codes) > 1 else 0
-        tomorrow_desc, tomorrow_icon = WMO_WEATHER_CODES.get(tomorrow_code, ("Partly Cloudy", "⛅"))
-
-        hourly_watt_scale = round((calibrated_factor / 0.80) * 2.88, 2)
-        hourly_times = hourly.get("time", [])
-        hourly_rad = hourly.get("shortwave_radiation", [])
-        hourly_temps = hourly.get("temperature_2m", [])
-        hourly_codes = hourly.get("weathercode", [])
-
-        now_hour_str = now_dt.strftime("%Y-%m-%dT%H:00")
-        start_idx = 0
-        for idx, t_str in enumerate(hourly_times):
-            if t_str >= now_hour_str:
-                start_idx = idx
-                break
-
-        hourly_forecast = []
-        for i in range(start_idx, min(len(hourly_times), start_idx + 24)):
-            t_obj = datetime.fromisoformat(hourly_times[i])
-            w_m2 = hourly_rad[i] if i < len(hourly_rad) else 0.0
-            pred_watts = round(w_m2 * hourly_watt_scale)
-            code = hourly_codes[i] if i < len(hourly_codes) else 0
-            desc, icon = WMO_WEATHER_CODES.get(code, ("Clear", "☀️"))
-            hourly_forecast.append({
-                "time": t_obj.strftime("%H:00"),
-                "date": t_obj.strftime("%a"),
-                "watts": pred_watts,
-                "temp_c": round(hourly_temps[i], 1) if i < len(hourly_temps) else 15.0,
-                "icon": icon,
-                "desc": desc,
-            })
-
-    except Exception as e_om:
-        # Fallback to Norwegian Meteorological Institute (Met.no) when Open-Meteo is overloaded
         try:
-            url_met = f"https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={LATITUDE}&lon={LONGITUDE}"
-            req_met = urllib.request.Request(url_met, headers={"User-Agent": "SmartPowerDashboard/2.0 (contact: user@example.com)"})
-            with urllib.request.urlopen(req_met, timeout=7) as resp:
-                data_met = json.load(resp)
+            req = urllib.request.Request(url_om, headers={"User-Agent": "SmartPowerDashboard/2.0 (contact: user@example.com)"})
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
 
-            timeseries = data_met.get("properties", {}).get("timeseries", [])
-            if not timeseries:
-                raise ValueError("Empty timeseries from Met.no")
+            current = data.get("current", {})
+            daily = data.get("daily", {})
+            hourly = data.get("hourly", {})
 
-            curr_entry = timeseries[0]["data"]["instant"]["details"]
-            curr_temp = curr_entry.get("air_temperature", 11.0)
-            curr_code = 1
-            curr_desc, curr_icon = ("Fair", "🌤️")
+            curr_temp = current.get("temperature_2m", 12.0)
+            curr_code = current.get("weathercode", 0)
+            curr_desc, curr_icon = WMO_WEATHER_CODES.get(curr_code, ("Clear", "☀️"))
 
-            # Calculate today & tomorrow solar using clear-sky physics attenuated by cloud cover
-            today_str = now_dt.strftime("%Y-%m-%d")
-            tomorrow_str = (now_dt + timedelta(days=1)).strftime("%Y-%m-%d")
+            rad_sums = daily.get("shortwave_radiation_sum", [4.5, 5.5, 5.5])
+            today_rad = rad_sums[0] if len(rad_sums) > 0 else 4.5
+            tomorrow_rad = rad_sums[1] if len(rad_sums) > 1 else 5.5
 
-            today_mj = 0.0
-            tomorrow_mj = 0.0
-            hourly_forecast = []
-
-            for entry in timeseries:
-                t_iso = entry.get("time", "")
-                t_obj = datetime.fromisoformat(t_iso.replace("Z", "+00:00")).astimezone()
-                dt_str = t_obj.strftime("%Y-%m-%d")
-                hour_f = t_obj.hour + t_obj.minute / 60.0
-                day_num = t_obj.timetuple().tm_yday
-
-                cloud_pct = entry.get("data", {}).get("instant", {}).get("details", {}).get("cloud_area_fraction", 50.0)
-                temp_c = entry.get("data", {}).get("instant", {}).get("details", {}).get("air_temperature", 10.0)
-                # Cloud attenuation: (1 - 0.75 * cloud_fraction)
-                cloud_factor = max(0.15, 1.0 - (0.75 * (cloud_pct / 100.0)))
-                clear_w = _calculate_clearsky_ghi(LATITUDE, day_num, hour_f)
-                ghi_w = clear_w * cloud_factor
-
-                if dt_str == today_str:
-                    today_mj += (ghi_w * 3600.0) / 1_000_000.0
-                elif dt_str == tomorrow_str:
-                    tomorrow_mj += (ghi_w * 3600.0) / 1_000_000.0
-
-                if len(hourly_forecast) < 24 and t_obj >= now_dt.astimezone() - timedelta(minutes=30):
-                    # Inverter AC Watts = GHI * 3.7kWp * (calibrated_factor / 0.80 * 2.88)
-                    pred_w = round(ghi_w * ((calibrated_factor / 0.80) * 2.88 / 1000.0) * 1000.0 / 2.88 * ((calibrated_factor / 0.80) * 2.88))
-                    pred_w = round(ghi_w * ((calibrated_factor / 0.80) * 2.88))
-                    symbol = entry.get("data", {}).get("next_1_hours", {}).get("summary", {}).get("symbol_code", "partlycloudy_day")
-                    icon = "☀️" if "clearsky" in symbol else ("⛅" if "fair" in symbol or "partly" in symbol else "☁️")
-                    hourly_forecast.append({
-                        "time": t_obj.strftime("%H:00"),
-                        "date": t_obj.strftime("%a"),
-                        "watts": pred_w,
-                        "temp_c": round(temp_c, 1),
-                        "icon": icon,
-                        "desc": symbol.replace("_", " ").title(),
-                    })
-
-            today_rad = round(today_mj, 1)
-            tomorrow_rad = round(tomorrow_mj, 1)
             today_predicted_kwh = round(today_rad * calibrated_factor, 1)
             tomorrow_predicted_kwh = round(tomorrow_rad * calibrated_factor, 1)
-            tomorrow_t_max = curr_temp
-            tomorrow_t_min = curr_temp - 4.0
-            tomorrow_desc, tomorrow_icon = ("Partly Cloudy", "⛅")
 
-        except Exception as e_met:
-            print(f"[Weather Dual-Provider Error] OM: {e_om} | Met.no: {e_met}")
-            return
+            t_maxs = daily.get("temperature_2m_max", [15.0, 15.0])
+            t_mins = daily.get("temperature_2m_min", [8.0, 8.0])
+            w_codes = daily.get("weathercode", [0, 0])
+            tomorrow_t_max = t_maxs[1] if len(t_maxs) > 1 else 15.0
+            tomorrow_t_min = t_mins[1] if len(t_mins) > 1 else 8.0
+            tomorrow_code = w_codes[1] if len(w_codes) > 1 else 0
+            tomorrow_desc, tomorrow_icon = WMO_WEATHER_CODES.get(tomorrow_code, ("Partly Cloudy", "⛅"))
+
+            hourly_watt_scale = round((calibrated_factor / 0.80) * 2.88, 2)
+            hourly_times = hourly.get("time", [])
+            hourly_rad = hourly.get("shortwave_radiation", [])
+            hourly_temps = hourly.get("temperature_2m", [])
+            hourly_codes = hourly.get("weathercode", [])
+
+            now_hour_str = now_dt.strftime("%Y-%m-%dT%H:00")
+            start_idx = 0
+            for idx, t_str in enumerate(hourly_times):
+                if t_str >= now_hour_str:
+                    start_idx = idx
+                    break
+
+            hourly_forecast = []
+            for i in range(start_idx, min(len(hourly_times), start_idx + 24)):
+                t_obj = datetime.fromisoformat(hourly_times[i])
+                w_m2 = hourly_rad[i] if i < len(hourly_rad) else 0.0
+                pred_watts = round(w_m2 * hourly_watt_scale)
+                code = hourly_codes[i] if i < len(hourly_codes) else 0
+                desc, icon = WMO_WEATHER_CODES.get(code, ("Clear", "☀️"))
+                hourly_forecast.append({
+                    "time": t_obj.strftime("%H:00"),
+                    "date": t_obj.strftime("%a"),
+                    "watts": pred_watts,
+                    "temp_c": round(hourly_temps[i], 1) if i < len(hourly_temps) else 15.0,
+                    "icon": icon,
+                    "desc": desc,
+                })
+
+        except Exception as e_om:
+            # Fallback to Norwegian Meteorological Institute (Met.no) when Open-Meteo is overloaded
+            try:
+                url_met = f"https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={LATITUDE}&lon={LONGITUDE}"
+                req_met = urllib.request.Request(url_met, headers={"User-Agent": "SmartPowerDashboard/2.0 (contact: user@example.com)"})
+                with urllib.request.urlopen(req_met, timeout=7) as resp:
+                    data_met = json.load(resp)
+
+                timeseries = data_met.get("properties", {}).get("timeseries", [])
+                if not timeseries:
+                    raise ValueError("Empty timeseries from Met.no")
+
+                curr_entry = timeseries[0]["data"]["instant"]["details"]
+                curr_temp = curr_entry.get("air_temperature", 11.0)
+                curr_code = 1
+                curr_desc, curr_icon = ("Fair", "🌤️")
+
+                # Calculate today & tomorrow solar using clear-sky physics attenuated by cloud cover
+                today_str = now_dt.strftime("%Y-%m-%d")
+                tomorrow_str = (now_dt + timedelta(days=1)).strftime("%Y-%m-%d")
+
+                today_mj = 0.0
+                tomorrow_mj = 0.0
+                hourly_forecast = []
+
+                for entry in timeseries:
+                    t_iso = entry.get("time", "")
+                    t_obj = datetime.fromisoformat(t_iso.replace("Z", "+00:00")).astimezone()
+                    dt_str = t_obj.strftime("%Y-%m-%d")
+                    hour_f = t_obj.hour + t_obj.minute / 60.0
+                    day_num = t_obj.timetuple().tm_yday
+
+                    cloud_pct = entry.get("data", {}).get("instant", {}).get("details", {}).get("cloud_area_fraction", 50.0)
+                    temp_c = entry.get("data", {}).get("instant", {}).get("details", {}).get("air_temperature", 10.0)
+                    # Cloud attenuation: (1 - 0.75 * cloud_fraction)
+                    cloud_factor = max(0.15, 1.0 - (0.75 * (cloud_pct / 100.0)))
+                    clear_w = _calculate_clearsky_ghi(LATITUDE, day_num, hour_f)
+                    ghi_w = clear_w * cloud_factor
+
+                    if dt_str == today_str:
+                        today_mj += (ghi_w * 3600.0) / 1_000_000.0
+                    elif dt_str == tomorrow_str:
+                        tomorrow_mj += (ghi_w * 3600.0) / 1_000_000.0
+
+                    if len(hourly_forecast) < 24 and t_obj >= now_dt.astimezone() - timedelta(minutes=30):
+                        # Inverter AC Watts = GHI * 3.7kWp * (calibrated_factor / 0.80 * 2.88)
+                        pred_w = round(ghi_w * ((calibrated_factor / 0.80) * 2.88))
+                        symbol = entry.get("data", {}).get("next_1_hours", {}).get("summary", {}).get("symbol_code", "partlycloudy_day")
+                        icon = "☀️" if "clearsky" in symbol else ("⛅" if "fair" in symbol or "partly" in symbol else "☁️")
+                        hourly_forecast.append({
+                            "time": t_obj.strftime("%H:00"),
+                            "date": t_obj.strftime("%a"),
+                            "watts": pred_w,
+                            "temp_c": round(temp_c, 1),
+                            "icon": icon,
+                            "desc": symbol.replace("_", " ").title(),
+                        })
+
+                today_rad = round(today_mj, 1)
+                tomorrow_rad = round(tomorrow_mj, 1)
+                today_predicted_kwh = round(today_rad * calibrated_factor, 1)
+                tomorrow_predicted_kwh = round(tomorrow_rad * calibrated_factor, 1)
+                tomorrow_t_max = curr_temp
+                tomorrow_t_min = curr_temp - 4.0
+                tomorrow_desc, tomorrow_icon = ("Partly Cloudy", "⛅")
+
+            except Exception as e_met:
+                print(f"[Weather Dual-Provider Error] OM: {e_om} | Met.no: {e_met}")
+                return
 
         with lock:
             latest_weather["status"] = "online"
@@ -1248,6 +1248,9 @@ def poll_weather_forecast():
             latest_weather["tomorrow_icon"] = tomorrow_icon
             latest_weather["hourly_forecast"] = hourly_forecast
             latest_weather["last_updated"] = datetime.now().strftime("%H:%M:%S")
+
+    except Exception as e:
+        print(f"[Weather Forecast Warning] {e}")
 
     except Exception as e:
         print(f"[Weather Forecast Warning] {e}")
