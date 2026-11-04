@@ -751,6 +751,7 @@ def calculate_adaptive_target_soc(tomorrow_solar_kwh):
     tomorrow_str = target_date.strftime("%Y-%m-%d")
 
     projected_solar_surplus_kwh = 0.0
+    first_solar_breakeven_hr = 9  # default to 09:00 if not found
     try:
         url_om = (
             f"https://api.open-meteo.com/v1/forecast?latitude={LATITUDE}&longitude={LONGITUDE}"
@@ -763,11 +764,16 @@ def calculate_adaptive_target_soc(tomorrow_solar_kwh):
         times = om_data.get("hourly", {}).get("time", [])
         rads = om_data.get("hourly", {}).get("shortwave_radiation", [])
 
+        found_breakeven = False
         for t_iso, w_m2 in zip(times, rads):
             if t_iso.startswith(tomorrow_str):
                 hr = int(t_iso.split("T")[1].split(":")[0])
                 pred_solar_w = round(w_m2 * hourly_watt_scale)
                 hr_base_w = learned_base.get(hr, 130)
+                # Determine first hour where solar begins offsetting the house baseline
+                if pred_solar_w >= hr_base_w and not found_breakeven and hr >= 6:
+                    first_solar_breakeven_hr = hr
+                    found_breakeven = True
                 # Any solar exceeding the learned baseload is surplus that needs battery storage
                 if pred_solar_w > hr_base_w:
                     projected_solar_surplus_kwh += (pred_solar_w - hr_base_w) / 1000.0
@@ -775,16 +781,36 @@ def calculate_adaptive_target_soc(tomorrow_solar_kwh):
         print(f"[Adaptive Solar Curve Warning] {e}")
         # Robust fallback: solar during peak midday hours above baseline
         projected_solar_surplus_kwh = max(0.0, tomorrow_solar_kwh - 1.2)
+        first_solar_breakeven_hr = 9
+
+    # 3. Model Morning Pre-Solar Drain (05:30 until solar covers base load):
+    # The battery must power the home during this entire pre-solar window.
+    # Because the battery naturally discharges to cover this morning gap, that discharge
+    # creates "free headroom" inside the battery before peak solar hits!
+    morning_pre_solar_kwh = (learned_base.get(5, 100) * 0.5) / 1000.0  # 05:30 to 06:00
+    for hr in range(6, max(6, first_solar_breakeven_hr)):
+        morning_pre_solar_kwh += learned_base.get(hr, 120) / 1000.0
+
+    morning_pre_solar_kwh = round(morning_pre_solar_kwh, 2)
+    ml["morning_pre_solar_kwh"] = morning_pre_solar_kwh
+    ml["first_solar_breakeven_hour"] = f"{first_solar_breakeven_hr:02d}:00"
 
     projected_solar_surplus_kwh = round(projected_solar_surplus_kwh, 2)
     ml["predicted_solar_surplus_kwh"] = projected_solar_surplus_kwh
 
-    # 3. Decision Matrix:
-    # If the ML model detects significant solar surplus above learned baseload,
-    # reserve battery headroom so generation is captured rather than exported to grid.
-    if projected_solar_surplus_kwh >= 0.4:
+    # 4. Net Headroom Required at 05:30:
+    # Net headroom to reserve overnight = Max(0, Solar Surplus - Morning Pre-Solar Drain)
+    # If the morning house load will naturally empty 0.5 kWh out of the battery before the sun
+    # is high enough to produce surplus, we only need to reserve additional overnight headroom
+    # if solar surplus exceeds what the morning drain already frees up.
+    net_overnight_headroom_needed = max(0.0, projected_solar_surplus_kwh - morning_pre_solar_kwh)
+    net_overnight_headroom_needed = round(net_overnight_headroom_needed, 2)
+    ml["net_overnight_headroom_needed_kwh"] = net_overnight_headroom_needed
+
+    # 5. Decision Matrix:
+    if net_overnight_headroom_needed >= 0.3:
         # Cap headroom reservation to not drop battery below 40% (ensuring evening peak security)
-        headroom_kwh = min(projected_solar_surplus_kwh, bat_usable_kwh * 0.60)
+        headroom_kwh = min(net_overnight_headroom_needed, bat_usable_kwh * 0.60)
         target_soc = int(round(100 - (headroom_kwh / bat_total_kwh) * 100))
         target_soc = max(40, min(95, target_soc))
         headroom_kwh = ((100 - target_soc) / 100.0) * bat_total_kwh
