@@ -403,12 +403,25 @@
               </div>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;color:var(--text-muted);margin-top:4px">
-              <span id="agile-peak-window">Peak window: 16:00 - 19:00</span>
+              <span id="agile-peak-window">Peak: 16:00 - 19:00</span>
               <span id="agile-next-rate-preview" class="mono" style="font-size:0.73rem;color:var(--text-secondary)"></span>
             </div>
           </div>
-          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
-            <span>Peak Today <strong class="mono" id="agile-peak-rate" style="color:#ec4899">--.-p</strong></span>
+
+          <!-- Top Export Slots Today & Realized Rate -->
+          <div style="margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.06);font-size:0.74rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="color:var(--text-muted);font-weight:600">🔥 Top Export Slots Today</span>
+              <span class="mono" id="agile-realized-pill" style="font-size:0.70rem;color:#a855f7;background:rgba(168,85,247,0.12);padding:1px 6px;border-radius:4px">Avg --.-p</span>
+            </div>
+            <div id="agile-top-slots-container" style="display:flex;gap:6px;justify-content:space-between">
+              <span style="color:var(--text-muted)">Loading top windows...</span>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
+            <span>Peak <strong class="mono" id="agile-peak-rate" style="color:#ec4899">--.-p</strong></span>
+            <span>Realized <strong class="mono" id="agile-realized-rate" style="color:#38bdf8">--.-p/kWh</strong></span>
             <span>Shadow Earned <strong class="mono" id="agile-shadow-earned" style="color:var(--text)">£0.00</strong></span>
           </div>
         </div>
@@ -896,6 +909,20 @@
             setText('agile-next-rate-preview', `Next: ${agile.next_export_p_kwh.toFixed(1)}p @ ${agile.next_rate_time}`);
           } else {
             setText('agile-next-rate-preview', '');
+          }
+
+          const realizedRate = agile.realized_rate_p_kwh || agile.current_export_p_kwh || 18.0;
+          setText('agile-realized-rate', `${realizedRate.toFixed(1)}p/kWh`);
+          setText('agile-realized-pill', `Avg ${realizedRate.toFixed(1)}p`);
+
+          const slotsContainer = document.getElementById('agile-top-slots-container');
+          if (slotsContainer && Array.isArray(agile.top_slots_today) && agile.top_slots_today.length > 0) {
+            slotsContainer.innerHTML = agile.top_slots_today.map((s, idx) => `
+              <div style="flex:1;background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.22);border-radius:6px;padding:4px 6px;text-align:center">
+                <div class="mono" style="font-size:0.69rem;color:var(--text-secondary)">${s.from} - ${s.to}</div>
+                <div class="mono" style="font-size:0.80rem;font-weight:700;color:#ec4899;margin-top:1px">${s.rate_p_kwh.toFixed(1)}p</div>
+              </div>
+            `).join('');
           }
         }
 

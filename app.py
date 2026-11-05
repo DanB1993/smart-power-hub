@@ -132,7 +132,11 @@ latest_octopus = {
         "peak_window_today": "16:00 - 19:00",
         "peak_rate_today_p_kwh": 32.0,
         "min_rate_today_p_kwh": 8.0,
+        "realized_rate_p_kwh": 0.0,
         "today_shadow_earned_gbp": 0.0,
+        "standard_export_earned_gbp": 0.0,
+        "agile_uplift_gbp": 0.0,
+        "top_slots_today": [],
         "half_hourly_rates": [],
         "last_updated": None,
     },
@@ -1158,12 +1162,69 @@ def poll_octopus_rates():
         max_rate = max(today_rates_vals) if today_rates_vals else 30.0
         min_rate = min(today_rates_vals) if today_rates_vals else 5.0
 
-        # Calculate today's simulated shadow export earnings
-        with lock:
-            today_exp_kwh = latest_data.get("energy", {}).get("today", {}).get("grid_export_kwh", 0.0)
-        # Weight by current/peak rate average (typically ~18-20p average across daytime export)
-        avg_export_p = (curr_agile_p + max_rate) / 2.0 if curr_agile_p else 18.0
-        shadow_earned_gbp = round((today_exp_kwh * (avg_export_p / 100.0)), 2)
+        # Top 3 highest earning export half-hour slots today
+        sorted_by_rate = sorted(half_hourly_today, key=lambda x: x["rate_p_kwh"], reverse=True)
+        top_slots = sorted_by_rate[:3]
+
+        # Calculate exact weighted realized export rate and shadow earnings from today's telemetry
+        realized_rate_p = 0.0
+        shadow_earned_gbp = 0.0
+        standard_earned_gbp = 0.0
+        agile_uplift_gbp = 0.0
+
+        try:
+            midnight_ts = datetime(now_dt.year, now_dt.month, now_dt.day).timestamp()
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute(
+                "SELECT ts, grid_power FROM telemetry WHERE ts >= ? ORDER BY ts ASC",
+                (midnight_ts,),
+            )
+            telem_rows = c.fetchall()
+            conn.close()
+
+            total_exp_kwh = 0.0
+            total_earned_p = 0.0
+
+            if len(telem_rows) > 1 and half_hourly_today:
+                # Pre-map timestamp ranges to agile rates
+                rates_map = []
+                for s in half_hourly_today:
+                    h_start, m_start = map(int, s["from"].split(":"))
+                    h_end, m_end = map(int, s["to"].split(":"))
+                    t1 = datetime(now_dt.year, now_dt.month, now_dt.day, h_start, m_start).timestamp()
+                    # If slot ends at 00:00, it's midnight tomorrow
+                    if h_end == 0 and m_end == 0:
+                        t2 = t1 + 1800.0
+                    else:
+                        t2 = datetime(now_dt.year, now_dt.month, now_dt.day, h_end, m_end).timestamp()
+                    rates_map.append((t1, t2, s["rate_p_kwh"]))
+
+                for i in range(1, len(telem_rows)):
+                    dt_hours = (telem_rows[i][0] - telem_rows[i - 1][0]) / 3600.0
+                    if dt_hours <= 0 or dt_hours > 0.05:
+                        continue
+                    grid_w = telem_rows[i][1]
+                    if grid_w < -10:
+                        exp_kwh = (-grid_w * dt_hours) / 1000.0
+                        ts = telem_rows[i][0]
+                        slot_rate = curr_agile_p
+                        for r_start, r_end, r_val in rates_map:
+                            if r_start <= ts < r_end:
+                                slot_rate = r_val
+                                break
+                        total_exp_kwh += exp_kwh
+                        total_earned_p += exp_kwh * slot_rate
+
+                if total_exp_kwh > 0.001:
+                    realized_rate_p = round(total_earned_p / total_exp_kwh, 2)
+                    shadow_earned_gbp = round(total_earned_p / 100.0, 2)
+                    standard_earned_gbp = round((total_exp_kwh * 15.0) / 100.0, 2)  # Standard fixed 15p SEG
+                    agile_uplift_gbp = round(shadow_earned_gbp - standard_earned_gbp, 2)
+                else:
+                    realized_rate_p = round(curr_agile_p, 2)
+        except Exception as e_calc:
+            print(f"[Agile Earnings Telemetry Warning] {e_calc}")
 
         with lock:
             latest_octopus["agile_outgoing"].update({
@@ -1174,7 +1235,11 @@ def poll_octopus_rates():
                 "peak_window_today": "16:00 - 19:00",
                 "peak_rate_today_p_kwh": round(max_rate, 2),
                 "min_rate_today_p_kwh": round(min_rate, 2),
+                "realized_rate_p_kwh": realized_rate_p,
                 "today_shadow_earned_gbp": shadow_earned_gbp,
+                "standard_export_earned_gbp": standard_earned_gbp,
+                "agile_uplift_gbp": agile_uplift_gbp,
+                "top_slots_today": top_slots,
                 "half_hourly_rates": half_hourly_today,
                 "last_updated": now_dt.strftime("%H:%M:%S"),
             })
