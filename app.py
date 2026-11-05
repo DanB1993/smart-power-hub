@@ -127,6 +127,8 @@ latest_octopus = {
     "agile_outgoing": {
         "status": "initializing",
         "current_export_p_kwh": 15.0,
+        "next_export_p_kwh": None,
+        "next_rate_time": None,
         "peak_window_today": "16:00 - 19:00",
         "peak_rate_today_p_kwh": 32.0,
         "min_rate_today_p_kwh": 8.0,
@@ -1126,6 +1128,8 @@ def poll_octopus_rates():
             agile_results = data_agile.get("results", [])
 
         curr_agile_p = 15.0
+        next_agile_p = None
+        next_agile_from = None
         today_date_str = now_dt.strftime("%Y-%m-%d")
         half_hourly_today = []
 
@@ -1138,6 +1142,9 @@ def poll_octopus_rates():
                 t_to = datetime.fromisoformat(vt.replace("Z", "+00:00")).astimezone()
                 if t_from <= now_dt.astimezone() < t_to:
                     curr_agile_p = val
+                elif now_dt.astimezone() < t_from <= now_dt.astimezone() + timedelta(minutes=30):
+                    next_agile_p = round(val, 2)
+                    next_agile_from = t_from.strftime("%H:%M")
                 if t_from.strftime("%Y-%m-%d") == today_date_str:
                     half_hourly_today.append({
                         "from": t_from.strftime("%H:%M"),
@@ -1162,6 +1169,8 @@ def poll_octopus_rates():
             latest_octopus["agile_outgoing"].update({
                 "status": "online",
                 "current_export_p_kwh": round(curr_agile_p, 2),
+                "next_export_p_kwh": next_agile_p,
+                "next_rate_time": next_agile_from,
                 "peak_window_today": "16:00 - 19:00",
                 "peak_rate_today_p_kwh": round(max_rate, 2),
                 "min_rate_today_p_kwh": round(min_rate, 2),

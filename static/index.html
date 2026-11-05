@@ -393,12 +393,18 @@
               </span>
               <span class="pill-tag mono" id="agile-shadow-badge" style="color:#ec4899;border-color:rgba(236,72,153,0.3)">Shadow Mode</span>
             </div>
-            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
-              <span class="mono" id="agile-live-rate" style="font-size:1.55rem;font-weight:700;color:#ec4899">--.-p</span>
-              <span class="metric-unit" style="font-size:0.85rem;color:#ec4899">/kWh live</span>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:6px">
+              <div style="display:flex;align-items:baseline;gap:8px">
+                <span class="mono" id="agile-live-rate" style="font-size:1.55rem;font-weight:700;color:#ec4899">--.-p</span>
+                <span class="metric-unit" style="font-size:0.85rem;color:#ec4899">/kWh live</span>
+              </div>
+              <div style="text-align:right">
+                <span class="mono" id="agile-next-countdown" style="font-size:0.75rem;padding:3px 7px;border-radius:6px;background:rgba(236,72,153,0.12);color:#ec4899;border:1px solid rgba(236,72,153,0.25);font-weight:600">Next in --m --s</span>
+              </div>
             </div>
-            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="agile-peak-window">
-              Peak window: 16:00 - 19:00
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;color:var(--text-muted);margin-top:4px">
+              <span id="agile-peak-window">Peak window: 16:00 - 19:00</span>
+              <span id="agile-next-rate-preview" class="mono" style="font-size:0.73rem;color:var(--text-secondary)"></span>
             </div>
           </div>
           <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
@@ -885,7 +891,12 @@
           setText('agile-live-rate', `${(agile.current_export_p_kwh || 15.0).toFixed(1)}p`);
           setText('agile-peak-rate', `${(agile.peak_rate_today_p_kwh || 30.0).toFixed(1)}p`);
           setText('agile-shadow-earned', `£${(agile.today_shadow_earned_gbp || 0.0).toFixed(2)}`);
-          setText('agile-peak-window', `Peak window: ${agile.peak_window_today || '16:00 - 19:00'}`);
+          setText('agile-peak-window', `Peak: ${agile.peak_window_today || '16:00 - 19:00'}`);
+          if (agile.next_export_p_kwh != null && agile.next_rate_time) {
+            setText('agile-next-rate-preview', `Next: ${agile.next_export_p_kwh.toFixed(1)}p @ ${agile.next_rate_time}`);
+          } else {
+            setText('agile-next-rate-preview', '');
+          }
         }
 
         // 8. Energy Optimization Insights
@@ -1278,6 +1289,18 @@
       fetchHistory();
       fetchDevices();
 
+      function updateAgileCountdown() {
+        const now = new Date();
+        const mins = now.getMinutes();
+        const secs = now.getSeconds();
+        const remMins = 29 - (mins % 30);
+        const remSecs = 59 - secs;
+        const countdownStr = `Next in ${remMins}m ${remSecs < 10 ? '0' : ''}${remSecs}s`;
+        setText('agile-next-countdown', countdownStr);
+      }
+
+      updateAgileCountdown();
+
       setInterval(() => {
         countdownSec -= 1;
         if (countdownSec <= 0) {
@@ -1289,6 +1312,7 @@
           }
         }
         setText('countdown', `${countdownSec}s`);
+        updateAgileCountdown();
       }, 1000);
 
       // Register Service Worker for PWA / Chrome install support
