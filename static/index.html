@@ -244,8 +244,23 @@
 
           <div class="flow-wrap">
             <svg class="flow-svg" viewBox="0 0 340 320">
-              <!-- Orthogonal Cross Lines -->
-              <!-- Top (Solar 170,56) -> Center (170,160) -->
+              <!-- SVG Defs for Glows and Gradients -->
+              <defs>
+                <filter id="solarGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#f59e0b" flood-opacity="0.55" />
+                </filter>
+                <filter id="batteryGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#10b981" flood-opacity="0.55" />
+                </filter>
+                <filter id="homeGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#38bdf8" flood-opacity="0.55" />
+                </filter>
+                <filter id="gridGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#818cf8" flood-opacity="0.55" />
+                </filter>
+              </defs>
+
+              <!-- Orthogonal Cross Tracks -->
               <!-- Top (Solar 170,52) -> Center (170,160) -->
               <line x1="170" y1="80" x2="170" y2="138" class="track-line" />
               <line id="flow-pv" x1="170" y1="80" x2="170" y2="138" class="active-line" stroke="#f59e0b" />
@@ -264,14 +279,14 @@
 
               <!-- TOP: SOLAR -->
               <g transform="translate(170, 52)">
-                <circle r="34" fill="var(--bg)" stroke="var(--solar)" stroke-width="1.8" />
+                <circle r="34" fill="var(--surface-solid)" stroke="var(--solar)" stroke-width="1.8" filter="url(#solarGlow)" />
                 <text y="-6" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600" letter-spacing="0.05em">SOLAR</text>
                 <text y="11" id="svg-pv-w" text-anchor="middle" fill="var(--solar)" font-size="12.5" font-weight="700" class="mono">0 W</text>
               </g>
 
               <!-- LEFT: GRID -->
               <g transform="translate(52, 160)">
-                <circle r="34" fill="var(--bg)" stroke="var(--grid)" stroke-width="1.8" />
+                <circle r="34" fill="var(--surface-solid)" stroke="var(--grid)" stroke-width="1.8" filter="url(#gridGlow)" />
                 <text y="-6" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600" letter-spacing="0.05em">GRID</text>
                 <text y="11" id="svg-grid-w" text-anchor="middle" fill="var(--grid)" font-size="12" font-weight="700" class="mono">0 W</text>
               </g>
@@ -285,14 +300,14 @@
 
               <!-- RIGHT: HOME -->
               <g transform="translate(288, 160)">
-                <circle r="34" fill="var(--bg)" stroke="var(--home)" stroke-width="1.8" />
+                <circle r="34" fill="var(--surface-solid)" stroke="var(--home)" stroke-width="1.8" filter="url(#homeGlow)" />
                 <text y="-6" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600" letter-spacing="0.05em">HOME</text>
                 <text y="11" id="svg-load-w" text-anchor="middle" fill="var(--home)" font-size="12.5" font-weight="700" class="mono">0 W</text>
               </g>
 
               <!-- BOTTOM: BATTERY -->
               <g transform="translate(170, 268)">
-                <circle r="34" fill="var(--bg)" stroke="var(--battery)" stroke-width="1.8" />
+                <circle r="34" fill="var(--surface-solid)" stroke="var(--battery)" stroke-width="1.8" filter="url(#batteryGlow)" />
                 <text y="-8" id="svg-bat-soc" text-anchor="middle" fill="var(--battery)" font-size="12" font-weight="700" class="mono">0%</text>
                 <text y="9" id="svg-bat-w" text-anchor="middle" fill="var(--text-secondary)" font-size="10.5" font-weight="600" class="mono">0 W</text>
               </g>
