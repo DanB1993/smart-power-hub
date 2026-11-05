@@ -123,6 +123,17 @@ latest_octopus = {
     "off_peak_window": "00:30 - 05:30",
     "next_transition": None,
     "last_fetched": None,
+    # Octopus Agile Outgoing Export Feed & Shadow Tracker
+    "agile_outgoing": {
+        "status": "initializing",
+        "current_export_p_kwh": 15.0,
+        "peak_window_today": "16:00 - 19:00",
+        "peak_rate_today_p_kwh": 32.0,
+        "min_rate_today_p_kwh": 8.0,
+        "today_shadow_earned_gbp": 0.0,
+        "half_hourly_rates": [],
+        "last_updated": None,
+    },
 }
 latest_weather = {
     "status": "initializing",
@@ -1105,6 +1116,61 @@ def poll_octopus_rates():
                         is_go_window = val < 15.0
     except Exception as e:
         print(f"[Octopus Rates Warning] {e}")
+
+    # Poll live Octopus Agile Outgoing Export rates for Region H (Southern England)
+    try:
+        url_agile = "https://api.octopus.energy/v1/products/AGILE-OUTGOING-19-05-13/electricity-tariffs/E-1R-AGILE-OUTGOING-19-05-13-H/standard-unit-rates/"
+        req_agile = urllib.request.Request(url_agile, headers={"User-Agent": "SmartPowerDashboard/2.0"})
+        with urllib.request.urlopen(req_agile, timeout=6) as resp_agile:
+            data_agile = json.loads(resp_agile.read().decode("utf-8"))
+            agile_results = data_agile.get("results", [])
+
+        curr_agile_p = 15.0
+        today_date_str = now_dt.strftime("%Y-%m-%d")
+        half_hourly_today = []
+
+        for r in agile_results:
+            vf = r.get("valid_from")
+            vt = r.get("valid_to")
+            val = float(r.get("value_inc_vat", 0.0))
+            if vf and vt:
+                t_from = datetime.fromisoformat(vf.replace("Z", "+00:00")).astimezone()
+                t_to = datetime.fromisoformat(vt.replace("Z", "+00:00")).astimezone()
+                if t_from <= now_dt.astimezone() < t_to:
+                    curr_agile_p = val
+                if t_from.strftime("%Y-%m-%d") == today_date_str:
+                    half_hourly_today.append({
+                        "from": t_from.strftime("%H:%M"),
+                        "to": t_to.strftime("%H:%M"),
+                        "rate_p_kwh": round(val, 2),
+                    })
+
+        # Sort earliest to latest
+        half_hourly_today.sort(key=lambda x: x["from"])
+        today_rates_vals = [x["rate_p_kwh"] for x in half_hourly_today]
+        max_rate = max(today_rates_vals) if today_rates_vals else 30.0
+        min_rate = min(today_rates_vals) if today_rates_vals else 5.0
+
+        # Calculate today's simulated shadow export earnings
+        with lock:
+            today_exp_kwh = latest_data.get("energy", {}).get("today", {}).get("grid_export_kwh", 0.0)
+        # Weight by current/peak rate average (typically ~18-20p average across daytime export)
+        avg_export_p = (curr_agile_p + max_rate) / 2.0 if curr_agile_p else 18.0
+        shadow_earned_gbp = round((today_exp_kwh * (avg_export_p / 100.0)), 2)
+
+        with lock:
+            latest_octopus["agile_outgoing"].update({
+                "status": "online",
+                "current_export_p_kwh": round(curr_agile_p, 2),
+                "peak_window_today": "16:00 - 19:00",
+                "peak_rate_today_p_kwh": round(max_rate, 2),
+                "min_rate_today_p_kwh": round(min_rate, 2),
+                "today_shadow_earned_gbp": shadow_earned_gbp,
+                "half_hourly_rates": half_hourly_today,
+                "last_updated": now_dt.strftime("%H:%M:%S"),
+            })
+    except Exception as e_agile:
+        print(f"[Octopus Agile Outgoing Warning] {e_agile}")
 
     with lock:
         latest_octopus["status"] = "online"

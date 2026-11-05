@@ -382,6 +382,30 @@
             <span>Rate <strong class="mono" id="sched-rate-p" style="color:var(--battery)">9.4p/kWh</strong></span>
           </div>
         </div>
+
+        <!-- Octopus Agile Outgoing Shadow Export Tile -->
+        <div class="solar-forecast-card" style="background:linear-gradient(180deg, rgba(236,72,153,0.06), var(--surface));border-color:rgba(236,72,153,0.25)">
+          <div>
+            <div class="metric-top" style="margin-bottom:8px">
+              <span class="metric-title">
+                <span class="metric-icon" style="background:#ec4899"></span>
+                Agile Outgoing Tracker
+              </span>
+              <span class="pill-tag mono" id="agile-shadow-badge" style="color:#ec4899;border-color:rgba(236,72,153,0.3)">Shadow Mode</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
+              <span class="mono" id="agile-live-rate" style="font-size:1.55rem;font-weight:700;color:#ec4899">--.-p</span>
+              <span class="metric-unit" style="font-size:0.85rem;color:#ec4899">/kWh live</span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="agile-peak-window">
+              Peak window: 16:00 - 19:00
+            </div>
+          </div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
+            <span>Peak Today <strong class="mono" id="agile-peak-rate" style="color:#ec4899">--.-p</strong></span>
+            <span>Shadow Earned <strong class="mono" id="agile-shadow-earned" style="color:var(--text)">£0.00</strong></span>
+          </div>
+        </div>
       </section>
 
       <!-- Energy Savings Optimizer Card -->
@@ -853,6 +877,15 @@
           if (d.octopus) {
             setText('sched-rate-p', `${d.octopus.off_peak_rate_p_kwh.toFixed(1)}p/kWh`);
           }
+        }
+
+        // 8. Octopus Agile Outgoing Live Tracker
+        if (d.octopus && d.octopus.agile_outgoing) {
+          const agile = d.octopus.agile_outgoing;
+          setText('agile-live-rate', `${(agile.current_export_p_kwh || 15.0).toFixed(1)}p`);
+          setText('agile-peak-rate', `${(agile.peak_rate_today_p_kwh || 30.0).toFixed(1)}p`);
+          setText('agile-shadow-earned', `£${(agile.today_shadow_earned_gbp || 0.0).toFixed(2)}`);
+          setText('agile-peak-window', `Peak window: ${agile.peak_window_today || '16:00 - 19:00'}`);
         }
 
         // 8. Energy Optimization Insights
