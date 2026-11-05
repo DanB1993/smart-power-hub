@@ -997,7 +997,7 @@
         // 1. Solar
         const pvW = d.power.pv_total_w;
         const pvPct = Math.min(100, Math.round((pvW / 3700) * 100));
-        setText('kpi-pv-w', pvW); setText('overview-summary-pv', `${pvW} W`); setText('overview-summary-soc', `${soc}%`); setText('overview-summary-grid', `${gridAbsW} W`);
+        setText('kpi-pv-w', pvW);
         setText('kpi-pv-pct', `${pvPct}%`);
         document.getElementById('kpi-pv-bar').style.width = `${pvPct}%`;
         setText('kpi-pv-today', `${d.energy.today.solar_pv_kwh.toFixed(1)} kWh`);
@@ -1036,6 +1036,11 @@
         document.getElementById('kpi-grid-bar').style.width = `${Math.min(100, Math.round((gridAbsW / 3700) * 100))}%`;
         setText('kpi-grid-in', `${d.energy.today.grid_import_kwh.toFixed(1)} kWh`);
         setText('kpi-grid-out', `${d.energy.today.grid_export_kwh.toFixed(1)} kWh`);
+
+        // Update Overview 3-column summary cards
+        setText('overview-summary-pv', `${pvW} W`);
+        setText('overview-summary-soc', `${soc}%`);
+        setText('overview-summary-grid', `${gridAbsW} W`);
 
         // 5. Octopus Savings & Financials
         if (d.financials) {
