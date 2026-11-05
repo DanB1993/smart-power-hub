@@ -6,7 +6,7 @@
   <title>Smart Power Dashboard</title>
 
   <!-- PWA & Mobile Web App Meta -->
-  <meta name="theme-color" content="#090d16" />
+  <meta name="theme-color" content="#07090e" />
   <meta name="color-scheme" content="dark" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -27,68 +27,138 @@
 </head>
 <body>
 
-  <div class="shell">
-    <!-- Top Header -->
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-logo">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="4"></circle>
-            <path d="M12 2v2"></path><path d="M12 20v2"></path>
-            <path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path>
-            <path d="M2 12h2"></path><path d="M20 12h2"></path>
-            <path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>
-          </svg>
+  <div class="app-layout">
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="app-sidebar">
+      <div>
+        <div class="sidebar-head">
+          <div class="sidebar-brand">
+            <div class="sidebar-logo">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path><path d="M12 20v2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path><path d="M20 12h2"></path>
+                <path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>
+              </svg>
+            </div>
+            <div class="sidebar-brand-text">
+              <div class="brand-title">Smart Power</div>
+              <div class="brand-sub mono" id="sidebar-inv-model">FoxESS H1-3.7kW</div>
+            </div>
+          </div>
+          <button class="btn-toggle-sidebar" id="btn-toggle-sidebar" onclick="toggleSidebar()" title="Toggle Sidebar">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
         </div>
-        <div>
-          <div class="brand-name">Home Energy Monitor</div>
-          <div class="brand-meta">
-            <span class="mono" id="hdr-model">H1-3.7-E-G2-WL</span>
+
+        <nav class="sidebar-nav">
+          <div class="nav-section-label">Dashboards</div>
+          
+          <button class="nav-item active" id="nav-overview" onclick="switchView('overview')">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+            </span>
+            <span class="nav-label">Overview</span>
+          </button>
+
+          <button class="nav-item" id="nav-flow" onclick="switchView('flow')">
+            <span class="nav-icon" style="color:var(--home)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </span>
+            <span class="nav-label">Flow & Telemetry</span>
+          </button>
+
+          <button class="nav-item" id="nav-agile" onclick="switchView('agile')">
+            <span class="nav-icon" style="color:var(--agile)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </span>
+            <span class="nav-label">Agile & Tariffs</span>
+          </button>
+
+          <button class="nav-item" id="nav-forecast" onclick="switchView('forecast')">
+            <span class="nav-icon" style="color:var(--solar)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            </span>
+            <span class="nav-label">Solar Forecast</span>
+          </button>
+
+          <div class="nav-section-label" style="margin-top:10px">Control & Devices</div>
+
+          <button class="nav-item" id="nav-devices" onclick="switchView('devices')">
+            <span class="nav-icon" style="color:var(--hue)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
+            </span>
+            <span class="nav-label">Devices & Lights</span>
+          </button>
+
+          <button class="nav-item" id="nav-settings" onclick="switchView('settings')">
+            <span class="nav-icon" style="color:var(--battery)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </span>
+            <span class="nav-label">Schedule & Battery</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="sidebar-foot">
+        <div class="system-status-pill">
+          <span class="live-dot" id="sidebar-status-dot"></span>
+          <span class="status-text mono" id="sidebar-status-text">Online · 10s poll</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Stage -->
+    <div class="main-content">
+      <!-- App Top Header -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="btn-mobile-menu" onclick="toggleMobileSidebar()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div>
+            <h1 class="page-title" id="view-title">System Overview</h1>
+            <div class="page-subtitle" id="view-subtitle">Real-time PV generation, battery bridging & tariff tracking</div>
+          </div>
+        </div>
+
+        <div class="topbar-meta">
+          <div class="meta-chip">
+            <span class="mono" id="hdr-model" style="font-size:0.74rem">H1-3.7-E-G2</span>
             <span class="dot-sep"></span>
             <span id="hdr-workmode">Self-Use</span>
             <span class="dot-sep"></span>
             <span id="hdr-state" style="color:var(--battery)">On-Grid</span>
-            <span class="dot-sep"></span>
-            <span id="hdr-octopus" style="color:var(--grid);display:flex;align-items:center;gap:4px">
-              Octopus Go: <strong class="mono" id="hdr-octo-rate">--.-p</strong>
-              <span class="pill-tag mono" id="hdr-octo-pill" style="font-size:0.65rem;padding:1px 6px">Peak</span>
-            </span>
-            <span class="dot-sep"></span>
-            <span id="hdr-weather" style="color:var(--text-secondary);display:flex;align-items:center;gap:4px">
-              <span id="hdr-weather-icon">🌤️</span>
-              <span class="mono" id="hdr-weather-temp">--°C</span>
-              <span id="hdr-weather-desc" style="color:var(--text-muted)">--</span>
-            </span>
+          </div>
+
+          <div class="meta-chip" id="hdr-octopus">
+            <span>Octopus Go:</span>
+            <strong class="mono" id="hdr-octo-rate">--.-p</strong>
+            <span class="pill-tag mono" id="hdr-octo-pill" style="font-size:0.65rem;padding:1px 6px">Peak</span>
+          </div>
+
+          <div class="meta-chip" id="hdr-weather">
+            <span id="hdr-weather-icon">🌤️</span>
+            <span class="mono" id="hdr-weather-temp">--°C</span>
+            <span id="hdr-weather-desc" style="color:var(--text-muted)">--</span>
+          </div>
+
+          <!-- Polling Countdown -->
+          <div class="status-bar">
+            <span class="live-dot" id="status-dot"></span>
+            <span class="mono" id="last-updated-txt">--:--:--</span>
+            <span style="color:var(--border-hover)">|</span>
+            <span class="mono" id="countdown" style="color:var(--text-muted)">10s</span>
           </div>
         </div>
-      </div>
+      </header>
 
-      <!-- Segmented Page Navigation -->
-      <div class="segmented">
-        <button class="seg-btn active" id="tab-overview" onclick="switchView('overview')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          Overview
-        </button>
-        <button class="seg-btn" id="tab-devices" onclick="switchView('devices')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
-          Devices & Lights
-        </button>
-      </div>
-
-      <!-- Live Poll Status -->
-      <div class="status-bar">
-        <span class="live-dot" id="status-dot"></span>
-        <span class="mono" id="last-updated-txt">--:--:--</span>
-        <span style="color:var(--border-hover)">|</span>
-        <span class="mono" id="countdown" style="color:var(--text-muted)">10s</span>
-      </div>
-    </header>
-
-    <!-- ==========================================
-         VIEW 1: SOLAR & ENERGY OVERVIEW
-         ========================================== -->
-    <main id="view-overview" class="view active">
-      <!-- 4-Card KPI Row -->
+      <!-- ==========================================
+           VIEW 1: OVERVIEW (HERO KPIS + SUMMARY)
+           ========================================== -->
+      <main id="view-overview" class="view active">
+        <!-- 4-Card KPI Row -->
       <section class="metrics-row">
         <!-- Solar PV -->
         <div class="card">
@@ -207,7 +277,8 @@
         </div>
       </section>
 
-      <!-- Smart Appliance Recommendation Advisory Banner -->
+        <div style="margin-top:20px">
+          <!-- Smart Appliance Recommendation Advisory Banner -->
       <section class="card" id="appliance-advisory-card" style="margin-bottom:20px;padding:16px 20px;background:var(--surface);border-color:rgba(56,189,248,0.2)">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
           <div style="display:flex;align-items:center;gap:14px">
@@ -230,19 +301,18 @@
           <!-- Populated dynamically via JS -->
         </div>
       </section>
+        </div>
 
-      <!-- Main Split: Flow Diagram + History Chart -->
-      <section class="workspace-grid">
-        <!-- Left: Clean Cross Flow Diagram -->
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Live Power Flow</div>
-              <div class="card-subtitle">Real-time routing across inverter bus</div>
+        <!-- 2-Column Hero Split: Live Flow & Agile Tracker -->
+        <div style="display:grid;grid-template-columns:minmax(340px, 420px) 1fr;gap:16px;margin-top:20px">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Live Power Flow</div>
+                <div class="card-subtitle">Real-time routing across inverter bus</div>
+              </div>
             </div>
-          </div>
-
-          <div class="flow-wrap">
+            <div class="flow-wrap">
             <svg class="flow-svg" viewBox="0 0 340 320">
               <!-- SVG Defs for Glows and Gradients -->
               <defs>
@@ -313,92 +383,11 @@
               </g>
             </svg>
           </div>
-        </div>
-
-        <!-- Right: Telemetry Chart -->
-        <div class="card" style="display:flex;flex-direction:column;justify-content:space-between">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Telemetry History</div>
-              <div class="card-subtitle">Power (W) & Battery State of Charge (%)</div>
-            </div>
-            <div class="range-pills">
-              <button class="range-btn" onclick="setHistoryWindow(1, this)">1H</button>
-              <button class="range-btn active" onclick="setHistoryWindow(6, this)">6H</button>
-              <button class="range-btn" onclick="setHistoryWindow(24, this)">24H</button>
-            </div>
+        
           </div>
 
-          <div style="position:relative;height:315px;width:100%">
-            <canvas id="telemetryChart"></canvas>
-          </div>
-        </div>
-      </section>
-
-      <!-- Weather & Solar Yield Forecast Strip -->
-      <section class="forecast-strip">
-        <!-- Tomorrow Forecast Summary Card -->
-        <div class="solar-forecast-card">
-          <div>
-            <div class="metric-top" style="margin-bottom:8px">
-              <span class="metric-title">
-                <span class="metric-icon" style="background:var(--solar)"></span>
-                Tomorrow's Solar Outlook
-              </span>
-              <span class="pill-tag mono" id="fore-tomorrow-icon" style="font-size:0.82rem">🌤️</span>
-            </div>
-            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
-              <span class="mono" id="fore-tomorrow-yield" style="font-size:1.8rem;font-weight:700;color:var(--solar)">--.-</span>
-              <span class="metric-unit" style="font-size:1rem;color:var(--solar)">kWh</span>
-            </div>
-            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="fore-tomorrow-desc">
-              Predicted Generation · Clear Sky
-            </div>
-          </div>
-          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
-            <span>Temp <strong class="mono" id="fore-tomorrow-temps" style="color:var(--text)">--° / --°C</strong></span>
-            <span>Today Est <strong class="mono" id="fore-today-yield" style="color:var(--text-secondary)">--.- kWh</strong></span>
-          </div>
-        </div>
-
-        <!-- 24-Hour Solar Radiation & Weather Hourly Track -->
-        <div class="solar-forecast-card" style="overflow:hidden">
-          <div class="metric-top" style="margin-bottom:10px">
-            <div>
-              <span class="metric-title">24-Hour Solar Yield & Sunlight Timeline</span>
-              <span style="font-size:0.72rem;color:var(--text-muted);margin-left:4px">Hourly forecast from Open-Meteo local irradiance model</span>
-            </div>
-            <span class="pill-tag mono" style="font-size:0.65rem;color:var(--home)">Local Solar Track</span>
-          </div>
-          <div class="hourly-forecast-scroll" id="forecast-hourly-container">
-            <!-- Populated via JS -->
-          </div>
-        </div>
-
-        <!-- FoxESS Grid Force-Charge Schedule Block -->
-        <div class="solar-forecast-card">
-          <div>
-            <div class="metric-top" style="margin-bottom:8px">
-              <span class="metric-title">
-                <span class="metric-icon" style="background:var(--battery)"></span>
-                Battery Grid Charge Schedule
-              </span>
-              <span class="pill-tag mono" id="sched-octo-aligned-pill" style="color:var(--battery);border-color:rgba(16,185,129,0.3)">Aligned</span>
-            </div>
-            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
-              <span class="mono" id="sched-p1-window" style="font-size:1.55rem;font-weight:700;color:var(--battery)">00:30 - 05:30</span>
-            </div>
-            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="sched-p1-status">
-              Period 1 Force-Charge · Inverter Holding Regs
-            </div>
-          </div>
-          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
-            <span>Target <strong class="mono" id="sched-target-soc" style="color:var(--text)">100% SoC</strong></span>
-            <span>Rate <strong class="mono" id="sched-rate-p" style="color:var(--battery)">9.4p/kWh</strong></span>
-          </div>
-        </div>
-
-        <!-- Octopus Agile Outgoing Shadow Export Tile -->
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <!-- Octopus Agile Outgoing Shadow Export Tile -->
         <div class="solar-forecast-card" style="background:linear-gradient(180deg, rgba(236,72,153,0.06), var(--surface));border-color:rgba(236,72,153,0.25)">
           <div>
             <div class="metric-top" style="margin-bottom:8px">
@@ -440,9 +429,7 @@
             <span>Shadow Earned <strong class="mono" id="agile-shadow-earned" style="color:var(--text)">£0.00</strong></span>
           </div>
         </div>
-      </section>
-
-      <!-- Energy Savings Optimizer Card -->
+            <!-- Energy Savings Optimizer Card -->
       <section class="card" style="margin-top:20px;background:linear-gradient(180deg, rgba(129,140,248,0.07), var(--surface));border-color:rgba(129,140,248,0.28)">
         <div class="card-header" style="margin-bottom:14px">
           <div style="display:flex;align-items:center;gap:12px">
@@ -463,13 +450,316 @@
           <div style="color:var(--text-secondary)">Calculating real-time savings & battery optimization...</div>
         </div>
       </section>
-    </main>
+          </div>
+        </div>
+      </main>
 
-    <!-- ==========================================
-         VIEW 2: DEVICE USAGE & HUE LIGHTS
-         ========================================== -->
-    <main id="view-devices" class="view">
-      <!-- Load Breakdown Bar Card -->
+      <!-- ==========================================
+           VIEW 2: LIVE FLOW & TELEMETRY
+           ========================================== -->
+      <main id="view-flow" class="view">
+        <div class="workspace-grid">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Bus Power Distribution</div>
+                <div class="card-subtitle">Active directional throughput</div>
+              </div>
+            </div>
+            <div class="flow-wrap">
+            <svg class="flow-svg" viewBox="0 0 340 320">
+              <!-- SVG Defs for Glows and Gradients -->
+              <defs>
+                <filter id="solarGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#f59e0b" flood-opacity="0.55" />
+                </filter>
+                <filter id="batteryGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#10b981" flood-opacity="0.55" />
+                </filter>
+                <filter id="homeGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#38bdf8" flood-opacity="0.55" />
+                </filter>
+                <filter id="gridGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#818cf8" flood-opacity="0.55" />
+                </filter>
+              </defs>
+
+              <!-- Orthogonal Cross Tracks -->
+              <!-- Top (Solar 170,52) -> Center (170,160) -->
+              <line x1="170" y1="80" x2="170" y2="138" class="track-line" />
+              <line id="flow-pv" x1="170" y1="80" x2="170" y2="138" class="active-line" stroke="#f59e0b" />
+
+              <!-- Left (Grid 52,160) -> Center (170,160) -->
+              <line x1="84" y1="160" x2="142" y2="160" class="track-line" />
+              <line id="flow-grid" x1="84" y1="160" x2="142" y2="160" class="active-line" stroke="#818cf8" />
+
+              <!-- Center (170,160) -> Right (Home 288,160) -->
+              <line x1="198" y1="160" x2="256" y2="160" class="track-line" />
+              <line id="flow-load" x1="198" y1="160" x2="256" y2="160" class="active-line" stroke="#38bdf8" />
+
+              <!-- Center (170,160) -> Bottom (Battery 170,268) -->
+              <line x1="170" y1="184" x2="170" y2="236" class="track-line" />
+              <line id="flow-bat" x1="170" y1="184" x2="170" y2="236" class="active-line" stroke="#10b981" />
+
+              <!-- TOP: SOLAR -->
+              <g transform="translate(170, 52)">
+                <circle r="34" fill="var(--surface-solid)" stroke="var(--solar)" stroke-width="1.8" filter="url(#solarGlow)" />
+                <text y="-6" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600" letter-spacing="0.05em">SOLAR</text>
+                <text y="11" id="svg-pv-w" text-anchor="middle" fill="var(--solar)" font-size="12.5" font-weight="700" class="mono">0 W</text>
+              </g>
+
+              <!-- LEFT: GRID -->
+              <g transform="translate(52, 160)">
+                <circle r="34" fill="var(--surface-solid)" stroke="var(--grid)" stroke-width="1.8" filter="url(#gridGlow)" />
+                <text y="-6" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600" letter-spacing="0.05em">GRID</text>
+                <text y="11" id="svg-grid-w" text-anchor="middle" fill="var(--grid)" font-size="12" font-weight="700" class="mono">0 W</text>
+              </g>
+
+              <!-- CENTER: INVERTER HUB -->
+              <g transform="translate(170, 160)">
+                <rect x="-30" y="-26" width="60" height="52" rx="12" fill="var(--surface-elevated)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" />
+                <text y="-4" text-anchor="middle" fill="var(--text-muted)" font-size="8.5" font-weight="600" letter-spacing="0.04em">HUB</text>
+                <text y="11" id="svg-inv-w" text-anchor="middle" fill="var(--text)" font-size="11.5" font-weight="700" class="mono">0 W</text>
+              </g>
+
+              <!-- RIGHT: HOME -->
+              <g transform="translate(288, 160)">
+                <circle r="34" fill="var(--surface-solid)" stroke="var(--home)" stroke-width="1.8" filter="url(#homeGlow)" />
+                <text y="-6" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600" letter-spacing="0.05em">HOME</text>
+                <text y="11" id="svg-load-w" text-anchor="middle" fill="var(--home)" font-size="12.5" font-weight="700" class="mono">0 W</text>
+              </g>
+
+              <!-- BOTTOM: BATTERY -->
+              <g transform="translate(170, 268)">
+                <circle r="34" fill="var(--surface-solid)" stroke="var(--battery)" stroke-width="1.8" filter="url(#batteryGlow)" />
+                <text y="-8" id="svg-bat-soc" text-anchor="middle" fill="var(--battery)" font-size="12" font-weight="700" class="mono">0%</text>
+                <text y="9" id="svg-bat-w" text-anchor="middle" fill="var(--text-secondary)" font-size="10.5" font-weight="600" class="mono">0 W</text>
+              </g>
+            </svg>
+          </div>
+        
+          </div>
+
+          <div class="card" style="display:flex;flex-direction:column;justify-content:space-between">
+            <div class="card-header">
+              <div>
+                <div class="card-title">High-Frequency Telemetry History</div>
+                <div class="card-subtitle">Power (W) & Battery State of Charge (%)</div>
+              </div>
+              <div class="range-pills">
+                <button class="range-btn" onclick="setHistoryWindow(1, this)">1H</button>
+                <button class="range-btn active" onclick="setHistoryWindow(6, this)">6H</button>
+                <button class="range-btn" onclick="setHistoryWindow(24, this)">24H</button>
+              </div>
+            </div>
+            <div style="position:relative;height:320px;width:100%">
+              <canvas id="telemetryChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px">
+          <!-- Energy Savings Optimizer Card -->
+      <section class="card" style="margin-top:20px;background:linear-gradient(180deg, rgba(129,140,248,0.07), var(--surface));border-color:rgba(129,140,248,0.28)">
+        <div class="card-header" style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:38px;height:38px;border-radius:10px;background:rgba(129,140,248,0.18);display:flex;align-items:center;justify-content:center;color:#818cf8;font-size:1.2rem;box-shadow:0 0 12px rgba(129,140,248,0.2)">⚡</div>
+            <div>
+              <div class="card-title" id="ai-insight-title" style="display:flex;align-items:center;gap:8px;font-size:0.95rem">
+                Energy Optimization & Savings
+              </div>
+              <div class="card-subtitle" id="ai-insight-sub">Real-time battery bridging, solar forecast & Octopus Go tariff calculations</div>
+            </div>
+          </div>
+          <button class="btn-refresh" id="btn-trigger-ai" onclick="triggerAiGeneration()" style="background:var(--surface-elevated);border:1px solid var(--border);color:var(--text);font-size:0.78rem;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all 0.15s">
+            <span id="ai-btn-icon">⚡</span>
+            <span id="ai-btn-txt">Recalculate</span>
+          </button>
+        </div>
+        <div id="ai-bullets-container" style="display:flex;flex-direction:column;gap:10px;font-size:0.86rem;color:var(--text);line-height:1.5;padding:6px 2px">
+          <div style="color:var(--text-secondary)">Calculating real-time savings & battery optimization...</div>
+        </div>
+      </section>
+        </div>
+      </main>
+
+      <!-- ==========================================
+           VIEW 3: AGILE EXPORT & TARIFFS
+           ========================================== -->
+      <main id="view-agile" class="view">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <!-- Octopus Agile Outgoing Shadow Export Tile -->
+        <div class="solar-forecast-card" style="background:linear-gradient(180deg, rgba(236,72,153,0.06), var(--surface));border-color:rgba(236,72,153,0.25)">
+          <div>
+            <div class="metric-top" style="margin-bottom:8px">
+              <span class="metric-title">
+                <span class="metric-icon" style="background:#ec4899"></span>
+                Agile Outgoing Tracker
+              </span>
+              <span class="pill-tag mono" id="agile-shadow-badge" style="color:#ec4899;border-color:rgba(236,72,153,0.3)">Shadow Mode</span>
+            </div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:6px">
+              <div style="display:flex;align-items:baseline;gap:8px">
+                <span class="mono" id="agile-live-rate" style="font-size:1.55rem;font-weight:700;color:#ec4899">--.-p</span>
+                <span class="metric-unit" style="font-size:0.85rem;color:#ec4899">/kWh live</span>
+              </div>
+              <div style="text-align:right">
+                <span class="mono" id="agile-next-countdown" style="font-size:0.75rem;padding:3px 7px;border-radius:6px;background:rgba(236,72,153,0.12);color:#ec4899;border:1px solid rgba(236,72,153,0.25);font-weight:600">Next in --m --s</span>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;color:var(--text-muted);margin-top:4px">
+              <span id="agile-peak-window">Peak: 16:00 - 19:00</span>
+              <span id="agile-next-rate-preview" class="mono" style="font-size:0.73rem;color:var(--text-secondary)"></span>
+            </div>
+          </div>
+
+          <!-- Top Export Slots Today & Realized Rate -->
+          <div style="margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.06);font-size:0.74rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="color:var(--text-muted);font-weight:600">🔥 Top Export Slots Today</span>
+              <span class="mono" id="agile-realized-pill" style="font-size:0.70rem;color:#a855f7;background:rgba(168,85,247,0.12);padding:1px 6px;border-radius:4px">Avg --.-p</span>
+            </div>
+            <div id="agile-top-slots-container" style="display:flex;gap:6px;justify-content:space-between">
+              <span style="color:var(--text-muted)">Loading top windows...</span>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
+            <span>Peak <strong class="mono" id="agile-peak-rate" style="color:#ec4899">--.-p</strong></span>
+            <span>Realized <strong class="mono" id="agile-realized-rate" style="color:#38bdf8">--.-p/kWh</strong></span>
+            <span>Shadow Earned <strong class="mono" id="agile-shadow-earned" style="color:var(--text)">£0.00</strong></span>
+          </div>
+        </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Import & Export Tariffs</div>
+                <div class="card-subtitle">Active contract rates for Reading (Region H)</div>
+              </div>
+              <span class="pill-tag mono" style="color:#ec4899;border-color:rgba(236,72,153,0.3)">Region H</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;font-size:0.86rem">
+              <div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface-elevated);border-radius:10px;border:1px solid var(--border)">
+                <span>Octopus Go Night (00:30 - 05:30)</span>
+                <strong class="mono" style="color:var(--battery)">9.40p / kWh</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface-elevated);border-radius:10px;border:1px solid var(--border)">
+                <span>Octopus Go Day Peak (05:30 - 00:30)</span>
+                <strong class="mono" style="color:var(--grid-import)">36.56p / kWh</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface-elevated);border-radius:10px;border:1px solid var(--border)">
+                <span>Agile Outgoing (Half-Hourly Wholesale)</span>
+                <strong class="mono" style="color:#ec4899">16.4p - 32.4p</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface-elevated);border-radius:10px;border:1px solid var(--border)">
+                <span>Standard SEG Baseline (Fixed)</span>
+                <strong class="mono" style="color:var(--text-secondary)">15.00p / kWh</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px">
+          <!-- Energy Savings Optimizer Card -->
+      <section class="card" style="margin-top:20px;background:linear-gradient(180deg, rgba(129,140,248,0.07), var(--surface));border-color:rgba(129,140,248,0.28)">
+        <div class="card-header" style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:38px;height:38px;border-radius:10px;background:rgba(129,140,248,0.18);display:flex;align-items:center;justify-content:center;color:#818cf8;font-size:1.2rem;box-shadow:0 0 12px rgba(129,140,248,0.2)">⚡</div>
+            <div>
+              <div class="card-title" id="ai-insight-title" style="display:flex;align-items:center;gap:8px;font-size:0.95rem">
+                Energy Optimization & Savings
+              </div>
+              <div class="card-subtitle" id="ai-insight-sub">Real-time battery bridging, solar forecast & Octopus Go tariff calculations</div>
+            </div>
+          </div>
+          <button class="btn-refresh" id="btn-trigger-ai" onclick="triggerAiGeneration()" style="background:var(--surface-elevated);border:1px solid var(--border);color:var(--text);font-size:0.78rem;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all 0.15s">
+            <span id="ai-btn-icon">⚡</span>
+            <span id="ai-btn-txt">Recalculate</span>
+          </button>
+        </div>
+        <div id="ai-bullets-container" style="display:flex;flex-direction:column;gap:10px;font-size:0.86rem;color:var(--text);line-height:1.5;padding:6px 2px">
+          <div style="color:var(--text-secondary)">Calculating real-time savings & battery optimization...</div>
+        </div>
+      </section>
+        </div>
+      </main>
+
+      <!-- ==========================================
+           VIEW 4: SOLAR FORECAST & IRRADIANCE
+           ========================================== -->
+      <main id="view-forecast" class="view">
+        <div style="display:grid;grid-template-columns:320px 1fr;gap:16px">
+          <!-- Tomorrow Forecast Summary Card -->
+        <div class="solar-forecast-card">
+          <div>
+            <div class="metric-top" style="margin-bottom:8px">
+              <span class="metric-title">
+                <span class="metric-icon" style="background:var(--solar)"></span>
+                Tomorrow's Solar Outlook
+              </span>
+              <span class="pill-tag mono" id="fore-tomorrow-icon" style="font-size:0.82rem">🌤️</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
+              <span class="mono" id="fore-tomorrow-yield" style="font-size:1.8rem;font-weight:700;color:var(--solar)">--.-</span>
+              <span class="metric-unit" style="font-size:1rem;color:var(--solar)">kWh</span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="fore-tomorrow-desc">
+              Predicted Generation · Clear Sky
+            </div>
+          </div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
+            <span>Temp <strong class="mono" id="fore-tomorrow-temps" style="color:var(--text)">--° / --°C</strong></span>
+            <span>Today Est <strong class="mono" id="fore-today-yield" style="color:var(--text-secondary)">--.- kWh</strong></span>
+          </div>
+        </div>
+          <!-- 24-Hour Solar Radiation & Weather Hourly Track -->
+        <div class="solar-forecast-card" style="overflow:hidden">
+          <div class="metric-top" style="margin-bottom:10px">
+            <div>
+              <span class="metric-title">24-Hour Solar Yield & Sunlight Timeline</span>
+              <span style="font-size:0.72rem;color:var(--text-muted);margin-left:4px">Hourly forecast from Open-Meteo local irradiance model</span>
+            </div>
+            <span class="pill-tag mono" style="font-size:0.65rem;color:var(--home)">Local Solar Track</span>
+          </div>
+          <div class="hourly-forecast-scroll" id="forecast-hourly-container">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+        </div>
+
+        <div style="margin-top:20px">
+          <!-- Smart Appliance Recommendation Advisory Banner -->
+      <section class="card" id="appliance-advisory-card" style="margin-bottom:20px;padding:16px 20px;background:var(--surface);border-color:rgba(56,189,248,0.2)">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div id="adv-icon" style="font-size:1.5rem;width:42px;height:42px;border-radius:12px;background:var(--surface-elevated);display:flex;align-items:center;justify-content:center;border:1px solid var(--border)">☀️</div>
+            <div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:0.92rem;font-weight:600" id="adv-title">Smart Appliance Planner</span>
+                <span class="pill-tag mono" id="adv-badge" style="font-size:0.7rem;color:#38bdf8;border-color:rgba(56,189,248,0.3)">Calculating...</span>
+              </div>
+              <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:3px" id="adv-action">Evaluating solar curve & Octopus Go tariff...</div>
+            </div>
+          </div>
+          <div class="mono" style="font-size:0.78rem;color:var(--text-muted);text-align:right" id="adv-savings-note">
+            Optimised for Octopus Go
+          </div>
+        </div>
+
+        <!-- Appliance Run Matrix (Dishwasher, Washing Machine, Tumble Dryer) -->
+        <div id="adv-appliance-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </section>
+        </div>
+      </main>
+
+      <!-- ==========================================
+           VIEW 5: DEVICES & LIGHTING
+           ========================================== -->
+      <main id="view-devices" class="view">
+        <!-- Load Breakdown Bar Card -->
       <section class="card load-bar-card">
         <div class="card-header" style="margin-bottom:4px">
           <div>
@@ -571,7 +861,65 @@
           </div>
         </div>
       </section>
-    </main>
+      </main>
+
+      <!-- ==========================================
+           VIEW 6: SETTINGS & BATTERY SCHEDULE
+           ========================================== -->
+      <main id="view-settings" class="view">
+        <div style="display:grid;grid-template-columns:minmax(320px, 420px) 1fr;gap:16px">
+          <!-- FoxESS Grid Force-Charge Schedule Block -->
+        <div class="solar-forecast-card">
+          <div>
+            <div class="metric-top" style="margin-bottom:8px">
+              <span class="metric-title">
+                <span class="metric-icon" style="background:var(--battery)"></span>
+                Battery Grid Charge Schedule
+              </span>
+              <span class="pill-tag mono" id="sched-octo-aligned-pill" style="color:var(--battery);border-color:rgba(16,185,129,0.3)">Aligned</span>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
+              <span class="mono" id="sched-p1-window" style="font-size:1.55rem;font-weight:700;color:var(--battery)">00:30 - 05:30</span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="sched-p1-status">
+              Period 1 Force-Charge · Inverter Holding Regs
+            </div>
+          </div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
+            <span>Target <strong class="mono" id="sched-target-soc" style="color:var(--text)">100% SoC</strong></span>
+            <span>Rate <strong class="mono" id="sched-rate-p" style="color:var(--battery)">9.4p/kWh</strong></span>
+          </div>
+        </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">FoxESS Inverter Configuration</div>
+                <div class="card-subtitle">Modbus RTU Holding Registers & Safety Reserves</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;font-size:0.84rem">
+              <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface-elevated);border-radius:10px;border:1px solid var(--border)">
+                <span>Hardware Model</span>
+                <strong class="mono" style="color:var(--text)">FoxESS H1-3.7-E-G2-WL</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface-elevated);border-radius:10px;border:1px solid var(--border)">
+                <span>Battery Gross Capacity</span>
+                <strong class="mono" style="color:var(--battery)">9.84 kWh (8.86 kWh usable)</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface-elevated);border-radius:10px;border:1px solid var(--border)">
+                <span>Minimum Protected Reserve</span>
+                <strong class="mono" style="color:var(--text)">10% SoC</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--surface-elevated);border-radius:10px;border:1px solid var(--border)">
+                <span>Maximum Charge Rate</span>
+                <strong class="mono" style="color:var(--text)">40A (~3.7 kW)</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   </div>
 
   <!-- Philips Hue Light Controls Modal -->
