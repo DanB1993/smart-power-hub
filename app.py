@@ -2008,13 +2008,23 @@ def set_foxess_battery_reserves(min_soc, max_soc, min_soc_on_grid=None, max_char
         return False
 
 
-def set_foxess_force_charge_schedule(enabled, start_hour=0, start_minute=30, end_hour=5, end_minute=30):
-    """Write Period 1 force charge schedule to registers 41001-41006 via Modbus FC16."""
+def set_foxess_force_charge_schedule(enabled, start_hour=0, start_minute=30, end_hour=5, end_minute=30, p2_enabled=False, p2_start_hour=0, p2_start_minute=0, p2_end_hour=0, p2_end_minute=0):
+    """Write Period 1 and Period 2 force charge schedules to registers 41001-41006 via Modbus FC16."""
     try:
         sock = socket.create_connection((INVERTER_HOST, INVERTER_PORT), timeout=4.5)
-        start_val = (start_hour * 256) + start_minute
-        end_val = (end_hour * 256) + end_minute
-        vals = [1 if enabled else 0, start_val, end_val, 0, 0, 0]
+        p1_start_val = (start_hour * 256) + start_minute
+        p1_end_val = (end_hour * 256) + end_minute
+        p2_start_val = (p2_start_hour * 256) + p2_start_minute
+        p2_end_val = (p2_end_hour * 256) + p2_end_minute
+
+        vals = [
+            1 if enabled else 0,
+            p1_start_val,
+            p1_end_val,
+            1 if p2_enabled else 0,
+            p2_start_val,
+            p2_end_val,
+        ]
         count = len(vals)
         byte_count = count * 2
         payload = struct.pack(f">HHHBBHHB{count}H", 77, 0, 7 + byte_count, INVERTER_UNIT, 16, 41001, count, byte_count, *vals)
@@ -3401,15 +3411,29 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             enabled = bool(body.get("enabled", True))
             start_str = str(body.get("start", "00:30"))
             end_str = str(body.get("end", "05:30"))
+            p2_enabled = bool(body.get("p2_enabled", False))
+            p2_start_str = str(body.get("p2_start", "00:00"))
+            p2_end_str = str(body.get("p2_end", "00:00"))
             try:
                 sh, sm = [int(x) for x in start_str.split(":")]
                 eh, em = [int(x) for x in end_str.split(":")]
             except Exception:
                 sh, sm, eh, em = 0, 30, 5, 30
-            ok = set_foxess_force_charge_schedule(enabled, sh, sm, eh, em)
+            try:
+                p2_sh, p2_sm = [int(x) for x in p2_start_str.split(":")]
+                p2_eh, p2_em = [int(x) for x in p2_end_str.split(":")]
+            except Exception:
+                p2_sh, p2_sm, p2_eh, p2_em = 0, 0, 0, 0
+            ok = set_foxess_force_charge_schedule(enabled, sh, sm, eh, em, p2_enabled, p2_sh, p2_sm, p2_eh, p2_em)
             time.sleep(0.3)
             poll_inverter_once(read_static=False)
-            self.send_json({"ok": ok, "enabled": enabled, "window": f"{sh:02d}:{sm:02d} - {eh:02d}:{em:02d}"})
+            self.send_json({
+                "ok": ok,
+                "enabled": enabled,
+                "window": f"{sh:02d}:{sm:02d} - {eh:02d}:{em:02d}",
+                "p2_enabled": p2_enabled,
+                "p2_window": f"{p2_sh:02d}:{p2_sm:02d} - {p2_eh:02d}:{p2_em:02d}"
+            })
             return
 
         if parsed.path == "/api/inverter/battery_limits":

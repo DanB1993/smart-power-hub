@@ -997,17 +997,38 @@
 
             <!-- 2. Overnight Force-Charge Schedule -->
             <div style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:10px;padding:14px">
-              <div style="font-weight:600;font-size:0.85rem;color:var(--text);margin-bottom:4px">Force-Charge Window (Registers 41001-41006)</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <div style="font-weight:600;font-size:0.85rem;color:var(--text)">Force-Charge Window (Period 1 & 2)</div>
+                <button class="btn-add" onclick="alignScheduleWithTariff()" style="font-size:0.7rem;padding:3px 8px;border-color:rgba(16,185,129,0.35);color:var(--battery)" title="Load Octopus Go 00:30 - 05:30 off-peak times">⚡ Align with Tariff</button>
+              </div>
               <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px">Automatic grid charging window matching your off-peak tariff.</div>
-              <div style="display:flex;gap:8px;align-items:center">
-                <input type="text" id="ctrl-sched-start" class="field-input mono" value="00:30" placeholder="00:30" style="width:75px;font-size:0.85rem;text-align:center" />
+              
+              <!-- Period 1 -->
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+                <span class="mono" style="font-size:0.72rem;color:var(--text-secondary);min-width:44px">Slot 1:</span>
+                <input type="text" id="ctrl-sched-start" class="field-input mono" value="00:30" placeholder="00:30" style="width:72px;font-size:0.85rem;text-align:center" />
                 <span style="color:var(--text-muted)">to</span>
-                <input type="text" id="ctrl-sched-end" class="field-input mono" value="05:30" placeholder="05:30" style="width:75px;font-size:0.85rem;text-align:center" />
-                <label class="toggle" title="Enable / Disable Schedule" style="margin-left:4px">
+                <input type="text" id="ctrl-sched-end" class="field-input mono" value="05:30" placeholder="05:30" style="width:72px;font-size:0.85rem;text-align:center" />
+                <label class="toggle" title="Enable / Disable Slot 1" style="margin-left:4px">
                   <input type="checkbox" id="ctrl-sched-enable" checked />
                   <span class="toggle-track green"></span>
                 </label>
-                <button class="btn-add" id="btn-save-sched" onclick="saveInverterSchedule()" style="font-size:0.78rem;margin-left:auto">Save Window</button>
+              </div>
+
+              <!-- Period 2 -->
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+                <span class="mono" style="font-size:0.72rem;color:var(--text-secondary);min-width:44px">Slot 2:</span>
+                <input type="text" id="ctrl-sched-p2-start" class="field-input mono" value="00:00" placeholder="00:00" style="width:72px;font-size:0.85rem;text-align:center" />
+                <span style="color:var(--text-muted)">to</span>
+                <input type="text" id="ctrl-sched-p2-end" class="field-input mono" value="00:00" placeholder="00:00" style="width:72px;font-size:0.85rem;text-align:center" />
+                <label class="toggle" title="Enable / Disable Slot 2 (Optional daytime/evening boost)" style="margin-left:4px">
+                  <input type="checkbox" id="ctrl-sched-p2-enable" />
+                  <span class="toggle-track green"></span>
+                </label>
+              </div>
+
+              <div style="display:flex;justify-content:flex-end">
+                <button class="btn-add" id="btn-save-sched" onclick="saveInverterSchedule()" style="font-size:0.78rem">Save Schedule Windows</button>
               </div>
             </div>
 
@@ -1482,6 +1503,15 @@
               if (sStart && document.activeElement !== sStart && p1.start) sStart.value = p1.start;
               if (sEnd && document.activeElement !== sEnd && p1.end) sEnd.value = p1.end;
               if (sEn && document.activeElement !== sEn && p1.enabled !== undefined) sEn.checked = !!p1.enabled;
+            }
+            const p2 = sched.period2 || {};
+            const sP2Start = document.getElementById('ctrl-sched-p2-start');
+            const sP2End = document.getElementById('ctrl-sched-p2-end');
+            const sP2En = document.getElementById('ctrl-sched-p2-enable');
+            if (p2) {
+              if (sP2Start && document.activeElement !== sP2Start && p2.start) sP2Start.value = p2.start;
+              if (sP2End && document.activeElement !== sP2End && p2.end) sP2End.value = p2.end;
+              if (sP2En && document.activeElement !== sP2En && p2.enabled !== undefined) sP2En.checked = !!p2.enabled;
             }
             const minSocInput = document.getElementById('ctrl-min-soc');
             const maxChgInput = document.getElementById('ctrl-max-charge-a');
@@ -2155,10 +2185,23 @@
       }
     }
 
+    function alignScheduleWithTariff() {
+      const startInput = document.getElementById('ctrl-sched-start');
+      const endInput = document.getElementById('ctrl-sched-end');
+      const enableInput = document.getElementById('ctrl-sched-enable');
+      if (startInput) startInput.value = '00:30';
+      if (endInput) endInput.value = '05:30';
+      if (enableInput) enableInput.checked = true;
+      showCtrlStatus('Schedule window set to Octopus Go off-peak hours (00:30 - 05:30). Click "Save Schedule Windows" to write to inverter.');
+    }
+
     async function saveInverterSchedule() {
       const startInput = document.getElementById('ctrl-sched-start');
       const endInput = document.getElementById('ctrl-sched-end');
       const enableInput = document.getElementById('ctrl-sched-enable');
+      const p2StartInput = document.getElementById('ctrl-sched-p2-start');
+      const p2EndInput = document.getElementById('ctrl-sched-p2-end');
+      const p2EnableInput = document.getElementById('ctrl-sched-p2-enable');
       const btn = document.getElementById('btn-save-sched');
       if (!startInput || !endInput || !enableInput || !btn) return;
 
@@ -2172,12 +2215,15 @@
           body: JSON.stringify({
             start: startInput.value.trim(),
             end: endInput.value.trim(),
-            enabled: enableInput.checked
+            enabled: enableInput.checked,
+            p2_start: p2StartInput ? p2StartInput.value.trim() : '00:00',
+            p2_end: p2EndInput ? p2EndInput.value.trim() : '00:00',
+            p2_enabled: p2EnableInput ? p2EnableInput.checked : false
           })
         });
         const data = await res.json();
         if (data.ok) {
-          showCtrlStatus(`Force-charge schedule saved: ${data.window} (${data.enabled ? 'Enabled' : 'Disabled'})`);
+          showCtrlStatus(`Schedule saved: Slot 1 ${data.window} (${data.enabled ? 'ON' : 'OFF'})${data.p2_enabled ? ` · Slot 2 ${data.p2_window} (ON)` : ''}`);
           fetchLive();
         } else {
           showCtrlStatus('Failed to update force-charge schedule on inverter.', true);
