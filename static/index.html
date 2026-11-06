@@ -111,7 +111,7 @@
       <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
           <button onclick="openChangelogModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v2.4.0</span>
+            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v1.0.0</span>
             <span>Changelog</span>
           </button>
           <span style="font-size:0.68rem;color:var(--text-muted)" class="mono">Open-Source</span>
@@ -994,65 +994,28 @@
           <div>
             <div class="card-title" style="display:flex;align-items:center;gap:8px">
               <span>Changelog</span>
-              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v2.4.0</span>
+              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v1.0.0</span>
             </div>
-            <div class="card-subtitle">Release history & recent improvements</div>
+            <div class="card-subtitle">Official 1.0 Release</div>
           </div>
         </div>
         <button class="btn-close-modal" onclick="closeChangelogModal()" title="Close">✕</button>
       </div>
       <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:16px">
         
-        <!-- v2.4.0 -->
+        <!-- v1.0.0 -->
         <div style="border-left:2px solid var(--accent);padding-left:14px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
-            <strong class="mono" style="color:var(--text);font-size:0.95rem">v2.4.0</strong>
-            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">Latest</span>
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.0.0 — Initial Open-Source Release</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">6 Nov 2026</span>
           </div>
           <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
-            <li>Added native local <strong>Shelly smart plug</strong> support & network scanner</li>
-            <li>Expanded UK supplier tariffs: British Gas, E.ON Next, OVO, EDF, Scottish Power & Ofgem Cap</li>
-            <li>Added interactive <strong>Setup Wizard</strong> with automated Modbus inverter discovery</li>
-          </ul>
-        </div>
-
-        <!-- v2.3.0 -->
-        <div style="border-left:2px solid var(--battery);padding-left:14px">
-          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
-            <strong class="mono" style="color:var(--text);font-size:0.95rem">v2.3.0</strong>
-            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">Nov 2026</span>
-          </div>
-          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
-            <li>Added <strong>48-Slot Agile Rates Curve</strong> with live color-coded export tiers</li>
-            <li>Added <strong>Export Dispatch Planner</strong> with arbitrage profit estimates</li>
-            <li>Added <strong>Battery Health & 00:30 Bridging Gauge</strong> with ML evening baseload prediction</li>
-            <li>Added 14-day <strong>Financial Savings Ledger</strong></li>
-          </ul>
-        </div>
-
-        <!-- v2.2.0 -->
-        <div style="border-left:2px solid var(--border);padding-left:14px">
-          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
-            <strong class="mono" style="color:var(--text);font-size:0.95rem">v2.2.0</strong>
-            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">Nov 2026</span>
-          </div>
-          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
-            <li>Redesigned modern collapsible sidebar layout with dedicated view switching</li>
-            <li>Live cross-bus power flow animation with bidirectional import/export indicators</li>
-            <li>Automated TP-Link Tapo KLAP v2 energy meter and idle cut-off rules</li>
-          </ul>
-        </div>
-
-        <!-- v2.0.0 -->
-        <div style="border-left:2px solid var(--border);padding-left:14px">
-          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
-            <strong class="mono" style="color:var(--text);font-size:0.95rem">v2.0.0</strong>
-            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">Oct 2026</span>
-          </div>
-          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
-            <li>Direct local FoxESS Modbus RTU-over-TCP integration (zero-cloud)</li>
-            <li>Philips Hue lighting power model integration</li>
-            <li>Machine-learned baseload demand forecasting & solar irradiance calibration</li>
+            <li><strong>Zero-Cloud Local Inverter Control</strong>: Modbus RTU-over-TCP support for FoxESS systems with live power flow animation.</li>
+            <li><strong>Auto-Discovery & Setup Wizard</strong>: 4-step first-time onboarding with subnet scan for inverters, Hue bridges & Shelly plugs.</li>
+            <li><strong>Multi-Supplier Energy Tariffs</strong>: Full support for Octopus (Go, Intelligent, Agile, Cosy, Tracker), British Gas, E.ON Next, OVO, EDF, Scottish Power, and Ofgem Price Cap.</li>
+            <li><strong>48-Slot Agile Rates Curve & Planner</strong>: Real-time half-hourly wholesale export tracking and discharge recommendations.</li>
+            <li><strong>Smart Battery Bridging</strong>: ML-powered countdown and confidence meter predicting battery endurance to the 00:30 off-peak window.</li>
+            <li><strong>Hardware Plugs & Smart Lighting</strong>: TP-Link Tapo (KLAP v2), Shelly (local HTTP RPC), and Philips Hue integration.</li>
           </ul>
         </div>
 
