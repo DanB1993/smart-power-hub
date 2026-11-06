@@ -37,7 +37,7 @@ Engineered for FoxESS inverters, Octopus Energy (Go, Agile, Intelligent, Tracker
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/danielmclaren/smart-power-dashboard.git
+git clone https://github.com/DanB1993/smart-power-dashboard.git
 cd smart-power-dashboard
 ```
 
@@ -110,7 +110,7 @@ You can configure the system through the **Web Setup Wizard** (`/setup`) or by s
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/danielmclaren/smart-power-dashboard.git
+git clone https://github.com/DanB1993/smart-power-dashboard.git
 cd smart-power-dashboard
 
 # Install dependencies
