@@ -108,7 +108,14 @@
         </nav>
       </div>
 
-      <div class="sidebar-foot">
+      <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
+          <button onclick="openChangelogModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
+            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v2.4.0</span>
+            <span>Changelog</span>
+          </button>
+          <span style="font-size:0.68rem;color:var(--text-muted)" class="mono">Open-Source</span>
+        </div>
         <div class="system-status-pill">
           <span class="live-dot" id="sidebar-status-dot"></span>
           <span class="status-text mono" id="sidebar-status-text">Online · 10s poll</span>
@@ -978,6 +985,81 @@
     </div>
   </div>
 
+  <!-- Simple Changelog Modal -->
+  <div class="modal-backdrop" id="changelog-modal" onclick="if(event.target===this)closeChangelogModal()">
+    <div class="modal-dialog" style="max-width:540px">
+      <div class="modal-head">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:1.2rem">📋</div>
+          <div>
+            <div class="card-title" style="display:flex;align-items:center;gap:8px">
+              <span>Changelog</span>
+              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v2.4.0</span>
+            </div>
+            <div class="card-subtitle">Release history & recent improvements</div>
+          </div>
+        </div>
+        <button class="btn-close-modal" onclick="closeChangelogModal()" title="Close">✕</button>
+      </div>
+      <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:16px">
+        
+        <!-- v2.4.0 -->
+        <div style="border-left:2px solid var(--accent);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v2.4.0</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">Latest</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li>Added native local <strong>Shelly smart plug</strong> support & network scanner</li>
+            <li>Expanded UK supplier tariffs: British Gas, E.ON Next, OVO, EDF, Scottish Power & Ofgem Cap</li>
+            <li>Added interactive <strong>Setup Wizard</strong> with automated Modbus inverter discovery</li>
+          </ul>
+        </div>
+
+        <!-- v2.3.0 -->
+        <div style="border-left:2px solid var(--battery);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v2.3.0</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">Nov 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li>Added <strong>48-Slot Agile Rates Curve</strong> with live color-coded export tiers</li>
+            <li>Added <strong>Export Dispatch Planner</strong> with arbitrage profit estimates</li>
+            <li>Added <strong>Battery Health & 00:30 Bridging Gauge</strong> with ML evening baseload prediction</li>
+            <li>Added 14-day <strong>Financial Savings Ledger</strong></li>
+          </ul>
+        </div>
+
+        <!-- v2.2.0 -->
+        <div style="border-left:2px solid var(--border);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v2.2.0</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">Nov 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li>Redesigned modern collapsible sidebar layout with dedicated view switching</li>
+            <li>Live cross-bus power flow animation with bidirectional import/export indicators</li>
+            <li>Automated TP-Link Tapo KLAP v2 energy meter and idle cut-off rules</li>
+          </ul>
+        </div>
+
+        <!-- v2.0.0 -->
+        <div style="border-left:2px solid var(--border);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v2.0.0</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">Oct 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li>Direct local FoxESS Modbus RTU-over-TCP integration (zero-cloud)</li>
+            <li>Philips Hue lighting power model integration</li>
+            <li>Machine-learned baseload demand forecasting & solar irradiance calibration</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <script>
     let chartInstance = null;
     let historyHours = 6;
@@ -1031,6 +1113,16 @@
 
     if (localStorage.getItem('sidebar_collapsed') === '1' && window.innerWidth > 900) {
       document.getElementById('app-sidebar').classList.add('collapsed');
+    }
+
+    function openChangelogModal() {
+      const modal = document.getElementById('changelog-modal');
+      if (modal) modal.classList.add('open');
+    }
+
+    function closeChangelogModal() {
+      const modal = document.getElementById('changelog-modal');
+      if (modal) modal.classList.remove('open');
     }
 
     function setText(id, val) {
