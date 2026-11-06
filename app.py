@@ -1962,6 +1962,52 @@ def calculate_daily_financials():
     }
 
 
+def set_foxess_work_mode(mode_code):
+    """Write work mode to Holding Register 41000 via Modbus FC06."""
+    try:
+        sock = socket.create_connection((INVERTER_HOST, INVERTER_PORT), timeout=4.5)
+        # TransID(2) + Proto(2) + Len(2) + Unit(1) + Func(1) + Reg(2) + Val(2)
+        payload = struct.pack(">HHHBBHH", 88, 0, 6, INVERTER_UNIT, 6, 41000, int(mode_code))
+        sock.sendall(payload)
+        resp = sock.recv(16)
+        sock.close()
+        return True
+    except Exception as e:
+        print(f"[FoxESS Work Mode Write Warning] {e}")
+        return False
+
+
+def set_foxess_battery_reserves(min_soc, max_soc, min_soc_on_grid=None, max_charge_a=None, max_discharge_a=None):
+    """Write battery safety thresholds and current limits (Registers 41007-41011) via Modbus FC16."""
+    try:
+        sock = socket.create_connection((INVERTER_HOST, INVERTER_PORT), timeout=4.5)
+        # Read current register values first
+        regs = read_regs(sock, 3, 41007, 5, unit=INVERTER_UNIT, tx_id=89)
+        cur_chg_a = regs[0] if regs else 400
+        cur_dis_a = regs[1] if regs else 400
+        cur_min = regs[2] if regs else 10
+        cur_max = regs[3] if regs else 100
+        cur_grid_min = regs[4] if regs else 10
+
+        new_chg_a = int(float(max_charge_a) * 10) if max_charge_a is not None else cur_chg_a
+        new_dis_a = int(float(max_discharge_a) * 10) if max_discharge_a is not None else cur_dis_a
+        new_min = int(min_soc) if min_soc is not None else cur_min
+        new_max = int(max_soc) if max_soc is not None else cur_max
+        new_grid_min = int(min_soc_on_grid) if min_soc_on_grid is not None else (new_min if min_soc is not None else cur_grid_min)
+
+        vals = [new_chg_a, new_dis_a, new_min, new_max, new_grid_min]
+        count = len(vals)
+        byte_count = count * 2
+        payload = struct.pack(f">HHHBBHHB{count}H", 90, 0, 7 + byte_count, INVERTER_UNIT, 16, 41007, count, byte_count, *vals)
+        sock.sendall(payload)
+        resp = sock.recv(16)
+        sock.close()
+        return True
+    except Exception as e:
+        print(f"[FoxESS Reserves Write Warning] {e}")
+        return False
+
+
 def set_foxess_force_charge_schedule(enabled, start_hour=0, start_minute=30, end_hour=5, end_minute=30):
     """Write Period 1 force charge schedule to registers 41001-41006 via Modbus FC16."""
     try:
@@ -3024,6 +3070,7 @@ def poll_inverter_once(read_static=False):
             },
         },
         "settings": {
+            "work_mode_code": work_mode_code,
             "work_mode": WORK_MODE_MAP.get(work_mode_code, f"Mode ({work_mode_code})"),
             "min_soc_pct": min_soc,
             "min_soc_on_grid_pct": min_soc_on_grid,
@@ -3340,6 +3387,40 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             conn.commit()
             conn.close()
             self.send_json({"ok": True})
+            return
+
+        if parsed.path == "/api/inverter/work_mode":
+            mode = int(body.get("mode", 0))
+            ok = set_foxess_work_mode(mode)
+            time.sleep(0.3)
+            poll_inverter_once(read_static=False)
+            self.send_json({"ok": ok, "mode": mode, "label": WORK_MODE_MAP.get(mode, "Unknown")})
+            return
+
+        if parsed.path == "/api/inverter/schedule":
+            enabled = bool(body.get("enabled", True))
+            start_str = str(body.get("start", "00:30"))
+            end_str = str(body.get("end", "05:30"))
+            try:
+                sh, sm = [int(x) for x in start_str.split(":")]
+                eh, em = [int(x) for x in end_str.split(":")]
+            except Exception:
+                sh, sm, eh, em = 0, 30, 5, 30
+            ok = set_foxess_force_charge_schedule(enabled, sh, sm, eh, em)
+            time.sleep(0.3)
+            poll_inverter_once(read_static=False)
+            self.send_json({"ok": ok, "enabled": enabled, "window": f"{sh:02d}:{sm:02d} - {eh:02d}:{em:02d}"})
+            return
+
+        if parsed.path == "/api/inverter/battery_limits":
+            min_soc = int(body.get("min_soc", 10))
+            max_soc = int(body.get("max_soc", 100))
+            max_chg_a = float(body.get("max_charge_a", 40.0))
+            max_dis_a = float(body.get("max_discharge_a", 40.0))
+            ok = set_foxess_battery_reserves(min_soc, max_soc, min_soc, max_chg_a, max_dis_a)
+            time.sleep(0.3)
+            poll_inverter_once(read_static=False)
+            self.send_json({"ok": ok, "min_soc": min_soc, "max_soc": max_soc, "max_charge_a": max_chg_a, "max_discharge_a": max_dis_a})
             return
 
         if parsed.path == "/api/shelly/toggle":

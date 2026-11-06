@@ -914,29 +914,29 @@
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:minmax(320px, 420px) 1fr;gap:16px">
+        <div style="display:grid;grid-template-columns:minmax(320px, 420px) 1fr;gap:16px;margin-bottom:16px">
           <!-- FoxESS Grid Force-Charge Schedule Block -->
-        <div class="solar-forecast-card">
-          <div>
-            <div class="metric-top" style="margin-bottom:8px">
-              <span class="metric-title">
-                <span class="metric-icon" style="background:var(--battery)"></span>
-                Battery Grid Charge Schedule
-              </span>
-              <span class="pill-tag mono" id="sched-octo-aligned-pill" style="color:var(--battery);border-color:rgba(16,185,129,0.3)">Aligned</span>
+          <div class="solar-forecast-card">
+            <div>
+              <div class="metric-top" style="margin-bottom:8px">
+                <span class="metric-title">
+                  <span class="metric-icon" style="background:var(--battery)"></span>
+                  Battery Grid Charge Schedule
+                </span>
+                <span class="pill-tag mono" id="sched-octo-aligned-pill" style="color:var(--battery);border-color:rgba(16,185,129,0.3)">Aligned</span>
+              </div>
+              <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
+                <span class="mono" id="sched-p1-window" style="font-size:1.55rem;font-weight:700;color:var(--battery)">00:30 - 05:30</span>
+              </div>
+              <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="sched-p1-status">
+                Period 1 Force-Charge · Inverter Holding Regs
+              </div>
             </div>
-            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
-              <span class="mono" id="sched-p1-window" style="font-size:1.55rem;font-weight:700;color:var(--battery)">00:30 - 05:30</span>
-            </div>
-            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="sched-p1-status">
-              Period 1 Force-Charge · Inverter Holding Regs
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
+              <span>Target <strong class="mono" id="sched-target-soc" style="color:var(--text)">100% SoC</strong></span>
+              <span>Rate <strong class="mono" id="sched-rate-p" style="color:var(--battery)">9.4p/kWh</strong></span>
             </div>
           </div>
-          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
-            <span>Target <strong class="mono" id="sched-target-soc" style="color:var(--text)">100% SoC</strong></span>
-            <span>Rate <strong class="mono" id="sched-rate-p" style="color:var(--battery)">9.4p/kWh</strong></span>
-          </div>
-        </div>
 
           <div class="card">
             <div class="card-header">
@@ -964,6 +964,71 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Inverter Holding Register Controls & Battery Management -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Inverter Mode & Battery Safety Controls</div>
+              <div class="card-subtitle">Live Modbus RTU holding register controls (FC06 / FC16)</div>
+            </div>
+            <span class="pill-tag mono" style="color:var(--home);border-color:rgba(56,189,248,0.3)">Live Modbus Control</span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;padding:8px 0">
+            <!-- 1. Work Mode Selector -->
+            <div style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:10px;padding:14px">
+              <div style="font-weight:600;font-size:0.85rem;color:var(--text);margin-bottom:4px">Operating Mode (Register 41000)</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px">Dictates how solar PV and battery prioritize household vs grid export.</div>
+              <div style="display:flex;gap:8px">
+                <select id="ctrl-work-mode" class="field-select" style="flex:1;font-size:0.85rem">
+                  <option value="0">Self-Use (Default / Solar Priority)</option>
+                  <option value="1">Feed-in Priority (Max Export)</option>
+                  <option value="2">Back-up (Keep Battery at 100%)</option>
+                  <option value="4">Force Charge (Grid In)</option>
+                  <option value="5">Force Discharge (Dump to Grid)</option>
+                </select>
+                <button class="btn-add" id="btn-save-mode" onclick="saveInverterWorkMode()" style="font-size:0.78rem">Set Mode</button>
+              </div>
+            </div>
+
+            <!-- 2. Overnight Force-Charge Schedule -->
+            <div style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:10px;padding:14px">
+              <div style="font-weight:600;font-size:0.85rem;color:var(--text);margin-bottom:4px">Force-Charge Window (Registers 41001-41006)</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px">Automatic grid charging window matching your off-peak tariff.</div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input type="text" id="ctrl-sched-start" class="field-input mono" value="00:30" placeholder="00:30" style="width:75px;font-size:0.85rem;text-align:center" />
+                <span style="color:var(--text-muted)">to</span>
+                <input type="text" id="ctrl-sched-end" class="field-input mono" value="05:30" placeholder="05:30" style="width:75px;font-size:0.85rem;text-align:center" />
+                <label class="toggle" title="Enable / Disable Schedule" style="margin-left:4px">
+                  <input type="checkbox" id="ctrl-sched-enable" checked />
+                  <span class="toggle-track green"></span>
+                </label>
+                <button class="btn-add" id="btn-save-sched" onclick="saveInverterSchedule()" style="font-size:0.78rem;margin-left:auto">Save Window</button>
+              </div>
+            </div>
+
+            <!-- 3. Battery Safety & Current Limits -->
+            <div style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:10px;padding:14px">
+              <div style="font-weight:600;font-size:0.85rem;color:var(--text);margin-bottom:4px">Reserve Limits & Charge Rate (Registers 41007-41011)</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px">Minimum protected reserve and maximum BMS current limit.</div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:4px">
+                  <span style="font-size:0.72rem;color:var(--text-secondary)">Min SoC:</span>
+                  <input type="number" id="ctrl-min-soc" class="field-input mono" value="10" min="10" max="30" style="width:65px;font-size:0.82rem;text-align:center" />
+                  <span style="font-size:0.72rem;color:var(--text-muted)">%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px">
+                  <span style="font-size:0.72rem;color:var(--text-secondary)">Max A:</span>
+                  <input type="number" id="ctrl-max-charge-a" class="field-input mono" value="40" min="10" max="50" style="width:65px;font-size:0.82rem;text-align:center" />
+                  <span style="font-size:0.72rem;color:var(--text-muted)">A</span>
+                </div>
+                <button class="btn-add" id="btn-save-limits" onclick="saveInverterLimits()" style="font-size:0.78rem;margin-left:auto">Update Limits</button>
+              </div>
+            </div>
+          </div>
+          <div id="ctrl-status-msg" style="font-size:0.75rem;color:var(--battery);margin-top:6px;display:none"></div>
         </div>
       </main>
     </div>
@@ -1400,6 +1465,30 @@
           setText('sched-target-soc', `${sched.max_soc_target_pct || 100}% SoC`);
           if (d.octopus) {
             setText('sched-rate-p', `${d.octopus.off_peak_rate_p_kwh.toFixed(1)}p/kWh`);
+          }
+
+          // Populate Settings Controls if not actively focused by user
+          if (d.settings) {
+            const wmSelect = document.getElementById('ctrl-work-mode');
+            if (wmSelect && document.activeElement !== wmSelect && d.settings.work_mode_code != null) {
+              wmSelect.value = String(d.settings.work_mode_code);
+            }
+            const sStart = document.getElementById('ctrl-sched-start');
+            const sEnd = document.getElementById('ctrl-sched-end');
+            const sEn = document.getElementById('ctrl-sched-enable');
+            if (p1) {
+              if (sStart && document.activeElement !== sStart && p1.start) sStart.value = p1.start;
+              if (sEnd && document.activeElement !== sEnd && p1.end) sEnd.value = p1.end;
+              if (sEn && document.activeElement !== sEn && p1.enabled !== undefined) sEn.checked = !!p1.enabled;
+            }
+            const minSocInput = document.getElementById('ctrl-min-soc');
+            const maxChgInput = document.getElementById('ctrl-max-charge-a');
+            if (minSocInput && document.activeElement !== minSocInput && d.settings.min_soc_pct != null) {
+              minSocInput.value = d.settings.min_soc_pct;
+            }
+            if (maxChgInput && document.activeElement !== maxChgInput && d.settings.max_charge_current_a != null) {
+              maxChgInput.value = Math.round(d.settings.max_charge_current_a);
+            }
           }
         }
 
@@ -2021,6 +2110,118 @@
         setText('ledger-mtd-saved', `14d Saved: £${mtdSaved.toFixed(2)}`);
       } catch (e) {
         console.error('Ledger fetch error:', e);
+      }
+    }
+
+    function showCtrlStatus(msg, isErr = false) {
+      const el = document.getElementById('ctrl-status-msg');
+      if (!el) return;
+      el.textContent = msg;
+      el.style.display = 'block';
+      el.style.color = isErr ? 'var(--grid-import)' : 'var(--battery)';
+      setTimeout(() => {
+        if (el) el.style.display = 'none';
+      }, 5000);
+    }
+
+    async function saveInverterWorkMode() {
+      const select = document.getElementById('ctrl-work-mode');
+      const btn = document.getElementById('btn-save-mode');
+      if (!select || !btn) return;
+      const mode = parseInt(select.value, 10);
+      const originalText = btn.textContent;
+      btn.textContent = 'Saving...';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/inverter/work_mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          showCtrlStatus(`Operating mode updated to ${data.label || mode} successfully.`);
+          fetchLive();
+        } else {
+          showCtrlStatus('Failed to update operating mode. Inverter communication error.', true);
+        }
+      } catch (e) {
+        showCtrlStatus(`Error: ${e.message}`, true);
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    async function saveInverterSchedule() {
+      const startInput = document.getElementById('ctrl-sched-start');
+      const endInput = document.getElementById('ctrl-sched-end');
+      const enableInput = document.getElementById('ctrl-sched-enable');
+      const btn = document.getElementById('btn-save-sched');
+      if (!startInput || !endInput || !enableInput || !btn) return;
+
+      const originalText = btn.textContent;
+      btn.textContent = 'Saving...';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/inverter/schedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            start: startInput.value.trim(),
+            end: endInput.value.trim(),
+            enabled: enableInput.checked
+          })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          showCtrlStatus(`Force-charge schedule saved: ${data.window} (${data.enabled ? 'Enabled' : 'Disabled'})`);
+          fetchLive();
+        } else {
+          showCtrlStatus('Failed to update force-charge schedule on inverter.', true);
+        }
+      } catch (e) {
+        showCtrlStatus(`Error: ${e.message}`, true);
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    async function saveInverterLimits() {
+      const minSocInput = document.getElementById('ctrl-min-soc');
+      const maxChgInput = document.getElementById('ctrl-max-charge-a');
+      const btn = document.getElementById('btn-save-limits');
+      if (!minSocInput || !maxChgInput || !btn) return;
+
+      const originalText = btn.textContent;
+      btn.textContent = 'Updating...';
+      btn.disabled = true;
+      try {
+        const min_soc = parseInt(minSocInput.value, 10);
+        const max_charge_a = parseFloat(maxChgInput.value);
+        const res = await fetch('/api/inverter/battery_limits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            min_soc: min_soc,
+            max_soc: 100,
+            max_charge_a: max_charge_a,
+            max_discharge_a: max_charge_a
+          })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          showCtrlStatus(`Safety limits updated: Min SoC ${data.min_soc}%, Max Current ${data.max_charge_a}A`);
+          fetchLive();
+        } else {
+          showCtrlStatus('Failed to write safety limits to inverter holding registers.', true);
+        }
+      } catch (e) {
+        showCtrlStatus(`Error: ${e.message}`, true);
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
       }
     }
 
