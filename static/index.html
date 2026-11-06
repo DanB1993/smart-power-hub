@@ -762,6 +762,25 @@
         </div>
       </section>
 
+      <!-- Shelly Smart Plugs Card (Local HTTP REST) -->
+      <section class="card" style="margin-bottom:20px" id="shelly-section">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Shelly Smart Plugs</div>
+            <div class="card-subtitle">Zero-config local HTTP REST API (Plus Plug S / Pro / Gen 1)</div>
+          </div>
+          <span class="pill-tag mono" id="shelly-status-badge" style="color:var(--home);border-color:rgba(56,189,248,0.3)">Local HTTP</span>
+        </div>
+        <div id="shelly-plugs-container">
+          <div style="font-size:0.8rem;color:var(--text-muted);padding:8px 0">No Shelly plugs added yet. Use the quick-add below or Auto-Discovery in Setup Wizard.</div>
+        </div>
+        <div class="inline-form" style="margin-top:10px">
+          <input type="text" id="new-shelly-name" class="field" placeholder="Plug name (e.g. Living Room Lamp)" style="flex:1.4" />
+          <input type="text" id="new-shelly-ip" class="field mono" placeholder="IP (192.168.x.x)" style="flex:1" />
+          <button class="btn-add" onclick="addShellyPlug()">+ Add Shelly</button>
+        </div>
+      </section>
+
       <!-- Tapo Smart Plugs Card (Hardware Energy Monitoring) -->
       <section class="card" style="margin-bottom:20px">
         <div class="card-header">
@@ -1491,6 +1510,43 @@
         document.getElementById('seg-app').style.width = `${appPct}%`;
         document.getElementById('seg-untracked').style.width = `${untrackedPct}%`;
 
+        // Shelly Smart Plugs
+        if (d.shelly) {
+          const shellyEl = document.getElementById('shelly-plugs-container');
+          if (shellyEl) {
+            if (d.shelly.plugs && d.shelly.plugs.length > 0) {
+              shellyEl.innerHTML = d.shelly.plugs.map(p => `
+                <div class="list-item" style="${p.is_on ? 'border-color:rgba(56,189,248,0.35)' : ''};margin-bottom:8px">
+                  <div class="list-item-main">
+                    <div>
+                      <div class="item-name">
+                        <span>${p.alias}</span>
+                        <span class="mono" style="font-size:0.75rem;color:var(--text-muted)">
+                          ${p.model} · Today: ${(p.today_kwh || 0).toFixed(2)} kWh
+                        </span>
+                      </div>
+                      <div class="item-meta" style="margin-top:2px;color:var(--text-secondary)">
+                        <span class="mono">${p.ip}</span> · Local HTTP RPC
+                      </div>
+                    </div>
+                    <div class="item-right">
+                      <span class="watt-readout mono" style="${p.is_on ? 'color:var(--home)' : ''}">
+                        ${p.watts.toFixed(1)} W
+                      </span>
+                      <label class="toggle">
+                        <input type="checkbox" ${p.is_on ? 'checked' : ''} onchange="toggleShellyPlug('${p.ip}', this.checked)" />
+                        <span class="toggle-track green"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              `).join('');
+            } else {
+              shellyEl.innerHTML = `<div style="font-size:0.78rem;color:var(--text-muted);padding:6px 0">No Shelly plugs connected. Add IP below to monitor live watts.</div>`;
+            }
+          }
+        }
+
         // Tapo Smart Plugs
         if (d.tapo) {
           const badgeEl = document.getElementById('tapo-status-badge');
@@ -1713,6 +1769,29 @@
 
     async function deleteAppliance(id) {
       await fetch('/api/appliances/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+      fetchDevices();
+    }
+
+    async function toggleShellyPlug(ip, is_on) {
+      await fetch('/api/shelly/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ip, is_on })
+      });
+      fetchDevices();
+    }
+
+    async function addShellyPlug() {
+      const name = document.getElementById('new-shelly-name').value.trim() || 'Shelly Plug';
+      const ip = document.getElementById('new-shelly-ip').value.trim();
+      if (!ip) return;
+      await fetch('/api/shelly/add_plug', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ip, name, model: 'Plus Plug' })
+      });
+      document.getElementById('new-shelly-name').value = '';
+      document.getElementById('new-shelly-ip').value = '';
       fetchDevices();
     }
 

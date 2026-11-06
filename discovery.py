@@ -426,6 +426,37 @@ def test_modbus_foxess(ip, port=502, unit_id=247, timeout=1.2):
     return False
 
 
+def test_shelly_plug(ip, timeout=0.8):
+    """Test if an IP is a local Shelly smart plug (Gen1 or Gen2/Gen3 Plus/Pro)."""
+    # Try Gen2/Gen3 RPC status endpoint first (/rpc/Shelly.GetDeviceInfo)
+    try:
+        url = f"http://{ip}/rpc/Shelly.GetDeviceInfo"
+        req = urllib.request.Request(url, headers={"User-Agent": "SmartPowerDiscovery/1.0"})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            app_id = data.get("app", "")
+            model = data.get("model", "")
+            name = data.get("name") or data.get("id") or "Shelly Device"
+            if "PlusPlug" in model or "Plug" in model or "Plug" in app_id or "shelly" in data.get("id", "").lower():
+                return {"type": "gen2", "model": model, "name": name}
+    except Exception:
+        pass
+
+    # Try Gen1 status endpoint (/shelly)
+    try:
+        url = f"http://{ip}/shelly"
+        req = urllib.request.Request(url, headers={"User-Agent": "SmartPowerDiscovery/1.0"})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            model = data.get("type", "")
+            if "SHPLG" in model or "shelly" in model.lower():
+                return {"type": "gen1", "model": model, "name": f"Shelly Plug ({ip})"}
+    except Exception:
+        pass
+
+    return None
+
+
 def test_hue_bridge(ip, timeout=1.0):
     """Test if IP is a Philips Hue Bridge via UPnP description."""
     try:
@@ -439,12 +470,12 @@ def test_hue_bridge(ip, timeout=1.0):
         pass
     return False
 
-
 def scan_network_for_devices(custom_subnets=None):
-    """Scan local network subnets for FoxESS inverters (Port 502), Hue Bridges (Port 80), and Tapo plugs."""
+    """Scan local network subnets for FoxESS inverters (Port 502), Hue Bridges (Port 80), Shelly plugs, and Tapo plugs."""
     detected = {
         "inverters": [],
         "hue_bridges": [],
+        "shelly_plugs": [],
         "tapo_plugs": [],
     }
 
@@ -476,12 +507,14 @@ def scan_network_for_devices(custom_subnets=None):
             return ("inverter", ip, is_fox)
         return None
 
-    # Probe port 80 (Hue / Tapo)
+    # Probe port 80 (Hue / Shelly / Tapo)
     def probe_http_job(ip):
         if probe_port(ip, 80, timeout=0.35):
             if test_hue_bridge(ip):
                 return ("hue", ip, True)
-            # Check Tapo KLAP port 80
+            shelly_info = test_shelly_plug(ip)
+            if shelly_info:
+                return ("shelly", ip, shelly_info)
             return ("http", ip, True)
         return None
 
@@ -504,11 +537,18 @@ def scan_network_for_devices(custom_subnets=None):
         for f in concurrent.futures.as_completed(http_futs):
             res = f.result()
             if res:
-                kind, ip, ok = res
+                kind, ip, data = res
                 if kind == "hue":
                     detected["hue_bridges"].append({
                         "ip": ip,
                         "label": f"Philips Hue Bridge ({ip})",
+                    })
+                elif kind == "shelly":
+                    detected["shelly_plugs"].append({
+                        "ip": ip,
+                        "label": f"{data.get('name', 'Shelly Plug')} ({ip})",
+                        "model": data.get("model", "Plus Plug"),
+                        "gen": data.get("type", "gen2"),
                     })
 
     return detected

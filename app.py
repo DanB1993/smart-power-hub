@@ -117,6 +117,11 @@ latest_tapo = {
     ],
     "error": None,
 }
+latest_shelly = {
+    "status": "online",
+    "total_watts": 0.0,
+    "plugs": [],
+}
 latest_octopus = {
     "status": "initializing",
     "tariff_name": "Octopus Go 12M Fixed",
@@ -2585,6 +2590,125 @@ def poll_tapo_once():
             latest_tapo["error"] = str(e)
 
 
+def get_shelly_known_ips():
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("CREATE TABLE IF NOT EXISTS shelly_plugs (ip TEXT PRIMARY KEY, name TEXT, model TEXT)")
+        c.execute("SELECT ip, name, model FROM shelly_plugs")
+        rows = [{"ip": r[0], "name": r[1] or f"Shelly Plug ({r[0]})", "model": r[2] or "Plus Plug"} for r in c.fetchall()]
+        conn.close()
+        return rows
+    except Exception as e:
+        print(f"[Shelly DB Error] {e}")
+        return []
+
+
+def add_shelly_known_ip(ip, name="Shelly Plug", model="Plus Plug"):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("CREATE TABLE IF NOT EXISTS shelly_plugs (ip TEXT PRIMARY KEY, name TEXT, model TEXT)")
+        c.execute("INSERT OR REPLACE INTO shelly_plugs VALUES (?, ?, ?)", (ip, name, model))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"[Shelly DB Add Error] {e}")
+        return False
+
+
+def poll_shelly_once():
+    known = get_shelly_known_ips()
+    if not known:
+        with lock:
+            latest_shelly["plugs"] = []
+            latest_shelly["total_watts"] = 0.0
+        return
+
+    plugs_out = []
+    tot_w = 0.0
+
+    for dev in known:
+        ip = dev["ip"]
+        alias = dev.get("name") or f"Shelly Plug ({ip})"
+        model = dev.get("model", "Plus Plug")
+        is_on = False
+        watts = 0.0
+        today_kwh = 0.0
+        reachable = False
+
+        # Try Gen2/Gen3 RPC
+        try:
+            url = f"http://{ip}/rpc/Switch.GetStatus?id=0"
+            req = urllib.request.Request(url, headers={"User-Agent": "SmartPowerDashboard/2.0"})
+            with urllib.request.urlopen(req, timeout=1.8) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                is_on = bool(data.get("output", False))
+                watts = float(data.get("apower", 0.0))
+                # aenergy.total is watt-hours
+                aenergy = data.get("aenergy", {})
+                today_kwh = round(float(aenergy.get("total", 0.0)) / 1000.0, 3)
+                reachable = True
+        except Exception:
+            # Fallback to Gen1 /meter/0 and /relay/0
+            try:
+                url_m = f"http://{ip}/meter/0"
+                req_m = urllib.request.Request(url_m, headers={"User-Agent": "SmartPowerDashboard/2.0"})
+                with urllib.request.urlopen(req_m, timeout=1.8) as resp_m:
+                    data_m = json.loads(resp_m.read().decode("utf-8"))
+                    watts = float(data_m.get("power", 0.0))
+                    today_kwh = round(float(data_m.get("total", 0.0)) / 60000.0, 3)
+
+                url_r = f"http://{ip}/relay/0"
+                req_r = urllib.request.Request(url_r, headers={"User-Agent": "SmartPowerDashboard/2.0"})
+                with urllib.request.urlopen(req_r, timeout=1.8) as resp_r:
+                    data_r = json.loads(resp_r.read().decode("utf-8"))
+                    is_on = bool(data_r.get("ison", False))
+                reachable = True
+            except Exception:
+                pass
+
+        if reachable:
+            tot_w += max(0.0, watts)
+            plugs_out.append({
+                "ip": ip,
+                "alias": alias,
+                "model": model,
+                "is_on": is_on,
+                "watts": round(max(0.0, watts), 1),
+                "today_kwh": today_kwh,
+                "reachable": True,
+            })
+
+    with lock:
+        latest_shelly["plugs"] = plugs_out
+        latest_shelly["total_watts"] = round(tot_w, 1)
+
+
+def toggle_shelly_plug(ip, is_on):
+    # Try Gen2/Gen3 RPC first
+    try:
+        on_str = "true" if is_on else "false"
+        url = f"http://{ip}/rpc/Switch.Set?id=0&on={on_str}"
+        req = urllib.request.Request(url, headers={"User-Agent": "SmartPowerDashboard/2.0"})
+        with urllib.request.urlopen(req, timeout=2.5) as resp:
+            return True
+    except Exception:
+        pass
+
+    # Try Gen1
+    try:
+        turn_param = "on" if is_on else "off"
+        url = f"http://{ip}/relay/0?turn={turn_param}"
+        req = urllib.request.Request(url, headers={"User-Agent": "SmartPowerDashboard/2.0"})
+        with urllib.request.urlopen(req, timeout=2.5) as resp:
+            return True
+    except Exception as e:
+        print(f"[Shelly Toggle Error {ip}] {e}")
+        return False
+
+
 def save_telemetry_point(point):
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -2988,6 +3112,7 @@ def poller_loop():
             if cycle % 8640 == 1:
                 prune_old_telemetry(retention_days=14)
             poll_tapo_once()
+            poll_shelly_once()
             evaluate_tapo_automation()
             # Enforce automatic battery cutoff at target SoC during 00:30-05:30 off-peak
             enforce_inverter_night_charge_cutoff()
@@ -3067,7 +3192,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             with lock:
                 hue_copy = dict(latest_hue)
                 tapo_copy = dict(latest_tapo)
+                shelly_copy = dict(latest_shelly)
                 plugs_copy = [dict(p) for p in tapo_copy.get("plugs", [])]
+                shelly_plugs = [dict(p) for p in shelly_copy.get("plugs", [])]
                 load_w = latest_data.get("power", {}).get("load_w", 0)
                 pv_w = latest_data.get("power", {}).get("pv_total_w", 0)
             for p in plugs_copy:
@@ -3081,7 +3208,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             appliances_w = round(sum(a["active_watts"] for a in appliances), 1)
             hue_w = hue_copy.get("total_watts", 0.0)
             tapo_w = tapo_copy.get("total_watts", 0.0)
-            tracked_w = round(hue_w + tapo_w + appliances_w, 1)
+            shelly_w = shelly_copy.get("total_watts", 0.0)
+            tracked_w = round(hue_w + tapo_w + shelly_w + appliances_w, 1)
             untracked_w = round(max(0.0, load_w - tracked_w), 1)
 
             self.send_json(
@@ -3092,9 +3220,11 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     "untracked_w": untracked_w,
                     "hue_w": hue_w,
                     "tapo_w": tapo_w,
+                    "shelly_w": shelly_w,
                     "appliances_w": appliances_w,
                     "hue": hue_copy,
                     "tapo": tapo_copy,
+                    "shelly": shelly_copy,
                     "appliances": appliances,
                 }
             )
@@ -3209,6 +3339,30 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             conn.execute("DELETE FROM custom_appliances WHERE id = ?", (app_id,))
             conn.commit()
             conn.close()
+            self.send_json({"ok": True})
+            return
+
+        if parsed.path == "/api/shelly/toggle":
+            ip = str(body.get("ip", "")).strip()
+            is_on = bool(body.get("is_on", False))
+            if not ip:
+                self.send_json({"ok": False, "error": "IP required"}, status=400)
+                return
+            ok = toggle_shelly_plug(ip, is_on)
+            time.sleep(0.15)
+            poll_shelly_once()
+            self.send_json({"ok": ok})
+            return
+
+        if parsed.path == "/api/shelly/add_plug":
+            ip = str(body.get("ip", "")).strip()
+            name = str(body.get("name", "Shelly Plug")).strip()
+            model = str(body.get("model", "Plus Plug")).strip()
+            if not ip:
+                self.send_json({"ok": False, "error": "IP required"}, status=400)
+                return
+            add_shelly_known_ip(ip, name, model)
+            poll_shelly_once()
             self.send_json({"ok": True})
             return
 
