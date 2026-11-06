@@ -8,6 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN pip install --no-cache-dir tapo python-kasa cryptography
 
 COPY app.py /app/app.py
+COPY discovery.py /app/discovery.py
 COPY static /app/static
 
 EXPOSE 8050

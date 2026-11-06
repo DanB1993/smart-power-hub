@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Power OS — Setup Wizard</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%22><text y=%2226%22 font-size=%2228%22>⚡</text></svg>">
+  <link rel="stylesheet" href="/css/tailwind.css">
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --surface: #111827;
+      --surface-elevated: #1f2937;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.16);
+      --text: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --solar: #f59e0b;
+      --battery: #10b981;
+      --home: #38bdf8;
+      --accent: #818cf8;
+      --primary: #3b82f6;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .wizard-container {
+      max-width: 780px;
+      margin: 40px auto;
+      padding: 0 20px;
+      width: 100%;
+      flex: 1;
+    }
+
+    .wizard-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .step-indicator {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      position: relative;
+    }
+
+    .step-indicator::before {
+      content: '';
+      position: absolute;
+      top: 15px;
+      left: 20px;
+      right: 20px;
+      height: 2px;
+      background: var(--border);
+      z-index: 1;
+    }
+
+    .step-item {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .step-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--surface-elevated);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+
+    .step-item.active .step-circle {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 12px rgba(129, 140, 248, 0.4);
+    }
+
+    .step-item.completed .step-circle {
+      background: var(--battery);
+      border-color: var(--battery);
+      color: #fff;
+    }
+
+    .step-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .step-item.active .step-label {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .device-card {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+    }
+
+    .device-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .device-card.selected {
+      border-color: var(--accent);
+      background: rgba(129, 140, 248, 0.08);
+    }
+
+    .field-group {
+      margin-bottom: 18px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .field-input, .field-select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .field-input:focus, .field-select:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-action {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      transition: opacity 0.15s;
+    }
+
+    .btn-action:hover {
+      opacity: 0.92;
+    }
+
+    .btn-secondary {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .scan-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wizard-container">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+      <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#818cf8);display:flex;align-items:center;justify-content:center;font-size:1.4rem">⚡</div>
+      <div>
+        <h1 style="font-size:1.4rem;font-weight:700;margin:0">Smart Power OS Setup</h1>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin:2px 0 0">Configure your local inverter, energy tariffs and battery parameters</p>
+      </div>
+    </div>
+
+    <div class="wizard-card">
+      <!-- Steps Indicator -->
+      <div class="step-indicator">
+        <div class="step-item active" id="indicator-1">
+          <div class="step-circle">1</div>
+          <span class="step-label">Discovery</span>
+        </div>
+        <div class="step-item" id="indicator-2">
+          <div class="step-circle">2</div>
+          <span class="step-label">Inverter & Battery</span>
+        </div>
+        <div class="step-item" id="indicator-3">
+          <div class="step-circle">3</div>
+          <span class="step-label">Tariffs & Region</span>
+        </div>
+        <div class="step-item" id="indicator-4">
+          <div class="step-circle">4</div>
+          <span class="step-label">Finish</span>
+        </div>
+      </div>
+
+      <!-- STEP 1: NETWORK AUTO-DISCOVERY -->
+      <div id="step-1" class="wizard-step">
+        <h2 style="font-size:1.15rem;font-weight:700;margin-top:0">Local Network Discovery</h2>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:18px">
+          Scanning your local network for solar inverters (Modbus Port 502), Philips Hue bridges, and smart hardware meters.
+        </p>
+
+        <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:0.82rem;font-weight:600;color:var(--text-secondary)">Discovered Inverters</span>
+          <button class="btn-secondary" id="btn-rescan" onclick="startScan()" style="font-size:0.75rem;padding:5px 12px">
+            <span id="scan-icon">🔄</span> Scan Again
+          </button>
+        </div>
+
+        <div id="discovered-inverters-list">
+          <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.85rem">
+            <div class="scan-spinner" style="margin-bottom:8px"></div>
+            <div>Probing local subnet...</div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;margin-bottom:8px">
+          <span style="font-size:0.82rem;font-weight:600;color:var(--text-secondary)">Discovered Smart Lighting / Bridges</span>
+        </div>
+        <div id="discovered-bridges-list"></div>
+
+        <div style="margin-top:28px;display:flex;justify-content:flex-end">
+          <button class="btn-action" onclick="goToStep(2)">Next: Inverter & Battery →</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: INVERTER & BATTERY CONFIG -->
+      <div id="step-2" class="wizard-step" style="display:none">
+        <h2 style="font-size:1.15rem;font-weight:700;margin-top:0">Inverter & Battery Calibration</h2>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:18px">
+          Confirm the IP connection and battery storage specs for accurate real-time bridging and percentage calculations.
+        </p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="field-group">
+            <label class="field-label">Inverter IP Address</label>
+            <input type="text" id="cfg-inverter-ip" class="field-input mono" value="192.168.1.100" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Modbus Port & Unit ID</label>
+            <div style="display:flex;gap:8px">
+              <input type="number" id="cfg-inverter-port" class="field-input mono" value="502" style="flex:1" />
+              <input type="number" id="cfg-inverter-unit" class="field-input mono" value="247" style="flex:1" title="Unit ID (247 for FoxESS)" />
+            </div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Battery Preset</label>
+          <select id="cfg-battery-preset" class="field-select" onchange="applyBatteryPreset(this.value)">
+            <option value="foxess_mira_984">FoxESS Mira HV25 (9.84 kWh gross · 8.86 kWh usable)</option>
+            <option value="foxess_ecs_576">FoxESS ECS2900 2-Stack (5.76 kWh gross · 5.18 kWh usable)</option>
+            <option value="foxess_ep5_50">FoxESS EP5 / All-In-One (5.0 kWh gross · 4.5 kWh usable)</option>
+            <option value="givenergy_95">GivEnergy Gen 2 (9.5 kWh gross · 8.5 kWh usable)</option>
+            <option value="custom">Custom Configuration</option>
+          </select>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+          <div class="field-group">
+            <label class="field-label">Gross Capacity (kWh)</label>
+            <input type="number" step="0.1" id="cfg-battery-gross" class="field-input mono" value="9.84" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Usable Capacity (kWh)</label>
+            <input type="number" step="0.1" id="cfg-battery-usable" class="field-input mono" value="8.86" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Min Reserve (% SoC)</label>
+            <input type="number" id="cfg-battery-min-soc" class="field-input mono" value="10" />
+          </div>
+        </div>
+
+        <div style="margin-top:28px;display:flex;justify-content:space-between">
+          <button class="btn-secondary" onclick="goToStep(1)">← Back</button>
+          <button class="btn-action" onclick="goToStep(3)">Next: Tariffs & Region →</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: TARIFFS & REGION -->
+      <div id="step-3" class="wizard-step" style="display:none">
+        <h2 style="font-size:1.15rem;font-weight:700;margin-top:0">Energy Tariffs & DNO Region</h2>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:18px">
+          Select your local DNO distribution region and active contract to unlock accurate real-time cost and savings tracking.
+        </p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="field-group">
+            <label class="field-label">UK DNO Distribution Region</label>
+            <select id="cfg-region" class="field-select" onchange="updateTariffRegion(this.value)">
+              <option value="H">Region H — Southern England (SSE)</option>
+              <option value="C">Region C — London (UKPN)</option>
+              <option value="J">Region J — South Eastern England (UKPN)</option>
+              <option value="A">Region A — Eastern England (UKPN)</option>
+              <option value="B">Region B — East Midlands (National Grid)</option>
+              <option value="E">Region E — West Midlands (National Grid)</option>
+              <option value="L">Region L — South Western England (National Grid)</option>
+              <option value="K">Region K — South Wales (National Grid)</option>
+              <option value="D">Region D — Merseyside & N. Wales (SP Energy)</option>
+              <option value="G">Region G — North Western (ENW)</option>
+              <option value="M">Region M — Yorkshire (N. Powergrid)</option>
+              <option value="F">Region F — North Eastern (N. Powergrid)</option>
+              <option value="N">Region N — Southern Scotland (SP Energy)</option>
+              <option value="P">Region P — Northern Scotland (SSE)</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Tariff Plan Template</label>
+            <select id="cfg-tariff-template" class="field-select" onchange="applyTariffTemplate(this.value)">
+              <option value="octopus_go">Octopus Go (9.4p Off-Peak · 00:30-05:30)</option>
+              <option value="octopus_intelligent_go">Intelligent Octopus Go (7.0p Off-Peak · 23:30-05:30)</option>
+              <option value="octopus_agile_import">Octopus Agile Import (Dynamic Half-Hourly)</option>
+              <option value="octopus_tracker">Octopus Tracker (Daily Wholesale Index)</option>
+              <option value="custom_fixed">Standard Flat Day Rate (~26.0p)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="field-group">
+            <label class="field-label">Off-Peak Night Rate (p/kWh)</label>
+            <input type="number" step="0.1" id="cfg-rate-offpeak" class="field-input mono" value="9.40" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Day Peak Rate (p/kWh)</label>
+            <input type="number" step="0.1" id="cfg-rate-peak" class="field-input mono" value="36.56" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Export Tracking Mode</label>
+          <select id="cfg-export-mode" class="field-select">
+            <option value="agile">Octopus Agile Outgoing (Live Half-Hourly Wholesale Arbitrage)</option>
+            <option value="fixed">Fixed SEG Baseline (15.0p / kWh)</option>
+          </select>
+        </div>
+
+        <div style="margin-top:28px;display:flex;justify-content:space-between">
+          <button class="btn-secondary" onclick="goToStep(2)">← Back</button>
+          <button class="btn-action" onclick="goToStep(4)">Review & Finish →</button>
+        </div>
+      </div>
+
+      <!-- STEP 4: REVIEW & FINISH -->
+      <div id="step-4" class="wizard-step" style="display:none">
+        <h2 style="font-size:1.15rem;font-weight:700;margin-top:0">Ready to Launch</h2>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:18px">
+          Review your configured system parameters. Clicking save will initialize your local config and take you straight to the dashboard.
+        </p>
+
+        <div style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:24px;font-size:0.85rem;line-height:1.7">
+          <div><strong>Inverter:</strong> <span class="mono" id="review-inverter">192.168.1.100:502 (FoxESS Unit 247)</span></div>
+          <div><strong>Battery:</strong> <span class="mono" id="review-battery">9.84 kWh (8.86 kWh usable · 10% reserve)</span></div>
+          <div><strong>Tariff:</strong> <span class="mono" id="review-tariff">Octopus Go Region H (9.4p / 36.6p)</span></div>
+          <div><strong>Export Mode:</strong> <span class="mono" id="review-export">Agile Outgoing (Half-Hourly)</span></div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between">
+          <button class="btn-secondary" onclick="goToStep(3)">← Back</button>
+          <button class="btn-action" id="btn-save-finish" onclick="saveAndLaunch()">
+            <span id="save-icon">🚀</span> Save Configuration & Launch
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let discoveredData = null;
+
+    async function startScan() {
+      const list = document.getElementById('discovered-inverters-list');
+      const bridgeList = document.getElementById('discovered-bridges-list');
+      const icon = document.getElementById('scan-icon');
+      if (icon) icon.textContent = '⏳';
+
+      list.innerHTML = `
+        <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:0.85rem">
+          <div class="scan-spinner" style="margin-bottom:8px"></div>
+          <div>Scanning local network subnets...</div>
+        </div>
+      `;
+
+      try {
+        const res = await fetch('/api/setup/discover');
+        discoveredData = await res.json();
+
+        if (discoveredData.inverters && discoveredData.inverters.length > 0) {
+          list.innerHTML = discoveredData.inverters.map((inv, idx) => `
+            <div class="device-card ${idx === 0 ? 'selected' : ''}" onclick="selectInverter('${inv.ip}', ${inv.port}, this)">
+              <div>
+                <div style="font-weight:600;display:flex;align-items:center;gap:8px">
+                  <span>${inv.label}</span>
+                  <span class="mono" style="font-size:0.7rem;padding:2px 6px;border-radius:4px;background:rgba(16,185,129,0.15);color:var(--battery)">Online</span>
+                </div>
+                <div class="mono" style="font-size:0.75rem;color:var(--text-secondary);margin-top:2px">Port ${inv.port} · Unit 247 · Modbus RTU-over-TCP</div>
+              </div>
+              <div class="mono" style="color:var(--accent);font-size:0.85rem">Selected ✓</div>
+            </div>
+          `).join('');
+          document.getElementById('cfg-inverter-ip').value = discoveredData.inverters[0].ip;
+        } else {
+          list.innerHTML = `
+            <div style="padding:14px;border-radius:8px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);font-size:0.8rem;color:var(--solar)">
+              No Modbus inverters auto-detected on this subnet. You can manually enter your Inverter IP in Step 2.
+            </div>
+          `;
+        }
+
+        if (discoveredData.hue_bridges && discoveredData.hue_bridges.length > 0) {
+          bridgeList.innerHTML = discoveredData.hue_bridges.map(b => `
+            <div class="device-card" style="cursor:default">
+              <div>
+                <div style="font-weight:600">${b.label}</div>
+                <div class="mono" style="font-size:0.75rem;color:var(--text-secondary);margin-top:2px">Port 80 · Ready for sync</div>
+              </div>
+              <span class="mono" style="font-size:0.72rem;color:var(--battery)">Detected</span>
+            </div>
+          `).join('');
+        } else {
+          bridgeList.innerHTML = `<div style="font-size:0.78rem;color:var(--text-muted)">No Philips Hue bridges found.</div>`;
+        }
+      } catch (e) {
+        list.innerHTML = `<div style="color:var(--solar);font-size:0.8rem">Discovery error: ${e.message}</div>`;
+      } finally {
+        if (icon) icon.textContent = '🔄';
+      }
+    }
+
+    function selectInverter(ip, port, el) {
+      document.querySelectorAll('.device-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('cfg-inverter-ip').value = ip;
+      document.getElementById('cfg-inverter-port').value = port;
+    }
+
+    function goToStep(s) {
+      document.querySelectorAll('.wizard-step').forEach(el => el.style.display = 'none');
+      document.getElementById(`step-${s}`).style.display = 'block';
+
+      for (let i = 1; i <= 4; i++) {
+        const ind = document.getElementById(`indicator-${i}`);
+        if (i < s) {
+          ind.className = 'step-item completed';
+        } else if (i === s) {
+          ind.className = 'step-item active';
+        } else {
+          ind.className = 'step-item';
+        }
+      }
+
+      if (s === 4) {
+        document.getElementById('review-inverter').textContent = `${document.getElementById('cfg-inverter-ip').value}:${document.getElementById('cfg-inverter-port').value}`;
+        document.getElementById('review-battery').textContent = `${document.getElementById('cfg-battery-gross').value} kWh (${document.getElementById('cfg-battery-usable').value} kWh usable · ${document.getElementById('cfg-battery-min-soc').value}% reserve)`;
+        document.getElementById('review-tariff').textContent = `Octopus Region ${document.getElementById('cfg-region').value} (${document.getElementById('cfg-rate-offpeak').value}p / ${document.getElementById('cfg-rate-peak').value}p)`;
+        document.getElementById('review-export').textContent = document.getElementById('cfg-export-mode').value === 'agile' ? 'Agile Outgoing (Half-Hourly)' : 'Fixed 15p SEG';
+      }
+    }
+
+    function applyBatteryPreset(val) {
+      if (val === 'foxess_mira_984') {
+        document.getElementById('cfg-battery-gross').value = 9.84;
+        document.getElementById('cfg-battery-usable').value = 8.86;
+        document.getElementById('cfg-battery-min-soc').value = 10;
+      } else if (val === 'foxess_ecs_576') {
+        document.getElementById('cfg-battery-gross').value = 5.76;
+        document.getElementById('cfg-battery-usable').value = 5.18;
+        document.getElementById('cfg-battery-min-soc').value = 10;
+      } else if (val === 'foxess_ep5_50') {
+        document.getElementById('cfg-battery-gross').value = 5.0;
+        document.getElementById('cfg-battery-usable').value = 4.5;
+        document.getElementById('cfg-battery-min-soc').value = 10;
+      } else if (val === 'givenergy_95') {
+        document.getElementById('cfg-battery-gross').value = 9.5;
+        document.getElementById('cfg-battery-usable').value = 8.5;
+        document.getElementById('cfg-battery-min-soc').value = 10;
+      }
+    }
+
+    function applyTariffTemplate(val) {
+      if (val === 'octopus_go') {
+        document.getElementById('cfg-rate-offpeak').value = 9.40;
+        document.getElementById('cfg-rate-peak').value = 36.56;
+      } else if (val === 'octopus_intelligent_go') {
+        document.getElementById('cfg-rate-offpeak').value = 7.00;
+        document.getElementById('cfg-rate-peak').value = 28.50;
+      } else if (val === 'octopus_agile_import') {
+        document.getElementById('cfg-rate-offpeak').value = 15.00;
+        document.getElementById('cfg-rate-peak').value = 35.00;
+      } else if (val === 'custom_fixed') {
+        document.getElementById('cfg-rate-offpeak').value = 26.00;
+        document.getElementById('cfg-rate-peak').value = 26.00;
+      }
+    }
+
+    async function saveAndLaunch() {
+      const btn = document.getElementById('btn-save-finish');
+      btn.innerHTML = `<span class="scan-spinner"></span> Saving Configuration...`;
+
+      const payload = {
+        configured: true,
+        inverter: {
+          brand: "foxess",
+          host: document.getElementById('cfg-inverter-ip').value,
+          port: parseInt(document.getElementById('cfg-inverter-port').value),
+          unit_id: parseInt(document.getElementById('cfg-inverter-unit').value),
+        },
+        battery: {
+          gross_capacity_kwh: parseFloat(document.getElementById('cfg-battery-gross').value),
+          usable_capacity_kwh: parseFloat(document.getElementById('cfg-battery-usable').value),
+          min_reserve_soc_pct: parseInt(document.getElementById('cfg-battery-min-soc').value),
+        },
+        tariff: {
+          region: document.getElementById('cfg-region').value,
+          off_peak_rate_p_kwh: parseFloat(document.getElementById('cfg-rate-offpeak').value),
+          peak_rate_p_kwh: parseFloat(document.getElementById('cfg-rate-peak').value),
+          export_mode: document.getElementById('cfg-export-mode').value,
+        }
+      };
+
+      try {
+        const res = await fetch('/api/setup/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const d = await res.json();
+        if (d.ok) {
+          window.location.href = '/';
+        }
+      } catch (e) {
+        alert('Save error: ' + e.message);
+        btn.innerHTML = `<span>🚀</span> Save Configuration & Launch`;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      startScan();
+    });
+  </script>
+</body>
+</html>

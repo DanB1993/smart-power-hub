@@ -14,32 +14,23 @@ from datetime import datetime, timezone, timedelta
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from socketserver import ThreadingMixIn
 from urllib.parse import urlparse, parse_qs
+from discovery import load_config, save_config, scan_network_for_devices, DNO_REGIONS, TARIFF_TEMPLATES, BATTERY_PRESETS
 
-try:
-    from tapo import ApiClient
-    HAS_TAPO = True
-except ImportError:
-    HAS_TAPO = False
+app_config = load_config()
 
-try:
-    from kasa import Discover, Credentials
-    HAS_KASA = True
-except ImportError:
-    HAS_KASA = False
-
-INVERTER_HOST = os.environ.get("INVERTER_HOST", "192.168.1.100")
-INVERTER_PORT = int(os.environ.get("INVERTER_PORT", "502"))
-INVERTER_UNIT = int(os.environ.get("INVERTER_UNIT", "247"))
-HUE_HOST = os.environ.get("HUE_HOST", "192.168.1.150")
-HUE_API_KEY = os.environ.get("HUE_API_KEY", "")
-OCTOPUS_API_KEY = os.environ.get("OCTOPUS_API_KEY", "")
-OCTOPUS_ACCOUNT = os.environ.get("OCTOPUS_ACCOUNT", "")
-OCTOPUS_PRODUCT_CODE = os.environ.get("OCTOPUS_PRODUCT", "GO-FIX-12M-26-10-14")
-OCTOPUS_TARIFF_CODE = os.environ.get("OCTOPUS_TARIFF", "E-1R-GO-FIX-12M-26-10-14-H")
-OCTOPUS_EXPORT_RATE_P_KWH = float(os.environ.get("OCTOPUS_EXPORT_RATE", "12.0"))
+INVERTER_HOST = os.environ.get("INVERTER_HOST", app_config.get("inverter", {}).get("host", "192.168.1.100"))
+INVERTER_PORT = int(os.environ.get("INVERTER_PORT", str(app_config.get("inverter", {}).get("port", 502))))
+INVERTER_UNIT = int(os.environ.get("INVERTER_UNIT", str(app_config.get("inverter", {}).get("unit_id", 247))))
+HUE_HOST = os.environ.get("HUE_HOST", app_config.get("devices", {}).get("hue", {}).get("host", "192.168.1.150"))
+HUE_API_KEY = os.environ.get("HUE_API_KEY", app_config.get("devices", {}).get("hue", {}).get("api_key", ""))
+OCTOPUS_API_KEY = os.environ.get("OCTOPUS_API_KEY", app_config.get("tariff", {}).get("api_key", ""))
+OCTOPUS_ACCOUNT = os.environ.get("OCTOPUS_ACCOUNT", app_config.get("tariff", {}).get("account_number", ""))
+OCTOPUS_PRODUCT_CODE = os.environ.get("OCTOPUS_PRODUCT", app_config.get("tariff", {}).get("product_code", "GO-FIX-12M-26-10-14"))
+OCTOPUS_TARIFF_CODE = os.environ.get("OCTOPUS_TARIFF", app_config.get("tariff", {}).get("import_tariff_code", "E-1R-GO-FIX-12M-26-10-14-H"))
+OCTOPUS_EXPORT_RATE_P_KWH = float(os.environ.get("OCTOPUS_EXPORT_RATE", str(app_config.get("tariff", {}).get("fixed_export_rate_p_kwh", 12.0))))
 OCTOPUS_EXPORT_ACTIVE = os.environ.get("OCTOPUS_EXPORT_ACTIVE", "false").lower() == "true"
-LATITUDE = float(os.environ.get("LATITUDE", "51.5074"))
-LONGITUDE = float(os.environ.get("LONGITUDE", "-0.1278"))
+LATITUDE = float(os.environ.get("LATITUDE", str(app_config.get("location", {}).get("latitude", 51.5074))))
+LONGITUDE = float(os.environ.get("LONGITUDE", str(app_config.get("location", {}).get("longitude", -0.1278))))
 TAPO_DEFAULT_IP = os.environ.get("TAPO_IP", "192.168.1.200")
 TAPO_ENV_USER = os.environ.get("TAPO_USERNAME", "")
 TAPO_ENV_PASS = os.environ.get("TAPO_PASSWORD", "")
@@ -2998,9 +2989,11 @@ class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
 
+STATIC_DIR = os.environ.get("STATIC_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "static"))
+
 class DashboardHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory="/app/static", **kwargs)
+        super().__init__(*args, directory=STATIC_DIR, **kwargs)
 
     def log_message(self, format, *args):
         pass
@@ -3023,6 +3016,26 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+
+        if parsed.path in ("/setup", "/setup.html", "/wizard", "/wizard.html"):
+            self.path = "/wizard.html"
+            return super().do_GET()
+
+        if parsed.path == "/api/setup/status":
+            self.send_json({
+                "configured": app_config.get("configured", False),
+                "config": app_config,
+                "dno_regions": DNO_REGIONS,
+                "tariffs": TARIFF_TEMPLATES,
+                "batteries": BATTERY_PRESETS,
+            })
+            return
+
+        if parsed.path == "/api/setup/discover":
+            results = scan_network_for_devices()
+            self.send_json(results)
+            return
+
         if parsed.path == "/api/live":
             ai_data = generate_energy_insights()
             with lock:
@@ -3100,6 +3113,29 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         raw_body = self.rfile.read(length).decode("utf-8") if length > 0 else "{}"
         body = json.loads(raw_body)
+
+        if parsed.path == "/api/setup/save":
+            global app_config, INVERTER_HOST, INVERTER_PORT, INVERTER_UNIT, BATTERY_CAPACITY_KWH
+            if not isinstance(body, dict):
+                self.send_json({"ok": False, "error": "Invalid JSON"}, status=400)
+                return
+            body["configured"] = True
+            app_config.update(body)
+            save_config(app_config)
+
+            # Update live runtime parameters immediately
+            if "inverter" in body:
+                INVERTER_HOST = body["inverter"].get("host", INVERTER_HOST)
+                INVERTER_PORT = int(body["inverter"].get("port", INVERTER_PORT))
+                INVERTER_UNIT = int(body["inverter"].get("unit_id", INVERTER_UNIT))
+            if "battery" in body:
+                BATTERY_CAPACITY_KWH = float(body["battery"].get("gross_capacity_kwh", BATTERY_CAPACITY_KWH))
+
+            # Kick off async rates sync with new region/tariffs
+            threading.Thread(target=poll_octopus_rates, daemon=True).start()
+
+            self.send_json({"ok": True, "config": app_config})
+            return
 
         if parsed.path == "/api/ai/generate":
             res = generate_energy_insights()
