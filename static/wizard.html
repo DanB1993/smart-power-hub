@@ -358,11 +358,36 @@
           <div class="field-group">
             <label class="field-label">Tariff Plan Template</label>
             <select id="cfg-tariff-template" class="field-select" onchange="applyTariffTemplate(this.value)">
-              <option value="octopus_go">Octopus Go (9.4p Off-Peak · 00:30-05:30)</option>
-              <option value="octopus_intelligent_go">Intelligent Octopus Go (7.0p Off-Peak · 23:30-05:30)</option>
-              <option value="octopus_agile_import">Octopus Agile Import (Dynamic Half-Hourly)</option>
-              <option value="octopus_tracker">Octopus Tracker (Daily Wholesale Index)</option>
-              <option value="custom_fixed">Standard Flat Day Rate (~26.0p)</option>
+              <optgroup label="Octopus Energy">
+                <option value="octopus_go">Octopus Go (9.4p Night · 00:30-05:30)</option>
+                <option value="octopus_intelligent_go">Intelligent Octopus Go (7.0p Night · 23:30-05:30)</option>
+                <option value="octopus_cosy">Octopus Cosy (13.5p Heat Pump & Battery)</option>
+                <option value="octopus_agile_import">Octopus Agile Import (Dynamic Half-Hourly)</option>
+                <option value="octopus_tracker">Octopus Tracker (Daily Wholesale Index)</option>
+              </optgroup>
+              <optgroup label="British Gas">
+                <option value="british_gas_electric_driver">British Gas Electric Driver (7.9p Night · 00:00-05:00)</option>
+                <option value="british_gas_fixed">British Gas Fixed / Standard (~25.5p)</option>
+              </optgroup>
+              <optgroup label="E.ON Next">
+                <option value="eon_next_drive">E.ON Next Drive (6.9p Night · 00:00-07:00)</option>
+                <option value="eon_next_pledge">E.ON Next Pledge (Tracker vs Cap)</option>
+              </optgroup>
+              <optgroup label="OVO Energy">
+                <option value="ovo_charge_anytime">OVO Charge Anytime (7.0p Night / EV)</option>
+                <option value="ovo_economy_7">OVO Economy 7 Dual Rate (14.8p Night)</option>
+              </optgroup>
+              <optgroup label="EDF Energy">
+                <option value="edf_go_electric">EDF GoElectric Overnight (8.0p Night · 00:00-05:00)</option>
+              </optgroup>
+              <optgroup label="Scottish Power">
+                <option value="scottish_power_ev">Scottish Power EV Saver (7.45p Night · 00:00-05:00)</option>
+              </optgroup>
+              <optgroup label="Ofgem / Custom">
+                <option value="ofgem_price_cap">Ofgem UK Price Cap Standard (~24.5p)</option>
+                <option value="custom_dual">Custom Dual Rate (Day / Night Hours)</option>
+                <option value="custom_fixed">Custom Single Flat Rate (~26.0p)</option>
+              </optgroup>
             </select>
           </div>
         </div>
@@ -370,9 +395,24 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
           <div class="field-group">
             <label class="field-label">Off-Peak Night Rate (p/kWh)</label>
-            <input type="number" step="0.1" id="cfg-rate-offpeak" class="field-input mono" value="9.40" />
+            <input type="number" step="0.01" id="cfg-rate-offpeak" class="field-input mono" value="9.40" />
           </div>
           <div class="field-group">
+            <label class="field-label">Day Peak Rate (p/kWh)</label>
+            <input type="number" step="0.01" id="cfg-rate-peak" class="field-input mono" value="36.56" />
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="field-group">
+            <label class="field-label">Off-Peak Window Start</label>
+            <input type="text" id="cfg-window-start" class="field-input mono" value="00:30" placeholder="00:30" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Off-Peak Window End</label>
+            <input type="text" id="cfg-window-end" class="field-input mono" value="05:30" placeholder="05:30" />
+          </div>
+        </div>
             <label class="field-label">Day Peak Rate (p/kWh)</label>
             <input type="number" step="0.1" id="cfg-rate-peak" class="field-input mono" value="36.56" />
           </div>
@@ -528,25 +568,44 @@
       }
     }
 
+    const tariffPresets = {
+      octopus_go: { off: 9.40, peak: 36.56, start: "00:30", end: "05:30", export: "agile" },
+      octopus_intelligent_go: { off: 7.00, peak: 28.50, start: "23:30", end: "05:30", export: "fixed" },
+      octopus_cosy: { off: 13.50, peak: 34.00, start: "04:00", end: "07:00", export: "agile" },
+      octopus_agile_import: { off: 15.00, peak: 35.00, start: "00:00", end: "00:00", export: "agile" },
+      octopus_tracker: { off: 22.50, peak: 22.50, start: "00:00", end: "00:00", export: "fixed" },
+      british_gas_electric_driver: { off: 7.90, peak: 30.20, start: "00:00", end: "05:00", export: "fixed" },
+      british_gas_fixed: { off: 25.50, peak: 25.50, start: "00:00", end: "00:00", export: "fixed" },
+      eon_next_drive: { off: 6.90, peak: 31.40, start: "00:00", end: "07:00", export: "fixed" },
+      eon_next_pledge: { off: 24.50, peak: 24.50, start: "00:00", end: "00:00", export: "fixed" },
+      ovo_charge_anytime: { off: 7.00, peak: 27.80, start: "00:00", end: "05:00", export: "fixed" },
+      ovo_economy_7: { off: 14.80, peak: 33.50, start: "00:30", end: "07:30", export: "fixed" },
+      edf_go_electric: { off: 8.00, peak: 31.00, start: "00:00", end: "05:00", export: "fixed" },
+      scottish_power_ev: { off: 7.45, peak: 29.80, start: "00:00", end: "05:00", export: "fixed" },
+      ofgem_price_cap: { off: 24.50, peak: 24.50, start: "00:00", end: "00:00", export: "fixed" },
+      custom_dual: { off: 10.00, peak: 30.00, start: "00:30", end: "05:30", export: "fixed" },
+      custom_fixed: { off: 26.00, peak: 26.00, start: "00:00", end: "00:00", export: "fixed" },
+    };
+
     function applyTariffTemplate(val) {
-      if (val === 'octopus_go') {
-        document.getElementById('cfg-rate-offpeak').value = 9.40;
-        document.getElementById('cfg-rate-peak').value = 36.56;
-      } else if (val === 'octopus_intelligent_go') {
-        document.getElementById('cfg-rate-offpeak').value = 7.00;
-        document.getElementById('cfg-rate-peak').value = 28.50;
-      } else if (val === 'octopus_agile_import') {
-        document.getElementById('cfg-rate-offpeak').value = 15.00;
-        document.getElementById('cfg-rate-peak').value = 35.00;
-      } else if (val === 'custom_fixed') {
-        document.getElementById('cfg-rate-offpeak').value = 26.00;
-        document.getElementById('cfg-rate-peak').value = 26.00;
+      const p = tariffPresets[val];
+      if (p) {
+        document.getElementById('cfg-rate-offpeak').value = p.off;
+        document.getElementById('cfg-rate-peak').value = p.peak;
+        document.getElementById('cfg-window-start').value = p.start;
+        document.getElementById('cfg-window-end').value = p.end;
+        if (p.export) {
+          document.getElementById('cfg-export-mode').value = p.export;
+        }
       }
     }
 
     async function saveAndLaunch() {
       const btn = document.getElementById('btn-save-finish');
       btn.innerHTML = `<span class="scan-spinner"></span> Saving Configuration...`;
+
+      const tplKey = document.getElementById('cfg-tariff-template').value;
+      const tpl = tariffPresets[tplKey] || {};
 
       const payload = {
         configured: true,
@@ -562,9 +621,13 @@
           min_reserve_soc_pct: parseInt(document.getElementById('cfg-battery-min-soc').value),
         },
         tariff: {
+          provider: tplKey.startsWith('octopus') ? 'octopus' : (tplKey.startsWith('british_gas') ? 'british_gas' : (tplKey.startsWith('eon') ? 'eon_next' : (tplKey.startsWith('ovo') ? 'ovo' : 'custom'))),
           region: document.getElementById('cfg-region').value,
+          product_code: tplKey,
           off_peak_rate_p_kwh: parseFloat(document.getElementById('cfg-rate-offpeak').value),
           peak_rate_p_kwh: parseFloat(document.getElementById('cfg-rate-peak').value),
+          off_peak_start: document.getElementById('cfg-window-start').value,
+          off_peak_end: document.getElementById('cfg-window-end').value,
           export_mode: document.getElementById('cfg-export-mode').value,
         }
       };
