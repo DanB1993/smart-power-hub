@@ -143,6 +143,16 @@ Visit `http://localhost:8050` in your browser.
 
 ---
 
+## ⚠️ Disclaimer & Limitation of Liability
+
+**USE AT YOUR OWN RISK**: Smart Power OS interacts directly with electrical hardware, hybrid solar inverters, and battery management systems (BMS) via Modbus RTU-over-TCP and local network protocols. 
+
+This software is provided on an **"AS IS" AND "AS AVAILABLE" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND**, either express or implied. Under no circumstances shall the author(s), maintainer(s), or contributor(s) be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, damage to inverters, battery storage packs, solar installations, home wiring, appliances, loss of electricity, grid utility non-compliance, or financial losses) arising out of the use, configuration, or failure of this software. 
+
+This project is an independent community development and is not affiliated with, endorsed by, or certified by FoxESS Co., Ltd., Octopus Energy, or any other manufacturer or utility. See [`SECURITY.md`](SECURITY.md) for full safety disclosures.
+
+---
+
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
