@@ -113,7 +113,7 @@
       <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
           <button onclick="openChangelogModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v1.0.0</span>
+            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v1.1.0</span>
             <span>Changelog</span>
           </button>
           <span style="font-size:0.68rem;color:var(--text-muted)" class="mono">Open-Source</span>
@@ -1082,17 +1082,31 @@
           <div>
             <div class="card-title" style="display:flex;align-items:center;gap:8px">
               <span>Changelog</span>
-              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v1.0.0</span>
+              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v1.1.0</span>
             </div>
-            <div class="card-subtitle">Official 1.0 Release</div>
+            <div class="card-subtitle">Version History & Release Notes</div>
           </div>
         </div>
         <button class="btn-close-modal" onclick="closeChangelogModal()" title="Close">✕</button>
       </div>
       <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:16px">
         
-        <!-- v1.0.0 -->
+        <!-- v1.1.0 -->
         <div style="border-left:2px solid var(--accent);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.1.0 — Inverter Settings & Dual-Slot Scheduling</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">6 Nov 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li><strong>Dedicated Settings View</strong>: Interactive controls for FoxESS inverter holding registers (FC06/FC16) under a dedicated sidebar link.</li>
+            <li><strong>Operating Work Mode Selector</strong>: Switch between Self-Use, Feed-in Priority, Backup, Force Charge, and Force Discharge.</li>
+            <li><strong>Dual-Period Force Charge Schedule</strong>: Independent control for Slot 1 and Slot 2 with a one-click <em>⚡ Align with Tariff</em> shortcut.</li>
+            <li><strong>Battery Safety Reserves & Current Rate</strong>: Live configuration of Min SoC reserve (10%–30%) and maximum charge/discharge current limits.</li>
+          </ul>
+        </div>
+
+        <!-- v1.0.0 -->
+        <div style="border-left:2px solid var(--border);padding-left:14px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
             <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.0.0 — Initial Open-Source Release</strong>
             <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">6 Nov 2026</span>
