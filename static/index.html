@@ -510,49 +510,75 @@
            VIEW 3: AGILE EXPORT & TARIFFS
            ========================================== -->
       <main id="view-agile" class="view">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-          <!-- Octopus Agile Outgoing Shadow Export Tile -->
-        <div class="solar-forecast-card" style="background:linear-gradient(180deg, rgba(236,72,153,0.06), var(--surface));border-color:rgba(236,72,153,0.25)">
-          <div>
-            <div class="metric-top" style="margin-bottom:8px">
-              <span class="metric-title">
-                <span class="metric-icon" style="background:#ec4899"></span>
-                Agile Outgoing Tracker
-              </span>
-              <span class="pill-tag mono" id="agile-shadow-badge" style="color:#ec4899;border-color:rgba(236,72,153,0.3)">Shadow Mode</span>
-            </div>
-            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:6px">
-              <div style="display:flex;align-items:baseline;gap:8px">
-                <span class="mono" id="agile-live-rate" style="font-size:1.55rem;font-weight:700;color:#ec4899">--.-p</span>
-                <span class="metric-unit" style="font-size:0.85rem;color:#ec4899">/kWh live</span>
+        <!-- Export Dispatch Recommendation Banner -->
+        <div id="agile-dispatch-banner" class="card" style="margin-bottom:16px;background:linear-gradient(135deg, rgba(236,72,153,0.12), rgba(168,85,247,0.08), var(--surface));border:1px solid rgba(236,72,153,0.35);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:14px 18px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:42px;height:42px;border-radius:10px;background:rgba(236,72,153,0.18);display:flex;align-items:center;justify-content:center;color:#ec4899;font-size:1.3rem;box-shadow:0 0 12px rgba(236,72,153,0.25)">🚀</div>
+            <div>
+              <div style="font-weight:700;font-size:0.95rem;color:var(--text);display:flex;align-items:center;gap:8px">
+                <span>Peak Export Dispatch Recommendation</span>
+                <span class="pill-tag mono" id="agile-plan-status" style="color:#ec4899;border-color:rgba(236,72,153,0.35);font-size:0.68rem">Arbitrage Ready</span>
               </div>
-              <div style="text-align:right">
-                <span class="mono" id="agile-next-countdown" style="font-size:0.75rem;padding:3px 7px;border-radius:6px;background:rgba(236,72,153,0.12);color:#ec4899;border:1px solid rgba(236,72,153,0.25);font-weight:600">Next in --m --s</span>
+              <div style="color:var(--text-secondary);font-size:0.78rem;margin-top:2px" id="agile-plan-desc">
+                Discharge battery during peak slot to maximize wholesale revenue against 9.4p night charge.
               </div>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;color:var(--text-muted);margin-top:4px">
-              <span id="agile-peak-window">Peak: 16:00 - 19:00</span>
-              <span id="agile-next-rate-preview" class="mono" style="font-size:0.73rem;color:var(--text-secondary)"></span>
-            </div>
           </div>
-
-          <!-- Top Export Slots Today & Realized Rate -->
-          <div style="margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.06);font-size:0.74rem">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <span style="color:var(--text-muted);font-weight:600">🔥 Top Export Slots Today</span>
-              <span class="mono" id="agile-realized-pill" style="font-size:0.70rem;color:#a855f7;background:rgba(168,85,247,0.12);padding:1px 6px;border-radius:4px">Avg --.-p</span>
+          <div style="display:flex;align-items:center;gap:16px">
+            <div style="text-align:right">
+              <div style="font-size:0.72rem;color:var(--text-muted)">Recommended Window</div>
+              <div class="mono" id="agile-plan-window" style="font-size:1.15rem;font-weight:700;color:#ec4899">--:-- - --:--</div>
             </div>
-            <div id="agile-top-slots-container" style="display:flex;gap:6px;justify-content:space-between">
-              <span style="color:var(--text-muted)">Loading top windows...</span>
+            <div style="text-align:right">
+              <div style="font-size:0.72rem;color:var(--text-muted)">Est. Profit (4.5 kWh)</div>
+              <div class="mono" id="agile-plan-profit" style="font-size:1.15rem;font-weight:700;color:var(--battery)">+£0.00</div>
             </div>
-          </div>
-
-          <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
-            <span>Peak <strong class="mono" id="agile-peak-rate" style="color:#ec4899">--.-p</strong></span>
-            <span>Realized <strong class="mono" id="agile-realized-rate" style="color:#38bdf8">--.-p/kWh</strong></span>
-            <span>Shadow Earned <strong class="mono" id="agile-shadow-earned" style="color:var(--text)">£0.00</strong></span>
           </div>
         </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <!-- Octopus Agile Outgoing Shadow Export Tile -->
+          <div class="solar-forecast-card" style="background:linear-gradient(180deg, rgba(236,72,153,0.06), var(--surface));border-color:rgba(236,72,153,0.25)">
+            <div>
+              <div class="metric-top" style="margin-bottom:8px">
+                <span class="metric-title">
+                  <span class="metric-icon" style="background:#ec4899"></span>
+                  Agile Outgoing Tracker
+                </span>
+                <span class="pill-tag mono" id="agile-shadow-badge" style="color:#ec4899;border-color:rgba(236,72,153,0.3)">Shadow Mode</span>
+              </div>
+              <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:6px">
+                <div style="display:flex;align-items:baseline;gap:8px">
+                  <span class="mono" id="agile-live-rate" style="font-size:1.55rem;font-weight:700;color:#ec4899">--.-p</span>
+                  <span class="metric-unit" style="font-size:0.85rem;color:#ec4899">/kWh live</span>
+                </div>
+                <div style="text-align:right">
+                  <span class="mono" id="agile-next-countdown" style="font-size:0.75rem;padding:3px 7px;border-radius:6px;background:rgba(236,72,153,0.12);color:#ec4899;border:1px solid rgba(236,72,153,0.25);font-weight:600">Next in --m --s</span>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;color:var(--text-muted);margin-top:4px">
+                <span id="agile-peak-window">Peak: 16:00 - 19:00</span>
+                <span id="agile-next-rate-preview" class="mono" style="font-size:0.73rem;color:var(--text-secondary)"></span>
+              </div>
+            </div>
+
+            <!-- Top Export Slots Today & Realized Rate -->
+            <div style="margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.06);font-size:0.74rem">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span style="color:var(--text-muted);font-weight:600">🔥 Top Export Slots Today</span>
+                <span class="mono" id="agile-realized-pill" style="font-size:0.70rem;color:#a855f7;background:rgba(168,85,247,0.12);padding:1px 6px;border-radius:4px">Avg --.-p</span>
+              </div>
+              <div id="agile-top-slots-container" style="display:flex;gap:6px;justify-content:space-between">
+                <span style="color:var(--text-muted)">Loading top windows...</span>
+              </div>
+            </div>
+
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
+              <span>Peak <strong class="mono" id="agile-peak-rate" style="color:#ec4899">--.-p</strong></span>
+              <span>Realized <strong class="mono" id="agile-realized-rate" style="color:#38bdf8">--.-p/kWh</strong></span>
+              <span>Shadow Earned <strong class="mono" id="agile-shadow-earned" style="color:var(--text)">£0.00</strong></span>
+            </div>
+          </div>
 
           <div class="card">
             <div class="card-header">
@@ -580,6 +606,66 @@
                 <strong class="mono" style="color:var(--text-secondary);font-size:1rem">15.00p / kWh</strong>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- 48-Slot Interactive Agile Rates Curve -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <div>
+              <div class="card-title">48-Slot Agile Rates Curve (p/kWh)</div>
+              <div class="card-subtitle" id="agile-curve-subtitle">Full 24-hour half-hourly wholesale export rates · Colour-coded by value</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="range-pills" style="margin:0">
+                <button class="range-btn active" id="btn-curve-today" onclick="setAgileCurveDay('today')">Today</button>
+                <button class="range-btn" id="btn-curve-tomorrow" onclick="setAgileCurveDay('tomorrow')">Tomorrow Preview</button>
+              </span>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;font-size:0.75rem;color:var(--text-muted)">
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#10b981"></span> Normal (&lt;15p)</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#38bdf8"></span> Good (15-20p)</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#f59e0b"></span> High (20-25p)</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#ec4899"></span> Peak (&gt;25p)</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#a855f7"></span> Super-Peak (&gt;32p)</span>
+          </div>
+
+          <div id="agile-curve-container" style="display:flex;align-items:flex-end;gap:3px;height:180px;padding:10px 4px;background:rgba(0,0,0,0.22);border-radius:8px;border:1px solid var(--border);overflow-x:auto">
+            <span style="color:var(--text-muted);font-size:0.8rem;margin:auto">Loading 48 half-hour slots...</span>
+          </div>
+        </div>
+
+        <!-- Historical Daily Savings Ledger & Monthly Projection Table -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Daily Financial Savings Ledger</div>
+              <div class="card-subtitle">Actual solar generated, grid import breakdown, net cost and savings vs Price Cap</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="pill-tag mono" id="ledger-mtd-cost" style="color:var(--text);border-color:var(--border)">MTD Cost: £0.00</span>
+              <span class="pill-tag mono" id="ledger-mtd-saved" style="color:var(--battery);border-color:rgba(16,185,129,0.3)">MTD Saved: £0.00</span>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:0.8rem;text-align:left">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border);color:var(--text-muted)">
+                  <th style="padding:8px 10px;font-weight:600">Date</th>
+                  <th style="padding:8px 10px;font-weight:600">Solar Yield</th>
+                  <th style="padding:8px 10px;font-weight:600">Import (Night @ 9.4p / Day @ 36.6p)</th>
+                  <th style="padding:8px 10px;font-weight:600">Export</th>
+                  <th style="padding:8px 10px;font-weight:600">Net Cost</th>
+                  <th style="padding:8px 10px;font-weight:600;text-align:right">Savings vs Cap</th>
+                </tr>
+              </thead>
+              <tbody id="ledger-table-body">
+                <tr><td colspan="6" style="padding:14px;text-align:center;color:var(--text-muted)">Loading historical ledger...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </main>
@@ -740,6 +826,61 @@
            VIEW 6: SETTINGS & BATTERY SCHEDULE
            ========================================== -->
       <main id="view-settings" class="view">
+        <!-- Battery Health & 00:30 Off-Peak Bridging Analytics Hero Card -->
+        <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg, rgba(16,185,129,0.08), rgba(56,189,248,0.05), var(--surface));border:1px solid rgba(16,185,129,0.28)">
+          <div class="card-header" style="margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;border-radius:10px;background:rgba(16,185,129,0.18);display:flex;align-items:center;justify-content:center;color:var(--battery);font-size:1.3rem;box-shadow:0 0 12px rgba(16,185,129,0.25)">🔋</div>
+              <div>
+                <div class="card-title" style="display:flex;align-items:center;gap:8px">
+                  <span>Battery Health & 00:30 Bridging Analysis</span>
+                  <span class="pill-tag mono" id="bat-bridge-badge" style="color:var(--battery);border-color:rgba(16,185,129,0.3)">High Confidence</span>
+                </div>
+                <div class="card-subtitle" id="bat-bridge-msg">Real-time model tracking usable kWh vs predicted evening demand until 00:30 Octopus Go off-peak window.</div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <span class="mono" id="bat-hours-to-go" style="font-size:1.1rem;font-weight:700;color:var(--text)">--h to 00:30</span>
+            </div>
+          </div>
+
+          <!-- 4 Stat Pill Grid -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;margin-bottom:14px">
+            <div style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+              <div style="font-size:0.72rem;color:var(--text-muted)">State of Health (SoH)</div>
+              <div class="mono" id="bat-soh-pct" style="font-size:1.2rem;font-weight:700;color:var(--battery)">100%</div>
+              <div style="font-size:0.7rem;color:var(--text-secondary);margin-top:2px">Nominal 9.84 kWh</div>
+            </div>
+            <div style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+              <div style="font-size:0.72rem;color:var(--text-muted)">Round-Trip Efficiency</div>
+              <div class="mono" id="bat-rte-pct" style="font-size:1.2rem;font-weight:700;color:#38bdf8">94.2%</div>
+              <div style="font-size:0.7rem;color:var(--text-secondary);margin-top:2px">Charge/Discharge ratio</div>
+            </div>
+            <div style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+              <div style="font-size:0.72rem;color:var(--text-muted)">Est. Full Cycles</div>
+              <div class="mono" id="bat-cycles-count" style="font-size:1.2rem;font-weight:700;color:var(--text)">14.2</div>
+              <div style="font-size:0.7rem;color:var(--text-secondary);margin-top:2px">6,000 cycle warranty</div>
+            </div>
+            <div style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+              <div style="font-size:0.72rem;color:var(--text-muted)">Pack Temp & Voltage</div>
+              <div class="mono" id="bat-temp-volt" style="font-size:1.2rem;font-weight:700;color:var(--solar)">20.4°C · 133V</div>
+              <div style="font-size:0.7rem;color:var(--text-secondary);margin-top:2px">Optimal operating zone</div>
+            </div>
+          </div>
+
+          <!-- Bridging Meter Bar -->
+          <div style="background:rgba(0,0,0,0.22);border:1px solid var(--border);border-radius:8px;padding:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;margin-bottom:6px">
+              <span>Usable Stored: <strong class="mono" id="bat-usable-stored-kwh" style="color:var(--battery)">-- kWh</strong></span>
+              <span>Predicted Evening Demand: <strong class="mono" id="bat-predicted-demand-kwh" style="color:var(--home)">-- kWh</strong></span>
+              <span>Projected Margin @ 00:30: <strong class="mono" id="bat-projected-margin-kwh" style="color:var(--battery)">+-- kWh</strong></span>
+            </div>
+            <div class="bar-bg" style="height:10px">
+              <div class="bar-fill" id="bat-bridge-bar" style="width:75%;background:var(--battery)"></div>
+            </div>
+          </div>
+        </div>
+
         <div style="display:grid;grid-template-columns:minmax(320px, 420px) 1fr;gap:16px">
           <!-- FoxESS Grid Force-Charge Schedule Block -->
         <div class="solar-forecast-card">
@@ -815,6 +956,8 @@
     let chartInstance = null;
     let historyHours = 6;
     let countdownSec = 10;
+    let latestAgileData = null;
+    let agileCurveDay = 'today'; // 'today' or 'tomorrow'
 
     const viewMeta = {
       overview: { title: 'System Overview', sub: 'Real-time PV generation, battery bridging & tariff tracking' },
@@ -839,6 +982,10 @@
       setText('view-subtitle', meta.sub);
 
       if (view === 'devices') fetchDevices();
+      if (view === 'agile') {
+        renderAgileCurve();
+        fetchDailyLedger();
+      }
       if (window.innerWidth <= 900) {
         const sb = document.getElementById('app-sidebar');
         if (sb) sb.classList.remove('mobile-open');
@@ -1178,6 +1325,7 @@
         // 8. Octopus Agile Outgoing Live Tracker
         if (d.octopus && d.octopus.agile_outgoing) {
           const agile = d.octopus.agile_outgoing;
+          latestAgileData = agile;
           setText('agile-live-rate', `${(agile.current_export_p_kwh || 15.0).toFixed(1)}p`);
           setText('agile-peak-rate', `${(agile.peak_rate_today_p_kwh || 30.0).toFixed(1)}p`);
           setText('agile-shadow-earned', `£${(agile.today_shadow_earned_gbp || 0.0).toFixed(2)}`);
@@ -1205,6 +1353,54 @@
                 <div class="mono" style="font-size:0.80rem;font-weight:700;color:#ec4899;margin-top:1px">${s.rate_p_kwh.toFixed(1)}p</div>
               </div>
             `).join('');
+          }
+
+          // Export Dispatch Recommendation Banner
+          if (agile.export_strategy) {
+            const strat = agile.export_strategy;
+            setText('agile-plan-window', strat.recommended_window);
+            setText('agile-plan-profit', `+£${strat.arbitrage_profit_gbp.toFixed(2)}`);
+            setText('agile-plan-desc', `Discharge ~${strat.estimated_export_kwh} kWh at avg ${strat.avg_rate_p_kwh}p/kWh (peak ${strat.peak_rate_p_kwh}p). Net profit £${strat.arbitrage_profit_gbp.toFixed(2)} vs 9.4p charge.`);
+            const btnTmrw = document.getElementById('btn-curve-tomorrow');
+            if (btnTmrw) {
+              btnTmrw.textContent = strat.has_tomorrow_rates ? 'Tomorrow Preview (Published)' : 'Tomorrow (Available ~16:00)';
+            }
+          }
+
+          // Render 48-slot Agile rates curve
+          renderAgileCurve();
+        }
+
+        // 9. Battery Health & 00:30 Off-Peak Bridging Analytics
+        if (d.financials && d.financials.bridging_analytics) {
+          const br = d.financials.bridging_analytics;
+          setText('bat-bridge-badge', br.bridge_confidence);
+          const badgeEl = document.getElementById('bat-bridge-badge');
+          if (badgeEl) {
+            badgeEl.style.color = br.will_bridge_to_offpeak ? 'var(--battery)' : 'var(--solar)';
+            badgeEl.style.borderColor = br.will_bridge_to_offpeak ? 'rgba(16,185,129,0.35)' : 'rgba(245,158,11,0.35)';
+          }
+          setText('bat-bridge-msg', br.bridging_message);
+          setText('bat-hours-to-go', `${br.hours_to_offpeak}h to 00:30`);
+          setText('bat-soh-pct', `${br.soh_pct}%`);
+          setText('bat-rte-pct', `${br.round_trip_efficiency_pct ? br.round_trip_efficiency_pct.toFixed(1) : '94.2'}%`);
+          setText('bat-cycles-count', br.est_cycles != null ? br.est_cycles.toString() : '14.2');
+          setText('bat-temp-volt', `${(br.temp_c || 20).toFixed(1)}°C · ${Math.round(br.voltage_v || 132)}V`);
+          setText('bat-usable-stored-kwh', `${br.usable_kwh_stored} kWh`);
+          setText('bat-predicted-demand-kwh', `${br.predicted_evening_demand_kwh} kWh`);
+          
+          const marginStr = br.will_bridge_to_offpeak ? `+${br.surplus_kwh_at_offpeak} kWh` : `-${br.deficit_kwh_before_offpeak} kWh`;
+          setText('bat-projected-margin-kwh', marginStr);
+          const marginEl = document.getElementById('bat-projected-margin-kwh');
+          if (marginEl) {
+            marginEl.style.color = br.will_bridge_to_offpeak ? 'var(--battery)' : 'var(--solar)';
+          }
+
+          const barRatio = Math.min(100, Math.max(5, Math.round((br.usable_kwh_stored / (br.predicted_evening_demand_kwh || 1)) * 50)));
+          const bridgeBar = document.getElementById('bat-bridge-bar');
+          if (bridgeBar) {
+            bridgeBar.style.width = `${barRatio}%`;
+            bridgeBar.style.background = br.will_bridge_to_offpeak ? 'var(--battery)' : 'var(--solar)';
           }
         }
 
@@ -1585,6 +1781,108 @@
       }
     }
 
+    function setAgileCurveDay(day) {
+      agileCurveDay = day;
+      const btnToday = document.getElementById('btn-curve-today');
+      const btnTmrw = document.getElementById('btn-curve-tomorrow');
+      if (btnToday && btnTmrw) {
+        if (day === 'today') {
+          btnToday.classList.add('active');
+          btnTmrw.classList.remove('active');
+        } else {
+          btnTmrw.classList.add('active');
+          btnToday.classList.remove('active');
+        }
+      }
+      renderAgileCurve();
+    }
+
+    function renderAgileCurve() {
+      if (!latestAgileData) return;
+      const container = document.getElementById('agile-curve-container');
+      if (!container) return;
+
+      const slots = agileCurveDay === 'tomorrow'
+        ? (latestAgileData.half_hourly_tomorrow || [])
+        : (latestAgileData.half_hourly_rates || []);
+
+      const subTitle = document.getElementById('agile-curve-subtitle');
+      if (subTitle) {
+        subTitle.textContent = agileCurveDay === 'tomorrow'
+          ? (slots.length > 0 ? `Tomorrow's wholesale day-ahead export curve (${slots.length} slots published)` : "Tomorrow's rates publish every afternoon between 16:00 and 17:00 UTC")
+          : `Full 24-hour half-hourly export rates (${slots.length} slots) · Colour-coded by value`;
+      }
+
+      if (!slots || slots.length === 0) {
+        container.innerHTML = `<span style="color:var(--text-muted);font-size:0.8rem;margin:auto">No ${agileCurveDay} rate slots published yet.</span>`;
+        return;
+      }
+
+      const rates = slots.map(s => s.rate_p_kwh);
+      const maxRate = Math.max(35, ...rates);
+      const now = new Date();
+      const currentHh = `${String(now.getHours()).padStart(2, '0')}:${now.getMinutes() < 30 ? '00' : '30'}`;
+
+      container.innerHTML = slots.map(s => {
+        const r = s.rate_p_kwh;
+        const heightPct = Math.max(8, Math.round((r / maxRate) * 100));
+        let color = '#10b981'; // Green < 15p
+        if (r >= 32) color = '#a855f7'; // Super peak purple
+        else if (r >= 25) color = '#ec4899'; // Peak pink
+        else if (r >= 20) color = '#f59e0b'; // High amber
+        else if (r >= 15) color = '#38bdf8'; // Good blue
+
+        const isCurrent = (agileCurveDay === 'today' && s.from === currentHh);
+        const borderStyle = isCurrent ? 'outline:2px solid #fff;box-shadow:0 0 10px #fff;z-index:2' : '';
+
+        return `
+          <div style="flex:1;min-width:13px;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;position:relative" title="${s.from} - ${s.to}: ${r.toFixed(1)}p/kWh ${isCurrent ? '(NOW)' : ''}">
+            <div style="width:100%;height:${heightPct}%;background:${color};border-radius:3px 3px 0 0;transition:all 0.2s;${borderStyle}"></div>
+            <div class="mono" style="font-size:0.55rem;color:${isCurrent ? 'var(--text)' : 'var(--text-muted)'};margin-top:4px;transform:rotate(-45deg);transform-origin:left top;white-space:nowrap">${s.from.endsWith(':00') ? s.from : ''}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function fetchDailyLedger() {
+      try {
+        const res = await fetch('/api/history/daily?days=14');
+        const data = await res.json();
+        const tbody = document.getElementById('ledger-table-body');
+        if (!tbody || !data || !data.daily) return;
+
+        let mtdCost = 0.0;
+        let mtdSaved = 0.0;
+
+        tbody.innerHTML = data.daily.slice().reverse().map(row => {
+          mtdCost += (row.cost_gbp || 0);
+          mtdSaved += (row.savings_gbp || 0);
+
+          const offPeakKwh = row.off_peak_import_kwh != null ? row.off_peak_import_kwh.toFixed(1) : (row.import_kwh * 0.85).toFixed(1);
+          const peakKwh = row.peak_import_kwh != null ? row.peak_import_kwh.toFixed(1) : (row.import_kwh * 0.15).toFixed(1);
+
+          return `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.15s">
+              <td class="mono" style="padding:10px;font-weight:600;color:var(--text)">${row.date}</td>
+              <td class="mono" style="padding:10px;color:var(--solar)">${row.solar_kwh.toFixed(1)} kWh</td>
+              <td class="mono" style="padding:10px">
+                <span style="color:var(--battery)">${offPeakKwh} kWh</span> / <span style="color:var(--grid-import)">${peakKwh} kWh</span>
+                <span style="font-size:0.7rem;color:var(--text-muted);margin-left:4px">(${row.import_kwh.toFixed(1)} tot)</span>
+              </td>
+              <td class="mono" style="padding:10px;color:#38bdf8">${row.export_kwh.toFixed(2)} kWh <span style="font-size:0.7rem;color:var(--text-muted)">(+£${(row.export_credit_gbp || 0).toFixed(2)})</span></td>
+              <td class="mono" style="padding:10px;font-weight:700;color:var(--text)">£${row.cost_gbp.toFixed(2)}</td>
+              <td class="mono" style="padding:10px;text-align:right;font-weight:700;color:var(--battery)">+£${row.savings_gbp.toFixed(2)}</td>
+            </tr>
+          `;
+        }).join('');
+
+        setText('ledger-mtd-cost', `14d Net: £${mtdCost.toFixed(2)}`);
+        setText('ledger-mtd-saved', `14d Saved: £${mtdSaved.toFixed(2)}`);
+      } catch (e) {
+        console.error('Ledger fetch error:', e);
+      }
+    }
+
     function setHistoryWindow(hours, btn) {
       historyHours = hours;
       document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
@@ -1597,6 +1895,7 @@
       fetchLive();
       fetchHistory();
       fetchDevices();
+      fetchDailyLedger();
 
       function updateAgileCountdown() {
         const now = new Date();
