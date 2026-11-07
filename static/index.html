@@ -113,7 +113,7 @@
       <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
           <button onclick="openChangelogModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v1.1.1</span>
+            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v1.1.2</span>
             <span>Changelog</span>
           </button>
           <span style="font-size:0.68rem;color:var(--text-muted)" class="mono">Open-Source</span>
@@ -1135,7 +1135,7 @@
           <div>
             <div class="card-title" style="display:flex;align-items:center;gap:8px">
               <span>Changelog</span>
-              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v1.1.1</span>
+              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v1.1.2</span>
             </div>
             <div class="card-subtitle">Version History & Release Notes</div>
           </div>
@@ -1144,14 +1144,26 @@
       </div>
       <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:16px">
         
-        <!-- v1.1.1 -->
+        <!-- v1.1.2 -->
         <div style="border-left:2px solid var(--accent);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.1.2 — Adaptive Safety Buffer (+%)</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">7 Nov 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li><strong>Safety Buffer Above Headroom (+%)</strong>: Configurable percentage margin added on top of the calculated adaptive target (e.g. baseline 60% + 10% buffer = 70% target) to guarantee pre-solar morning load coverage without depleting battery reserves.</li>
+            <li><strong>Live In-Dashboard Control</strong>: Instant tuning (+0% to +30%) in the Settings view with automatic recalculation and persistence to <span class="mono">config.json</span>.</li>
+          </ul>
+        </div>
+
+        <!-- v1.1.1 -->
+        <div style="border-left:2px solid var(--border);padding-left:14px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
             <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.1.1 — Adaptive Solar Headroom & Off-Peak Top-Up Fix</strong>
             <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">7 Nov 2026</span>
           </div>
           <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
-            <li><strong>Adaptive Solar Headroom & Safety Buffer</strong>: User-configurable setting to limit night charging to solar headroom, plus a customizable safety buffer (+%) on top of the target (e.g. 60% + 10% buffer = 70%).</li>
+            <li><strong>Adaptive Solar Headroom Toggle</strong>: Dedicated setting in the dashboard to enable or disable dynamic night-charge limiting (choose between solar headroom target vs full 100% capacity charge).</li>
             <li><strong>Automated Off-Peak Top-Up</strong>: Actively monitors battery during cheap hours (00:30–05:30) and automatically resumes grid charging if household baseline loads cause battery SoC to drop below target (&ge;3% drop).</li>
             <li><strong>Fix for Premature Off-Peak Cutoff</strong>: Solved issue where battery stopped charging early in the night window without recovering when house loads depleted battery.</li>
           </ul>
