@@ -113,7 +113,7 @@
       <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
           <button onclick="openChangelogModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v1.1.0</span>
+            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v1.1.1</span>
             <span>Changelog</span>
           </button>
           <span style="font-size:0.68rem;color:var(--text-muted)" class="mono">Open-Source</span>
@@ -1050,6 +1050,46 @@
                 <button class="btn-add" id="btn-save-limits" onclick="saveInverterLimits()" style="font-size:0.78rem;margin-left:auto">Update Limits</button>
               </div>
             </div>
+
+            <!-- 4. Adaptive Solar Headroom & Off-Peak Top-Up -->
+            <div style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:10px;padding:14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <div style="font-weight:600;font-size:0.85rem;color:var(--text)">Adaptive Solar Headroom & Top-Up</div>
+                <span class="pill-tag mono" id="ctrl-adaptive-badge" style="font-size:0.68rem;color:var(--battery);border-color:rgba(16,185,129,0.3)">Active</span>
+              </div>
+              <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:10px">
+                Calculates optimal night charge target SoC based on tomorrow's solar forecast and home demand.
+              </div>
+
+              <!-- Adaptive Enable Toggle -->
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 8px;background:rgba(0,0,0,0.18);border-radius:8px">
+                <div>
+                  <div style="font-size:0.78rem;font-weight:600;color:var(--text)">Limit Night Charge to Solar Headroom</div>
+                  <div style="font-size:0.70rem;color:var(--text-muted)">Stops force charge at adaptive target (e.g. 61%) instead of 100%</div>
+                </div>
+                <label class="toggle" title="Toggle Adaptive Solar Headroom">
+                  <input type="checkbox" id="ctrl-adaptive-enable" checked onchange="saveAdaptiveSettings()" />
+                  <span class="toggle-track green"></span>
+                </label>
+              </div>
+
+              <!-- Top-Up Enable Toggle & Drop Threshold -->
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:rgba(0,0,0,0.18);border-radius:8px">
+                <div>
+                  <div style="font-size:0.78rem;font-weight:600;color:var(--text)">Off-Peak Top-Up Back to Target</div>
+                  <div style="font-size:0.70rem;color:var(--text-muted)">Resumes charge if house loads drop SoC during cheap window</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="mono" style="font-size:0.72rem;color:var(--text-secondary)">drop &ge;</span>
+                  <input type="number" id="ctrl-topup-drop" class="field-input mono" value="3" min="1" max="10" style="width:45px;font-size:0.78rem;text-align:center;padding:2px 4px" onchange="saveAdaptiveSettings()" />
+                  <span class="mono" style="font-size:0.72rem;color:var(--text-muted)">%</span>
+                  <label class="toggle" title="Toggle Off-Peak Top-Up" style="margin-left:4px">
+                    <input type="checkbox" id="ctrl-topup-enable" checked onchange="saveAdaptiveSettings()" />
+                    <span class="toggle-track green"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
           <div id="ctrl-status-msg" style="font-size:0.75rem;color:var(--battery);margin-top:6px;display:none"></div>
         </div>
@@ -1082,7 +1122,7 @@
           <div>
             <div class="card-title" style="display:flex;align-items:center;gap:8px">
               <span>Changelog</span>
-              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v1.1.0</span>
+              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v1.1.1</span>
             </div>
             <div class="card-subtitle">Version History & Release Notes</div>
           </div>
@@ -1091,8 +1131,21 @@
       </div>
       <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:16px">
         
-        <!-- v1.1.0 -->
+        <!-- v1.1.1 -->
         <div style="border-left:2px solid var(--accent);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.1.1 — Adaptive Solar Headroom & Off-Peak Top-Up Fix</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">7 Nov 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li><strong>Adaptive Solar Headroom Toggle</strong>: User-configurable setting in Settings view to enable/disable dynamic night-charge limiting (choose between solar headroom target vs full 100% capacity charge).</li>
+            <li><strong>Automated Off-Peak Top-Up</strong>: Actively monitors battery during cheap hours (00:30–05:30) and automatically resumes grid charging if household baseline loads cause battery SoC to drop below target (&ge;3% drop).</li>
+            <li><strong>Fix for Premature Off-Peak Cutoff</strong>: Solved issue where battery stopped charging early in the night window without recovering when house loads depleted battery.</li>
+          </ul>
+        </div>
+
+        <!-- v1.1.0 -->
+        <div style="border-left:2px solid var(--border);padding-left:14px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
             <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.1.0 — Inverter Settings & Dual-Slot Scheduling</strong>
             <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">6 Nov 2026</span>
@@ -1534,6 +1587,34 @@
             }
             if (maxChgInput && document.activeElement !== maxChgInput && d.settings.max_charge_current_a != null) {
               maxChgInput.value = Math.round(d.settings.max_charge_current_a);
+            }
+
+            // Adaptive Headroom & Top-Up Controls
+            const adapt = sched.adaptive || {};
+            const adaptEn = document.getElementById('ctrl-adaptive-enable');
+            const topupEn = document.getElementById('ctrl-topup-enable');
+            const topupDrop = document.getElementById('ctrl-topup-drop');
+            const adaptBadge = document.getElementById('ctrl-adaptive-badge');
+
+            if (adaptEn && document.activeElement !== adaptEn && adapt.enabled !== undefined) {
+              adaptEn.checked = !!adapt.enabled;
+            }
+            if (topupEn && document.activeElement !== topupEn && adapt.topup_enabled !== undefined) {
+              topupEn.checked = !!adapt.topup_enabled;
+            }
+            if (topupDrop && document.activeElement !== topupDrop && adapt.topup_drop_pct !== undefined) {
+              topupDrop.value = adapt.topup_drop_pct;
+            }
+            if (adaptBadge) {
+              if (adapt.enabled) {
+                adaptBadge.textContent = `Adaptive Target: ${adapt.calculated_target_soc || 100}%`;
+                adaptBadge.style.color = 'var(--battery)';
+                adaptBadge.style.borderColor = 'rgba(16,185,129,0.3)';
+              } else {
+                adaptBadge.textContent = 'Disabled (Full 100%)';
+                adaptBadge.style.color = 'var(--text-muted)';
+                adaptBadge.style.borderColor = 'var(--border)';
+              }
             }
           }
         }
@@ -2284,6 +2365,38 @@
       } finally {
         btn.textContent = originalText;
         btn.disabled = false;
+      }
+    }
+
+    async function saveAdaptiveSettings() {
+      const adaptEn = document.getElementById('ctrl-adaptive-enable');
+      const topupEn = document.getElementById('ctrl-topup-enable');
+      const topupDrop = document.getElementById('ctrl-topup-drop');
+      if (!adaptEn || !topupEn || !topupDrop) return;
+
+      try {
+        const res = await fetch('/api/inverter/adaptive_headroom', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            headroom_enabled: adaptEn.checked,
+            topup_enabled: topupEn.checked,
+            topup_drop_pct: parseInt(topupDrop.value, 10) || 3
+          })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          if (data.headroom_enabled) {
+            showCtrlStatus(`Adaptive Solar Headroom active (Top-up: ${data.topup_enabled ? 'ON at \u2265' + data.topup_drop_pct + '% drop' : 'OFF'})`);
+          } else {
+            showCtrlStatus('Adaptive Headroom disabled: Inverter will charge to 100% capacity overnight.');
+          }
+          fetchLive();
+        } else {
+          showCtrlStatus('Failed to update adaptive settings.', true);
+        }
+      } catch (e) {
+        showCtrlStatus(`Error: ${e.message}`, true);
       }
     }
 

@@ -25,6 +25,9 @@ DEFAULT_CONFIG = {
         "min_reserve_soc_pct": 10,
         "max_charge_current_a": 40.0,
         "max_discharge_current_a": 40.0,
+        "adaptive_headroom_enabled": True,
+        "adaptive_topup_enabled": True,
+        "adaptive_topup_drop_pct": 3,
     },
     "tariff": {
         "provider": "octopus",

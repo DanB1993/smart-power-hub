@@ -35,6 +35,9 @@ INVERTER_PORT = int(os.environ.get("INVERTER_PORT", str(app_config.get("inverter
 INVERTER_UNIT = int(os.environ.get("INVERTER_UNIT", str(app_config.get("inverter", {}).get("unit_id", 247))))
 BATTERY_CAPACITY_KWH = float(app_config.get("battery", {}).get("gross_capacity_kwh", 9.84))
 BATTERY_USABLE_KWH = float(app_config.get("battery", {}).get("usable_capacity_kwh", 8.86))
+ADAPTIVE_HEADROOM_ENABLED = bool(app_config.get("battery", {}).get("adaptive_headroom_enabled", True))
+ADAPTIVE_TOPUP_ENABLED = bool(app_config.get("battery", {}).get("adaptive_topup_enabled", True))
+ADAPTIVE_TOPUP_DROP_PCT = int(app_config.get("battery", {}).get("adaptive_topup_drop_pct", 3))
 HUE_HOST = os.environ.get("HUE_HOST", app_config.get("devices", {}).get("hue", {}).get("host", "192.168.1.150"))
 HUE_API_KEY = os.environ.get("HUE_API_KEY", app_config.get("devices", {}).get("hue", {}).get("api_key", ""))
 OCTOPUS_API_KEY = os.environ.get("OCTOPUS_API_KEY", app_config.get("tariff", {}).get("api_key", ""))
@@ -2061,52 +2064,88 @@ def sync_foxess_octopus_schedule():
 
         with lock:
             latest_adaptive.update({
-                "enabled": True,
+                "enabled": ADAPTIVE_HEADROOM_ENABLED,
                 "calculated_target_soc": target_soc,
-                "active_register_max_soc": target_soc if is_night_window else 100,
-                "reason": reason,
+                "active_register_max_soc": target_soc if (is_night_window and ADAPTIVE_HEADROOM_ENABLED) else 100,
+                "reason": reason if ADAPTIVE_HEADROOM_ENABLED else "Adaptive Headroom disabled: charging to 100% capacity",
                 "tomorrow_solar_kwh": tomorrow_solar,
                 "ml_prediction": ml_pred,
                 "night_mode_active": is_night_window,
                 "last_evaluated": now.strftime("%H:%M:%S"),
+                "topup_enabled": ADAPTIVE_TOPUP_ENABLED,
+                "topup_drop_pct": ADAPTIVE_TOPUP_DROP_PCT,
             })
     except Exception as e:
         print(f"[FoxESS Adaptive SoC Warning] {e}")
 
 
 def enforce_inverter_night_charge_cutoff():
-    """Actively monitors battery SoC during the Octopus Go off-peak window (00:30-05:30).
-    Once the battery reaches the adaptive target SoC (e.g. 40%), disables Period 1 force charge
-    so the battery stops importing from the grid and avoids charging to 100%."""
+    """Actively monitors battery SoC during the off-peak tariff window.
+    - If Adaptive Headroom is enabled:
+        * Cuts off Period 1 force charge once battery reaches calculated target SoC.
+        * If battery falls below target (default: by 3% or more) during off-peak due to household loads,
+          automatically resumes force charge to top back up to the target SoC.
+    - If Adaptive Headroom is disabled:
+        * Keeps force charge active throughout the entire off-peak window to charge to 100% capacity."""
     now = datetime.now()
     cur_mins = now.hour * 60 + now.minute
-    # Octopus Go off-peak window: 00:30 (30) to 05:30 (330)
-    in_offpeak = (30 <= cur_mins < 330)
-    # Reset window before off-peak: 22:00 to 00:25
-    in_prep = (cur_mins >= 22 * 60) or (cur_mins < 30)
+
+    # Parse tariff off-peak start and end times
+    try:
+        start_str = app_config.get("tariff", {}).get("off_peak_start", "00:30")
+        end_str = app_config.get("tariff", {}).get("off_peak_end", "05:30")
+        sh, sm = [int(x) for x in start_str.split(":")]
+        eh, em = [int(x) for x in end_str.split(":")]
+        start_mins = sh * 60 + sm
+        end_mins = eh * 60 + em
+    except Exception:
+        start_mins = 30
+        end_mins = 330
+
+    if start_mins < end_mins:
+        in_offpeak = (start_mins <= cur_mins < end_mins)
+    else:
+        # Crosses midnight (e.g. 23:30 to 05:30)
+        in_offpeak = (cur_mins >= start_mins) or (cur_mins < end_mins)
+
+    # Prep window: ~30 mins before off-peak begins
+    prep_start = (start_mins - 30) % 1440
+    if prep_start < start_mins:
+        in_prep = (prep_start <= cur_mins < start_mins)
+    else:
+        in_prep = (cur_mins >= prep_start) or (cur_mins < start_mins)
 
     with lock:
         current_soc = latest_data.get("battery", {}).get("soc_pct", 100)
         target_soc = latest_adaptive.get("calculated_target_soc", 40)
         sched = latest_data.get("settings", {}).get("grid_charge_schedule", {})
         p1_enabled = sched.get("period1", {}).get("enabled", True)
+        headroom_enabled = ADAPTIVE_HEADROOM_ENABLED
+        topup_enabled = ADAPTIVE_TOPUP_ENABLED
+        topup_drop = ADAPTIVE_TOPUP_DROP_PCT
 
     if in_prep:
-        # Prior to the off-peak window, guarantee the schedule is enabled and ready to charge at 00:30
+        # Prior to the off-peak window, ensure the schedule is enabled and ready to charge
         if not p1_enabled:
-            print(f"[FoxESS Auto-Charge] Off-peak prep window: Re-enabling 00:30-05:30 force charge schedule.")
+            print(f"[FoxESS Auto-Charge] Off-peak prep window: Re-enabling force charge schedule.")
             set_foxess_force_charge_schedule(enabled=True)
     elif in_offpeak:
-        # During off-peak: If battery has reached or exceeded target SoC, cut off grid force charge!
-        if current_soc >= target_soc and p1_enabled:
-            print(f"[FoxESS Auto-Charge] Target SoC reached ({current_soc}% >= {target_soc}%). Disabling force charge to preserve solar headroom!")
-            set_foxess_force_charge_schedule(enabled=False)
-        elif current_soc < (target_soc - 5) and not p1_enabled:
-            # Re-enable if household load dropped it significantly below target during off-peak
-            print(f"[FoxESS Auto-Charge] SoC dropped below target ({current_soc}% < {target_soc}%). Resuming force charge.")
-            set_foxess_force_charge_schedule(enabled=True)
+        if not headroom_enabled:
+            # If adaptive headroom is disabled by user, guarantee charging stays enabled to 100%
+            if not p1_enabled:
+                print(f"[FoxESS Auto-Charge] Full 100% Charge Mode: Ensuring force charge remains enabled throughout off-peak.")
+                set_foxess_force_charge_schedule(enabled=True)
+        else:
+            # Adaptive mode active
+            if current_soc >= target_soc and p1_enabled:
+                print(f"[FoxESS Auto-Charge] Target SoC reached ({current_soc}% >= {target_soc}%). Pausing force charge to preserve solar headroom.")
+                set_foxess_force_charge_schedule(enabled=False)
+            elif topup_enabled and current_soc <= (target_soc - topup_drop) and not p1_enabled:
+                # Top up back to adaptive target if house load drained battery during off-peak
+                print(f"[FoxESS Auto-Charge] Top-Up Triggered: SoC dropped to {current_soc}% (<= target {target_soc}% - {topup_drop}%). Resuming force charge.")
+                set_foxess_force_charge_schedule(enabled=True)
     else:
-        # Outside off-peak (daytime after 05:30): Ensure schedule is ready for tonight
+        # Outside off-peak window: Ensure schedule is re-enabled for upcoming night cycle
         if not p1_enabled:
             set_foxess_force_charge_schedule(enabled=True)
 
@@ -3445,6 +3484,32 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             time.sleep(0.3)
             poll_inverter_once(read_static=False)
             self.send_json({"ok": ok, "min_soc": min_soc, "max_soc": max_soc, "max_charge_a": max_chg_a, "max_discharge_a": max_dis_a})
+            return
+
+        if parsed.path == "/api/inverter/adaptive_headroom":
+            global ADAPTIVE_HEADROOM_ENABLED, ADAPTIVE_TOPUP_ENABLED, ADAPTIVE_TOPUP_DROP_PCT
+            headroom_en = bool(body.get("headroom_enabled", True))
+            topup_en = bool(body.get("topup_enabled", True))
+            topup_drop = int(body.get("topup_drop_pct", 3))
+
+            ADAPTIVE_HEADROOM_ENABLED = headroom_en
+            ADAPTIVE_TOPUP_ENABLED = topup_en
+            ADAPTIVE_TOPUP_DROP_PCT = topup_drop
+
+            # Persist to config.json
+            app_config.setdefault("battery", {})["adaptive_headroom_enabled"] = headroom_en
+            app_config["battery"]["adaptive_topup_enabled"] = topup_en
+            app_config["battery"]["adaptive_topup_drop_pct"] = topup_drop
+            save_config(app_config)
+
+            # Re-evaluate adaptive values immediately
+            sync_foxess_octopus_schedule()
+            self.send_json({
+                "ok": True,
+                "headroom_enabled": ADAPTIVE_HEADROOM_ENABLED,
+                "topup_enabled": ADAPTIVE_TOPUP_ENABLED,
+                "topup_drop_pct": ADAPTIVE_TOPUP_DROP_PCT
+            })
             return
 
         if parsed.path == "/api/shelly/toggle":

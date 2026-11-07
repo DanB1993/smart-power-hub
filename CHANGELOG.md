@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.1] - 2026-11-07
+
+### Added
+- **Adaptive Solar Headroom Toggle**: Dedicated setting in the dashboard to enable or disable dynamic night-charge limiting, allowing users to choose between solar-headroom targeting vs full 100% night charging.
+- **Automated Off-Peak Top-Up**: Actively monitors battery SoC throughout cheap tariff windows (e.g. Octopus Go 00:30–05:30) and automatically resumes grid charging if overnight household demand drops the battery below the adaptive target by a configurable threshold (default: $\ge 3\%$).
+- **Persistent Headroom Configuration**: Settings save directly to `/data/config.json` via `/api/inverter/adaptive_headroom` to persist across container restarts.
+
+### Fixed
+- **Premature Night Charge Cutoff**: Resolved issue where battery stopped charging early in the off-peak window without topping back up when household baseline loads depleted stored capacity.
+
+---
+
 ## [1.1.0] - 2026-11-06
 
 ### Added
