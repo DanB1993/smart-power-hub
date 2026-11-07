@@ -861,6 +861,83 @@ def calculate_adaptive_target_soc(tomorrow_solar_kwh):
     return target_soc, target_charge_kwh, round(headroom_kwh, 1), ml
 
 
+def calculate_solar_forecast_analytics(tomorrow_solar_kwh, hourly_forecast=None, ml_pred=None, peak_rate=36.56, export_rate=15.0):
+    """
+    Compute enriched solar forecast intelligence metrics:
+      - Estimated battery solar charge (kWh) & SoC gain (%)
+      - Direct household load offset (kWh)
+      - Projected grid export (kWh) & export revenue (£)
+      - Solar self-consumption percentage (%)
+      - Peak generation window & peak wattage (W)
+      - Morning solar breakeven hour
+      - Avoided grid peak import bill savings (£) and total financial value (£)
+    """
+    bat_total_kwh = 9.84
+    if ml_pred is None:
+        ml_pred = {}
+
+    surplus_kwh = float(ml_pred.get("predicted_solar_surplus_kwh", max(0.0, tomorrow_solar_kwh - 1.2)))
+    breakeven_time = ml_pred.get("first_solar_breakeven_hour", "09:00")
+
+    # Peak solar analysis from hourly forecast track
+    peak_solar_w = 0
+    peak_solar_time = "--:--"
+    peak_solar_window = "--"
+    if hourly_forecast:
+        max_item = max(hourly_forecast, key=lambda x: x.get("watts", 0))
+        peak_solar_w = max_item.get("watts", 0)
+        peak_solar_time = max_item.get("time", "--:--")
+        if peak_solar_w >= 100:
+            threshold = peak_solar_w * 0.70
+            peak_slots = [h["time"] for h in hourly_forecast if h.get("watts", 0) >= threshold]
+            if peak_slots:
+                sorted_hrs = sorted([int(s.split(":")[0]) for s in peak_slots])
+                start_t = f"{sorted_hrs[0]:02d}:00"
+                end_hr = min(23, sorted_hrs[-1] + 1)
+                peak_solar_window = f"{start_t} - {end_hr:02d}:00"
+            else:
+                peak_solar_window = f"Peak ~{peak_solar_time}"
+        else:
+            peak_solar_window = "Diffuse light only"
+
+    # Battery absorption vs export
+    net_headroom = float(ml_pred.get("net_overnight_headroom_needed_kwh", surplus_kwh))
+    estimated_battery_charge_kwh = round(min(surplus_kwh, max(0.0, net_headroom)), 2)
+    estimated_soc_gain_pct = round((estimated_battery_charge_kwh / bat_total_kwh) * 100)
+
+    # Surplus exceeding battery absorption is exported
+    estimated_solar_export_kwh = round(max(0.0, surplus_kwh - estimated_battery_charge_kwh), 2)
+
+    # Solar serving baseline demand directly
+    estimated_direct_load_kwh = round(max(0.0, tomorrow_solar_kwh - estimated_battery_charge_kwh - estimated_solar_export_kwh), 2)
+
+    # Self-consumption metrics
+    total_self_consumed_kwh = round(estimated_direct_load_kwh + estimated_battery_charge_kwh, 2)
+    self_consumption_pct = round((total_self_consumed_kwh / tomorrow_solar_kwh) * 100) if tomorrow_solar_kwh > 0 else 100
+
+    # Financial valuation
+    bill_savings_gbp = round((total_self_consumed_kwh * peak_rate) / 100.0, 2)
+    export_credit_gbp = round((estimated_solar_export_kwh * export_rate) / 100.0, 2)
+    total_financial_value_gbp = round(bill_savings_gbp + export_credit_gbp, 2)
+
+    return {
+        "solar_yield_kwh": tomorrow_solar_kwh,
+        "battery_charge_kwh": estimated_battery_charge_kwh,
+        "soc_gain_pct": estimated_soc_gain_pct,
+        "direct_load_kwh": estimated_direct_load_kwh,
+        "export_kwh": estimated_solar_export_kwh,
+        "self_consumed_kwh": total_self_consumed_kwh,
+        "self_consumption_pct": self_consumption_pct,
+        "breakeven_time": breakeven_time,
+        "peak_window": peak_solar_window,
+        "peak_watts": peak_solar_w,
+        "peak_time": peak_solar_time,
+        "bill_savings_gbp": bill_savings_gbp,
+        "export_credit_gbp": export_credit_gbp,
+        "total_value_gbp": total_financial_value_gbp,
+    }
+
+
 def generate_energy_insights():
     """Deterministic, math-driven savings & battery optimization engine."""
     with lock:
@@ -1546,8 +1623,20 @@ def poll_weather_forecast():
             latest_weather["hourly_forecast"] = hourly_forecast
             latest_weather["last_updated"] = datetime.now().strftime("%H:%M:%S")
 
-    except Exception as e:
-        print(f"[Weather Forecast Warning] {e}")
+            # Enrich with solar intelligence metrics
+            try:
+                adapt_ml = latest_adaptive.get("ml_prediction", {})
+                pk_r = latest_octopus.get("peak_rate_p_kwh", 36.56)
+                exp_r = latest_octopus.get("agile_outgoing", {}).get("current_export_p_kwh", 15.0)
+                latest_weather["solar_intelligence"] = calculate_solar_forecast_analytics(
+                    tomorrow_solar_kwh=tomorrow_predicted_kwh,
+                    hourly_forecast=hourly_forecast,
+                    ml_pred=adapt_ml,
+                    peak_rate=pk_r,
+                    export_rate=exp_r
+                )
+            except Exception as e_intel:
+                print(f"[Solar Intelligence Calc Warning] {e_intel}")
 
     except Exception as e:
         print(f"[Weather Forecast Warning] {e}")
@@ -3285,6 +3374,25 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 data_copy = dict(latest_data)
                 octo_copy = dict(latest_octopus)
                 weather_copy = dict(latest_weather)
+                adapt_copy = dict(latest_adaptive)
+
+            # Ensure solar intelligence is always computed and up to date
+            try:
+                tmrw_kwh = weather_copy.get("tomorrow_solar_kwh", 0.0)
+                h_fc = weather_copy.get("hourly_forecast", [])
+                ml_p = adapt_copy.get("ml_prediction", {})
+                pk_r = octo_copy.get("peak_rate_p_kwh", 36.56)
+                exp_r = octo_copy.get("agile_outgoing", {}).get("current_export_p_kwh", 15.0)
+                weather_copy["solar_intelligence"] = calculate_solar_forecast_analytics(
+                    tomorrow_solar_kwh=tmrw_kwh,
+                    hourly_forecast=h_fc,
+                    ml_pred=ml_p,
+                    peak_rate=pk_r,
+                    export_rate=exp_r
+                )
+            except Exception as e_intel_live:
+                print(f"[Live Solar Intel Warning] {e_intel_live}")
+
             data_copy["octopus"] = octo_copy
             data_copy["weather"] = weather_copy
             data_copy["financials"] = calculate_daily_financials()
