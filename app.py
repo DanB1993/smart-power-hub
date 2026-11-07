@@ -36,6 +36,7 @@ INVERTER_UNIT = int(os.environ.get("INVERTER_UNIT", str(app_config.get("inverter
 BATTERY_CAPACITY_KWH = float(app_config.get("battery", {}).get("gross_capacity_kwh", 9.84))
 BATTERY_USABLE_KWH = float(app_config.get("battery", {}).get("usable_capacity_kwh", 8.86))
 ADAPTIVE_HEADROOM_ENABLED = bool(app_config.get("battery", {}).get("adaptive_headroom_enabled", True))
+ADAPTIVE_BUFFER_PCT = int(app_config.get("battery", {}).get("adaptive_buffer_pct", 10))
 ADAPTIVE_TOPUP_ENABLED = bool(app_config.get("battery", {}).get("adaptive_topup_enabled", True))
 ADAPTIVE_TOPUP_DROP_PCT = int(app_config.get("battery", {}).get("adaptive_topup_drop_pct", 3))
 HUE_HOST = os.environ.get("HUE_HOST", app_config.get("devices", {}).get("hue", {}).get("host", "192.168.1.150"))
@@ -839,16 +840,22 @@ def calculate_adaptive_target_soc(tomorrow_solar_kwh):
     net_overnight_headroom_needed = round(net_overnight_headroom_needed, 2)
     ml["net_overnight_headroom_needed_kwh"] = net_overnight_headroom_needed
 
-    # 5. Decision Matrix:
+    # 5. Decision Matrix with User Safety Buffer:
+    buffer_pct = max(0, min(30, ADAPTIVE_BUFFER_PCT))
+    ml["applied_buffer_pct"] = buffer_pct
+
     if net_overnight_headroom_needed >= 0.3:
         # Cap headroom reservation to not drop battery below 40% (ensuring evening peak security)
         headroom_kwh = min(net_overnight_headroom_needed, bat_usable_kwh * 0.60)
-        target_soc = int(round(100 - (headroom_kwh / bat_total_kwh) * 100))
-        target_soc = max(40, min(95, target_soc))
+        raw_target_soc = int(round(100 - (headroom_kwh / bat_total_kwh) * 100))
+        # Add the user-configured safety buffer on top of the calculated target
+        target_soc = min(100, max(40, raw_target_soc + buffer_pct))
         headroom_kwh = ((100 - target_soc) / 100.0) * bat_total_kwh
+        ml["raw_target_soc"] = raw_target_soc
     else:
         target_soc = 100
         headroom_kwh = 0.0
+        ml["raw_target_soc"] = 100
 
     target_charge_kwh = round((target_soc / 100.0) * bat_total_kwh, 1)
     return target_soc, target_charge_kwh, round(headroom_kwh, 1), ml
@@ -2074,6 +2081,7 @@ def sync_foxess_octopus_schedule():
                 "last_evaluated": now.strftime("%H:%M:%S"),
                 "topup_enabled": ADAPTIVE_TOPUP_ENABLED,
                 "topup_drop_pct": ADAPTIVE_TOPUP_DROP_PCT,
+                "buffer_pct": ADAPTIVE_BUFFER_PCT,
             })
     except Exception as e:
         print(f"[FoxESS Adaptive SoC Warning] {e}")
@@ -3487,17 +3495,20 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             return
 
         if parsed.path == "/api/inverter/adaptive_headroom":
-            global ADAPTIVE_HEADROOM_ENABLED, ADAPTIVE_TOPUP_ENABLED, ADAPTIVE_TOPUP_DROP_PCT
+            global ADAPTIVE_HEADROOM_ENABLED, ADAPTIVE_BUFFER_PCT, ADAPTIVE_TOPUP_ENABLED, ADAPTIVE_TOPUP_DROP_PCT
             headroom_en = bool(body.get("headroom_enabled", True))
+            buffer_pct = int(body.get("buffer_pct", 10))
             topup_en = bool(body.get("topup_enabled", True))
             topup_drop = int(body.get("topup_drop_pct", 3))
 
             ADAPTIVE_HEADROOM_ENABLED = headroom_en
+            ADAPTIVE_BUFFER_PCT = max(0, min(30, buffer_pct))
             ADAPTIVE_TOPUP_ENABLED = topup_en
             ADAPTIVE_TOPUP_DROP_PCT = topup_drop
 
             # Persist to config.json
             app_config.setdefault("battery", {})["adaptive_headroom_enabled"] = headroom_en
+            app_config["battery"]["adaptive_buffer_pct"] = ADAPTIVE_BUFFER_PCT
             app_config["battery"]["adaptive_topup_enabled"] = topup_en
             app_config["battery"]["adaptive_topup_drop_pct"] = topup_drop
             save_config(app_config)
@@ -3507,6 +3518,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_json({
                 "ok": True,
                 "headroom_enabled": ADAPTIVE_HEADROOM_ENABLED,
+                "buffer_pct": ADAPTIVE_BUFFER_PCT,
                 "topup_enabled": ADAPTIVE_TOPUP_ENABLED,
                 "topup_drop_pct": ADAPTIVE_TOPUP_DROP_PCT
             })

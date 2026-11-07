@@ -1065,12 +1065,25 @@
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 8px;background:rgba(0,0,0,0.18);border-radius:8px">
                 <div>
                   <div style="font-size:0.78rem;font-weight:600;color:var(--text)">Limit Night Charge to Solar Headroom</div>
-                  <div style="font-size:0.70rem;color:var(--text-muted)">Stops force charge at adaptive target (e.g. 61%) instead of 100%</div>
+                  <div style="font-size:0.70rem;color:var(--text-muted)">Caps force charge at adaptive target instead of 100%</div>
                 </div>
                 <label class="toggle" title="Toggle Adaptive Solar Headroom">
                   <input type="checkbox" id="ctrl-adaptive-enable" checked onchange="saveAdaptiveSettings()" />
                   <span class="toggle-track green"></span>
                 </label>
+              </div>
+
+              <!-- Safety Buffer % Setting -->
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 8px;background:rgba(0,0,0,0.18);border-radius:8px">
+                <div>
+                  <div style="font-size:0.78rem;font-weight:600;color:var(--text)">Safety Buffer Above Headroom (+%)</div>
+                  <div style="font-size:0.70rem;color:var(--text-muted)">Adds extra buffer on top of target (e.g. 60% + 10% = 70%)</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px">
+                  <span class="mono" style="font-size:0.75rem;color:var(--battery);font-weight:700">+</span>
+                  <input type="number" id="ctrl-adaptive-buffer" class="field-input mono" value="10" min="0" max="30" style="width:50px;font-size:0.80rem;text-align:center;padding:2px 4px" onchange="saveAdaptiveSettings()" />
+                  <span class="mono" style="font-size:0.72rem;color:var(--text-muted)">%</span>
+                </div>
               </div>
 
               <!-- Top-Up Enable Toggle & Drop Threshold -->
@@ -1138,7 +1151,7 @@
             <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">7 Nov 2026</span>
           </div>
           <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
-            <li><strong>Adaptive Solar Headroom Toggle</strong>: User-configurable setting in Settings view to enable/disable dynamic night-charge limiting (choose between solar headroom target vs full 100% capacity charge).</li>
+            <li><strong>Adaptive Solar Headroom & Safety Buffer</strong>: User-configurable setting to limit night charging to solar headroom, plus a customizable safety buffer (+%) on top of the target (e.g. 60% + 10% buffer = 70%).</li>
             <li><strong>Automated Off-Peak Top-Up</strong>: Actively monitors battery during cheap hours (00:30–05:30) and automatically resumes grid charging if household baseline loads cause battery SoC to drop below target (&ge;3% drop).</li>
             <li><strong>Fix for Premature Off-Peak Cutoff</strong>: Solved issue where battery stopped charging early in the night window without recovering when house loads depleted battery.</li>
           </ul>
@@ -1592,12 +1605,16 @@
             // Adaptive Headroom & Top-Up Controls
             const adapt = sched.adaptive || {};
             const adaptEn = document.getElementById('ctrl-adaptive-enable');
+            const adaptBuf = document.getElementById('ctrl-adaptive-buffer');
             const topupEn = document.getElementById('ctrl-topup-enable');
             const topupDrop = document.getElementById('ctrl-topup-drop');
             const adaptBadge = document.getElementById('ctrl-adaptive-badge');
 
             if (adaptEn && document.activeElement !== adaptEn && adapt.enabled !== undefined) {
               adaptEn.checked = !!adapt.enabled;
+            }
+            if (adaptBuf && document.activeElement !== adaptBuf && adapt.buffer_pct !== undefined) {
+              adaptBuf.value = adapt.buffer_pct;
             }
             if (topupEn && document.activeElement !== topupEn && adapt.topup_enabled !== undefined) {
               topupEn.checked = !!adapt.topup_enabled;
@@ -1607,7 +1624,8 @@
             }
             if (adaptBadge) {
               if (adapt.enabled) {
-                adaptBadge.textContent = `Adaptive Target: ${adapt.calculated_target_soc || 100}%`;
+                const bufTxt = adapt.buffer_pct ? ` (+${adapt.buffer_pct}% buf)` : '';
+                adaptBadge.textContent = `Target: ${adapt.calculated_target_soc || 100}%${bufTxt}`;
                 adaptBadge.style.color = 'var(--battery)';
                 adaptBadge.style.borderColor = 'rgba(16,185,129,0.3)';
               } else {
@@ -2370,6 +2388,7 @@
 
     async function saveAdaptiveSettings() {
       const adaptEn = document.getElementById('ctrl-adaptive-enable');
+      const adaptBuf = document.getElementById('ctrl-adaptive-buffer');
       const topupEn = document.getElementById('ctrl-topup-enable');
       const topupDrop = document.getElementById('ctrl-topup-drop');
       if (!adaptEn || !topupEn || !topupDrop) return;
@@ -2380,6 +2399,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             headroom_enabled: adaptEn.checked,
+            buffer_pct: adaptBuf ? parseInt(adaptBuf.value, 10) || 0 : 10,
             topup_enabled: topupEn.checked,
             topup_drop_pct: parseInt(topupDrop.value, 10) || 3
           })
@@ -2387,7 +2407,7 @@
         const data = await res.json();
         if (data.ok) {
           if (data.headroom_enabled) {
-            showCtrlStatus(`Adaptive Solar Headroom active (Top-up: ${data.topup_enabled ? 'ON at \u2265' + data.topup_drop_pct + '% drop' : 'OFF'})`);
+            showCtrlStatus(`Adaptive Headroom active (+${data.buffer_pct}% buffer, Top-up: ${data.topup_enabled ? 'ON at \u2265' + data.topup_drop_pct + '% drop' : 'OFF'})`);
           } else {
             showCtrlStatus('Adaptive Headroom disabled: Inverter will charge to 100% capacity overnight.');
           }

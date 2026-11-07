@@ -26,6 +26,7 @@ DEFAULT_CONFIG = {
         "max_charge_current_a": 40.0,
         "max_discharge_current_a": 40.0,
         "adaptive_headroom_enabled": True,
+        "adaptive_buffer_pct": 10,
         "adaptive_topup_enabled": True,
         "adaptive_topup_drop_pct": 3,
     },
