@@ -7,3 +7,8 @@ __pycache__/
 *.db-wal
 *.db-shm
 bin/tailwindcss
+.env
+.env*
+!docker-compose.yml
+config.json
+

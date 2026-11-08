@@ -333,6 +333,22 @@ def init_db():
         )
         """
     )
+    # Shelly plugs table
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS shelly_plugs (
+            ip TEXT PRIMARY KEY,
+            name TEXT,
+            model TEXT,
+            is_essential INTEGER DEFAULT 0
+        )
+        """
+    )
+    # Ensure is_essential column exists in shelly_plugs if migrating
+    try:
+        c.execute("ALTER TABLE shelly_plugs ADD COLUMN is_essential INTEGER DEFAULT 0")
+    except Exception:
+        pass
     # Seed default estimated baseline appliances if table is empty
     c.execute("SELECT COUNT(*) FROM custom_appliances")
     if c.fetchone()[0] == 0:
@@ -2302,6 +2318,163 @@ def save_tapo_automation_rules(ip, new_rules):
     return merged
 
 
+def get_holiday_mode():
+    """Retrieve persisted Holiday Mode state and execution log."""
+    res = {
+        "enabled": False,
+        "activated_at": None,
+        "last_action": None,
+        "plugs_turned_off": [],
+        "plugs_kept_on": [],
+        "lights_turned_off_count": 0,
+    }
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("SELECT value FROM app_config WHERE key = 'holiday_mode'")
+        row = c.fetchone()
+        conn.close()
+        if row and row[0]:
+            saved = json.loads(row[0])
+            res.update(saved)
+    except Exception as e:
+        print(f"[Holiday Mode Load Error] {e}")
+    return res
+
+
+def set_holiday_mode(enabled):
+    """
+    Toggle Holiday Mode.
+    When enabled:
+      1. Finds all Philips Hue lights that are ON and switches them OFF.
+      2. Finds all Tapo & Shelly smart plugs:
+         - If NOT marked as essential, turns them OFF.
+         - If marked as essential, keeps them running untouched.
+      3. Records execution audit log and persists state.
+    """
+    user, pw = get_tapo_credentials()
+    now_dt = datetime.now()
+    now_str = now_dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    current_state = get_holiday_mode()
+    current_state["enabled"] = bool(enabled)
+
+    if not enabled:
+        current_state["last_action"] = f"Holiday Mode deactivated on {now_str}"
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute("INSERT OR REPLACE INTO app_config (key, value) VALUES ('holiday_mode', ?)", (json.dumps(current_state),))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"[Holiday Mode Save Error] {e}")
+        return current_state
+
+    # Activating Holiday Mode:
+    current_state["activated_at"] = now_str
+    plugs_turned_off = []
+    plugs_kept_on = []
+    lights_turned_off_count = 0
+
+    # 1. Turn OFF all Philips Hue lights
+    try:
+        with lock:
+            lights_snapshot = list(latest_hue.get("lights", []))
+        for lt in lights_snapshot:
+            if lt.get("on", False):
+                try:
+                    set_hue_light_state(lt["id"], {"on": False})
+                    lights_turned_off_count += 1
+                except Exception as e_lt:
+                    print(f"[Holiday Mode Hue Error {lt.get('id')}] {e_lt}")
+        if lights_turned_off_count > 0:
+            time.sleep(0.2)
+            poll_hue_once()
+    except Exception as e_hue:
+        print(f"[Holiday Mode Hue Batch Error] {e_hue}")
+
+    # 2. Turn OFF all non-essential Tapo Plugs
+    try:
+        with lock:
+            tapo_snapshot = list(latest_tapo.get("plugs", []))
+        if user and pw:
+            for p in tapo_snapshot:
+                ip = p.get("ip")
+                alias = p.get("alias", f"Tapo ({ip})")
+                rules = get_tapo_automation_rules(ip)
+                is_essential = bool(rules.get("is_essential", False))
+                is_on = bool(p.get("is_on", False))
+
+                if is_essential:
+                    plugs_kept_on.append(f"{alias} ({ip}) [Essential]")
+                else:
+                    if is_on:
+                        try:
+                            asyncio.run(_async_toggle_tapo(ip, False, user, pw))
+                            plugs_turned_off.append(f"{alias} ({ip})")
+                            with lock:
+                                rt = get_tapo_runtime(ip)
+                                rt["idle_since_ts"] = None
+                                rt["idle_elapsed_sec"] = 0
+                                rt["last_action"] = "Auto-OFF: Holiday Mode activated"
+                                rt["last_action_ts"] = now_dt.strftime("%H:%M:%S")
+                        except Exception as e_tap:
+                            print(f"[Holiday Mode Tapo Error {ip}] {e_tap}")
+                    else:
+                        plugs_turned_off.append(f"{alias} ({ip}) [Already Off]")
+            time.sleep(0.2)
+            poll_tapo_once()
+    except Exception as e_tapo:
+        print(f"[Holiday Mode Tapo Batch Error] {e_tapo}")
+
+    # 3. Turn OFF all non-essential Shelly Plugs
+    try:
+        shelly_list = get_shelly_known_ips()
+        with lock:
+            live_shelly = {p["ip"]: p for p in latest_shelly.get("plugs", [])}
+        for dev in shelly_list:
+            ip = dev.get("ip")
+            alias = dev.get("name", f"Shelly ({ip})")
+            is_essential = bool(dev.get("is_essential", False))
+            is_on = bool(live_shelly.get(ip, {}).get("is_on", False))
+
+            if is_essential:
+                plugs_kept_on.append(f"{alias} ({ip}) [Essential]")
+            else:
+                if is_on:
+                    try:
+                        toggle_shelly_plug(ip, False)
+                        plugs_turned_off.append(f"{alias} ({ip})")
+                    except Exception as e_sh:
+                        print(f"[Holiday Mode Shelly Error {ip}] {e_sh}")
+                else:
+                    plugs_turned_off.append(f"{alias} ({ip}) [Already Off]")
+        time.sleep(0.2)
+        poll_shelly_once()
+    except Exception as e_sh_batch:
+        print(f"[Holiday Mode Shelly Batch Error] {e_sh_batch}")
+
+    current_state["plugs_turned_off"] = plugs_turned_off
+    current_state["plugs_kept_on"] = plugs_kept_on
+    current_state["lights_turned_off_count"] = lights_turned_off_count
+    current_state["last_action"] = (
+        f"Activated at {now_str}: Turned off {len([p for p in plugs_turned_off if not p.endswith('[Already Off]')])} active plugs "
+        f"and {lights_turned_off_count} lights. Kept {len(plugs_kept_on)} essential plugs powered."
+    )
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("INSERT OR REPLACE INTO app_config (key, value) VALUES ('holiday_mode', ?)", (json.dumps(current_state),))
+        conn.commit()
+        conn.close()
+    except Exception as e_sv:
+        print(f"[Holiday Mode Save Error] {e_sv}")
+
+    return current_state
+
+
 def evaluate_tapo_automation():
     with lock:
         if latest_tapo.get("status") != "online" or not latest_tapo.get("plugs"):
@@ -2318,6 +2491,9 @@ def evaluate_tapo_automation():
     if not user or not pw:
         return
 
+    # In Holiday Mode, do not auto-resume or wake up non-essential smart plugs
+    is_holiday = get_holiday_mode().get("enabled", False)
+
     now_ts = int(time.time())
     now_dt = datetime.now()
     toggled_any = False
@@ -2326,6 +2502,10 @@ def evaluate_tapo_automation():
         ip = plug.get("ip", TAPO_DEFAULT_IP)
         rules = get_tapo_automation_rules(ip)
         rt = get_tapo_runtime(ip)
+
+        # In Holiday Mode, non-essential plugs are suppressed from turning ON
+        if is_holiday and not rules.get("is_essential", False):
+            continue
 
         if not rules.get("enabled", True):
             rt["idle_since_ts"] = None
@@ -2697,9 +2877,17 @@ def get_shelly_known_ips():
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute("CREATE TABLE IF NOT EXISTS shelly_plugs (ip TEXT PRIMARY KEY, name TEXT, model TEXT)")
-        c.execute("SELECT ip, name, model FROM shelly_plugs")
-        rows = [{"ip": r[0], "name": r[1] or f"Shelly Plug ({r[0]})", "model": r[2] or "Plus Plug"} for r in c.fetchall()]
+        c.execute("CREATE TABLE IF NOT EXISTS shelly_plugs (ip TEXT PRIMARY KEY, name TEXT, model TEXT, is_essential INTEGER DEFAULT 0)")
+        c.execute("SELECT ip, name, model, is_essential FROM shelly_plugs")
+        rows = [
+            {
+                "ip": r[0],
+                "name": r[1] or f"Shelly Plug ({r[0]})",
+                "model": r[2] or "Plus Plug",
+                "is_essential": bool(r[3]) if len(r) > 3 else False,
+            }
+            for r in c.fetchall()
+        ]
         conn.close()
         return rows
     except Exception as e:
@@ -2707,17 +2895,31 @@ def get_shelly_known_ips():
         return []
 
 
-def add_shelly_known_ip(ip, name="Shelly Plug", model="Plus Plug"):
+def add_shelly_known_ip(ip, name="Shelly Plug", model="Plus Plug", is_essential=False):
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute("CREATE TABLE IF NOT EXISTS shelly_plugs (ip TEXT PRIMARY KEY, name TEXT, model TEXT)")
-        c.execute("INSERT OR REPLACE INTO shelly_plugs VALUES (?, ?, ?)", (ip, name, model))
+        c.execute("CREATE TABLE IF NOT EXISTS shelly_plugs (ip TEXT PRIMARY KEY, name TEXT, model TEXT, is_essential INTEGER DEFAULT 0)")
+        c.execute("INSERT OR REPLACE INTO shelly_plugs (ip, name, model, is_essential) VALUES (?, ?, ?, ?)", (ip, name, model, 1 if is_essential else 0))
         conn.commit()
         conn.close()
         return True
     except Exception as e:
         print(f"[Shelly DB Add Error] {e}")
+        return False
+
+
+def set_shelly_essential(ip, is_essential):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("CREATE TABLE IF NOT EXISTS shelly_plugs (ip TEXT PRIMARY KEY, name TEXT, model TEXT, is_essential INTEGER DEFAULT 0)")
+        c.execute("UPDATE shelly_plugs SET is_essential = ? WHERE ip = ?", (1 if is_essential else 0, ip))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"[Shelly Essential Update Error] {e}")
         return False
 
 
@@ -2740,6 +2942,8 @@ def poll_shelly_once():
         watts = 0.0
         today_kwh = 0.0
         reachable = False
+
+        is_essential = dev.get("is_essential", False)
 
         # Try Gen2/Gen3 RPC
         try:
@@ -2779,6 +2983,7 @@ def poll_shelly_once():
                 "alias": alias,
                 "model": model,
                 "is_on": is_on,
+                "is_essential": is_essential,
                 "watts": round(max(0.0, watts), 1),
                 "today_kwh": today_kwh,
                 "reachable": True,
@@ -3303,11 +3508,14 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 pv_w = latest_data.get("power", {}).get("pv_total_w", 0)
             for p in plugs_copy:
                 pip = p.get("ip", TAPO_DEFAULT_IP)
+                rules = get_tapo_automation_rules(pip)
+                p["is_essential"] = bool(rules.get("is_essential", False))
                 p["automation"] = {
-                    "rules": get_tapo_automation_rules(pip),
+                    "rules": rules,
                     "runtime": dict(get_tapo_runtime(pip)),
                 }
             tapo_copy["plugs"] = plugs_copy
+            shelly_copy["plugs"] = shelly_plugs
             appliances = get_custom_appliances()
             appliances_w = round(sum(a["active_watts"] for a in appliances), 1)
             hue_w = hue_copy.get("total_watts", 0.0)
@@ -3330,8 +3538,13 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     "tapo": tapo_copy,
                     "shelly": shelly_copy,
                     "appliances": appliances,
+                    "holiday_mode": get_holiday_mode(),
                 }
             )
+            return
+
+        if parsed.path == "/api/holiday":
+            self.send_json({"ok": True, "holiday_mode": get_holiday_mode()})
             return
 
         if parsed.path == "/api/history":
@@ -3598,6 +3811,30 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             ips = add_tapo_known_ip(ip)
             poll_tapo_once()
             self.send_json({"ok": True, "ips": ips})
+            return
+
+        if parsed.path == "/api/shelly/essential":
+            ip = str(body.get("ip", "")).strip()
+            is_essential = bool(body.get("is_essential", False))
+            if not ip:
+                self.send_json({"ok": False, "error": "IP required"}, status=400)
+                return
+            set_shelly_essential(ip, is_essential)
+            poll_shelly_once()
+            self.send_json({"ok": True, "ip": ip, "is_essential": is_essential})
+            return
+
+        if parsed.path == "/api/tapo/essential":
+            ip = str(body.get("ip", TAPO_DEFAULT_IP)).strip()
+            is_essential = bool(body.get("is_essential", False))
+            updated = save_tapo_automation_rules(ip, {"is_essential": is_essential})
+            self.send_json({"ok": True, "ip": ip, "is_essential": is_essential, "rules": updated})
+            return
+
+        if parsed.path == "/api/holiday/toggle":
+            enabled = bool(body.get("enabled", False))
+            res = set_holiday_mode(enabled)
+            self.send_json({"ok": True, "holiday_mode": res})
             return
 
         self.send_json({"error": "Not found"}, status=404)
