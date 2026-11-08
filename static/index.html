@@ -690,7 +690,7 @@
            VIEW 4: SOLAR FORECAST & IRRADIANCE
            ========================================== -->
       <main id="view-forecast" class="view">
-        <div style="display:grid;grid-template-columns:320px 1fr;gap:16px;margin-bottom:16px">
+        <div class="fore-hero-grid">
           <!-- Tomorrow Forecast Summary Card -->
           <div class="solar-forecast-card">
             <div>
@@ -709,7 +709,7 @@
                 Predicted Generation · Clear Sky
               </div>
             </div>
-            <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
+            <div class="fore-card-subgrid">
               <span>Temp <strong class="mono" id="fore-tomorrow-temps" style="color:var(--text)">--° / --°C</strong></span>
               <span>Today Est <strong class="mono" id="fore-today-yield" style="color:var(--text-secondary)">--.- kWh</strong></span>
             </div>
@@ -730,7 +730,7 @@
         </div>
 
         <!-- Solar Intelligence & Battery Forecast Metrics -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:16px;margin-bottom:16px">
+        <div class="fore-intel-grid">
           <!-- Card 1: Estimated Battery Solar Charge -->
           <div class="solar-forecast-card">
             <div>
@@ -749,7 +749,7 @@
                 Predicted solar surplus stored in battery
               </div>
             </div>
-            <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
+            <div class="fore-card-subgrid">
               <span>Direct House Use: <strong class="mono" id="fore-direct-use-kwh" style="color:var(--home)">--.- kWh</strong></span>
               <span>Capacity: <strong class="mono" style="color:var(--text-secondary)">9.84 kWh</strong></span>
             </div>
@@ -772,7 +772,7 @@
                 Window where irradiance exceeds 70% of peak
               </div>
             </div>
-            <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
+            <div class="fore-card-subgrid">
               <span>Peak Power: <strong class="mono" id="fore-peak-watts" style="color:var(--text)">-- W</strong></span>
               <span>Peak Time: <strong class="mono" id="fore-peak-time" style="color:var(--solar)">--:--</strong></span>
             </div>
@@ -795,7 +795,7 @@
                 First hour PV exceeds learned home baseline (~130W)
               </div>
             </div>
-            <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
+            <div class="fore-card-subgrid">
               <span>Pre-Solar Drain: <strong class="mono" id="fore-presolar-drain" style="color:var(--text)">--.- kWh</strong></span>
               <span>Learned Baseline: <strong class="mono" id="fore-learned-base" style="color:var(--text-secondary)">~130 W</strong></span>
             </div>
@@ -818,7 +818,7 @@
                 Avoided grid peak import + export earnings
               </div>
             </div>
-            <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
+            <div class="fore-card-subgrid">
               <span>Peak Savings: <strong class="mono" id="fore-bill-savings" style="color:var(--battery)">£--.--</strong></span>
               <span>Export Revenue: <strong class="mono" id="fore-export-revenue" style="color:#ec4899">£--.--</strong></span>
             </div>
@@ -826,14 +826,14 @@
         </div>
 
         <!-- Solar Flow Projection Bar & Breakdown -->
-        <div class="solar-forecast-card" style="margin-bottom:16px">
-          <div class="metric-top" style="margin-bottom:8px">
+        <div class="solar-forecast-card fore-allocation-card" style="margin-bottom:16px">
+          <div class="metric-top">
             <div>
-              <span class="metric-title">
+              <div class="metric-title">
                 <span class="metric-icon" style="background:var(--solar)"></span>
                 Tomorrow's Projected Solar Allocation
-              </span>
-              <span style="font-size:0.72rem;color:var(--text-muted);margin-left:6px">Estimated distribution across direct consumption, battery storage, and grid export</span>
+              </div>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:3px">Estimated distribution across direct consumption, battery storage, and grid export</div>
             </div>
             <span class="pill-tag mono" id="fore-self-consume-badge" style="color:var(--battery);border-color:rgba(16,185,129,0.3)">--% Self-Consumed</span>
           </div>
@@ -846,7 +846,7 @@
           </div>
 
           <!-- Legend with values -->
-          <div style="display:flex;flex-wrap:wrap;gap:18px;font-size:0.76rem;margin-top:6px">
+          <div class="fore-allocation-legend">
             <div style="display:flex;align-items:center;gap:6px">
               <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--home)"></span>
               <span style="color:var(--text-muted)">Direct House Load:</span>
@@ -862,7 +862,7 @@
               <span style="color:var(--text-muted)">Grid Export:</span>
               <strong class="mono" id="fore-leg-export" style="color:#ec4899">--.- kWh</strong>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+            <div class="legend-total" style="display:flex;align-items:center;gap:6px">
               <span style="color:var(--text-muted)">Total Forecast Yield:</span>
               <strong class="mono" id="fore-leg-total" style="color:var(--solar)">--.- kWh</strong>
             </div>
