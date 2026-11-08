@@ -37,8 +37,8 @@ Engineered for FoxESS inverters, Octopus Energy (Go, Agile, Intelligent, Tracker
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/DanB1993/smart-power-dashboard.git
-cd smart-power-dashboard
+git clone https://github.com/DanB1993/smart-power-hub.git
+cd smart-power-hub
 ```
 
 ### 2. Launch Container
@@ -110,8 +110,8 @@ You can configure the system through the **Web Setup Wizard** (`/setup`) or by s
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/DanB1993/smart-power-dashboard.git
-cd smart-power-dashboard
+git clone https://github.com/DanB1993/smart-power-hub.git
+cd smart-power-hub
 
 # Install dependencies
 pip install tapo python-kasa cryptography
