@@ -113,7 +113,7 @@
       <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
           <button onclick="openChangelogModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v1.1.2</span>
+            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v1.2.0</span>
             <span>Changelog</span>
           </button>
           <span style="font-size:0.68rem;color:var(--text-muted)" class="mono">Open-Source</span>
@@ -159,6 +159,12 @@
             <span class="mono" id="hdr-weather-temp">--°C</span>
             <span id="hdr-weather-desc" style="color:var(--text-muted)">--</span>
           </div>
+
+          <!-- Holiday Mode Header Indicator / Quick Toggle -->
+          <button id="hdr-holiday-chip" class="meta-chip" onclick="switchView('devices')" title="Click to view Holiday Mode settings" style="cursor:pointer;border:1px solid var(--border);transition:all 0.2s;background:var(--surface)">
+            <span style="font-size:0.85rem">🌴</span>
+            <span style="font-size:0.74rem;font-weight:600" id="hdr-holiday-label">Holiday: Off</span>
+          </button>
 
           <!-- Polling Countdown -->
           <div class="status-bar">
@@ -874,6 +880,34 @@
            VIEW 5: DEVICES & LIGHTING
            ========================================== -->
       <main id="view-devices" class="view">
+        <!-- Holiday Mode Master Control Banner -->
+        <section class="card" id="holiday-mode-card" style="margin-bottom:20px;border-color:rgba(129,140,248,0.25);background:linear-gradient(180deg, rgba(129,140,248,0.06), var(--surface))">
+          <div class="card-header" style="margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;border-radius:10px;background:rgba(129,140,248,0.15);border:1px solid rgba(129,140,248,0.3);display:flex;align-items:center;justify-content:center;font-size:1.35rem">
+                🌴
+              </div>
+              <div>
+                <div class="card-title" style="display:flex;align-items:center;gap:8px">
+                  <span>Holiday Mode</span>
+                  <span class="pill-tag mono" id="holiday-status-pill" style="color:var(--text-muted);border-color:var(--border)">Disabled</span>
+                </div>
+                <div class="card-subtitle">One-click power conservation: switches off all Hue lights and non-essential smart plugs</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <button id="btn-toggle-holiday" class="btn-add" style="padding:8px 16px;font-size:0.85rem;background:var(--accent);display:flex;align-items:center;gap:6px" onclick="toggleHolidayMode()">
+                <span id="holiday-btn-icon">🌴</span>
+                <span id="holiday-btn-text">Turn ON Holiday Mode</span>
+              </button>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:0.75rem;color:var(--text-secondary)">
+            <span id="holiday-audit-desc">Plugs marked with 🛡️ <strong>Essential</strong> remain powered on. Everything else is safely cut off.</span>
+            <span id="holiday-last-action" class="mono" style="color:var(--text-muted)"></span>
+          </div>
+        </section>
+
         <!-- Load Breakdown Bar Card -->
       <section class="card load-bar-card">
         <div class="card-header" style="margin-bottom:4px">
@@ -1275,7 +1309,7 @@
           <div>
             <div class="card-title" style="display:flex;align-items:center;gap:8px">
               <span>Changelog</span>
-              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v1.1.2</span>
+              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v1.2.0</span>
             </div>
             <div class="card-subtitle">Version History & Release Notes</div>
           </div>
@@ -1284,8 +1318,22 @@
       </div>
       <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:16px">
         
-        <!-- v1.1.2 -->
+        <!-- v1.2.0 -->
         <div style="border-left:2px solid var(--accent);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.2.0 — Holiday Mode & Essential Smart Plugs</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">8 Nov 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li><strong>1-Click Holiday Mode</strong>: Instantly cuts power to all non-essential smart plugs and turns off all Philips Hue lighting across the property.</li>
+            <li><strong>Essential Plug Tagging (🛡️ Essential)</strong>: Added per-plug essential status toggle across all TP-Link Tapo and Shelly devices. Essential devices (e.g. Fridge / Freezer) remain safely powered when Holiday Mode is engaged.</li>
+            <li><strong>Automation Suppression</strong>: While Holiday Mode is active, background schedules, TV wakeups, and smart auto-on triggers are held dormant to prevent accidental load resumption.</li>
+            <li><strong>Header & Device Status Badges</strong>: Persistent live status indicator in the topbar and dedicated action card in the Devices view with execution logs.</li>
+          </ul>
+        </div>
+
+        <!-- v1.1.2 -->
+        <div style="border-left:2px solid var(--border);padding-left:14px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
             <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.1.2 — Adaptive Safety Buffer (+%)</strong>
             <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">7 Nov 2026</span>
@@ -1994,6 +2042,75 @@
         setText('leg-app-w', `${appW.toFixed(1)} W`);
         setText('leg-untracked-w', `${untrackedW.toFixed(1)} W`);
 
+        // Holiday Mode State Update
+        if (d.holiday_mode) {
+          const hm = d.holiday_mode;
+          currentHolidayEnabled = !!hm.enabled;
+          const chipEl = document.getElementById('hdr-holiday-chip');
+          const chipLbl = document.getElementById('hdr-holiday-label');
+          const pillEl = document.getElementById('holiday-status-pill');
+          const btnEl = document.getElementById('btn-toggle-holiday');
+          const btnText = document.getElementById('holiday-btn-text');
+          const btnIcon = document.getElementById('holiday-btn-icon');
+          const lastActEl = document.getElementById('holiday-last-action');
+          const cardEl = document.getElementById('holiday-mode-card');
+
+          if (currentHolidayEnabled) {
+            if (chipEl) {
+              chipEl.style.borderColor = 'rgba(236,72,153,0.5)';
+              chipEl.style.background = 'rgba(236,72,153,0.12)';
+            }
+            if (chipLbl) {
+              chipLbl.textContent = 'Holiday: Active 🌴';
+              chipLbl.style.color = '#ec4899';
+            }
+            if (pillEl) {
+              pillEl.textContent = 'Active 🌴';
+              pillEl.style.color = '#ec4899';
+              pillEl.style.borderColor = 'rgba(236,72,153,0.35)';
+            }
+            if (btnEl) {
+              btnEl.style.background = 'rgba(236,72,153,0.2)';
+              btnEl.style.border = '1px solid rgba(236,72,153,0.4)';
+              btnEl.style.color = '#ec4899';
+            }
+            if (btnText) btnText.textContent = 'Deactivate Holiday Mode';
+            if (btnIcon) btnIcon.textContent = '✓';
+            if (cardEl) {
+              cardEl.style.borderColor = 'rgba(236,72,153,0.35)';
+              cardEl.style.background = 'linear-gradient(180deg, rgba(236,72,153,0.08), var(--surface))';
+            }
+          } else {
+            if (chipEl) {
+              chipEl.style.borderColor = 'var(--border)';
+              chipEl.style.background = 'var(--surface)';
+            }
+            if (chipLbl) {
+              chipLbl.textContent = 'Holiday: Off';
+              chipLbl.style.color = 'var(--text-muted)';
+            }
+            if (pillEl) {
+              pillEl.textContent = 'Disabled';
+              pillEl.style.color = 'var(--text-muted)';
+              pillEl.style.borderColor = 'var(--border)';
+            }
+            if (btnEl) {
+              btnEl.style.background = 'var(--accent)';
+              btnEl.style.border = 'none';
+              btnEl.style.color = '#ffffff';
+            }
+            if (btnText) btnText.textContent = 'Turn ON Holiday Mode';
+            if (btnIcon) btnIcon.textContent = '🌴';
+            if (cardEl) {
+              cardEl.style.borderColor = 'rgba(129,140,248,0.25)';
+              cardEl.style.background = 'linear-gradient(180deg, rgba(129,140,248,0.06), var(--surface))';
+            }
+          }
+          if (lastActEl && hm.last_action) {
+            lastActEl.textContent = hm.last_action;
+          }
+        }
+
         const huePct = Math.max(1.5, (hueW / denom) * 100);
         const tapoPct = (tapoW / denom) * 100;
         const appPct = (appW / denom) * 100;
@@ -2009,7 +2126,9 @@
           const shellyEl = document.getElementById('shelly-plugs-container');
           if (shellyEl) {
             if (d.shelly.plugs && d.shelly.plugs.length > 0) {
-              shellyEl.innerHTML = d.shelly.plugs.map(p => `
+              shellyEl.innerHTML = d.shelly.plugs.map(p => {
+                const isEss = !!p.is_essential;
+                return `
                 <div class="list-item" style="${p.is_on ? 'border-color:rgba(56,189,248,0.35)' : ''};margin-bottom:8px">
                   <div class="list-item-main">
                     <div>
@@ -2018,9 +2137,14 @@
                         <span class="mono" style="font-size:0.75rem;color:var(--text-muted)">
                           ${p.model} · Today: ${(p.today_kwh || 0).toFixed(2)} kWh
                         </span>
+                        <button class="pill-tag mono" onclick="setShellyEssential('${p.ip}', ${!isEss})"
+                          title="Click to toggle essential status for Holiday Mode"
+                          style="cursor:pointer;font-size:0.68rem;padding:2px 7px;border-radius:4px;margin-left:6px;transition:all 0.15s;${isEss ? 'color:var(--battery);background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35)' : 'color:var(--text-muted);background:transparent;border:1px solid var(--border)'}">
+                          ${isEss ? '🛡️ Essential' : '○ Mark Essential'}
+                        </button>
                       </div>
                       <div class="item-meta" style="margin-top:2px;color:var(--text-secondary)">
-                        <span class="mono">${p.ip}</span> · Local HTTP RPC
+                        <span class="mono">${p.ip}</span> · Local HTTP RPC · ${isEss ? '<span style="color:var(--battery);font-weight:600">Kept ON during Holiday Mode</span>' : 'Turned OFF in Holiday Mode'}
                       </div>
                     </div>
                     <div class="item-right">
@@ -2034,7 +2158,8 @@
                     </div>
                   </div>
                 </div>
-              `).join('');
+              `;
+              }).join('');
             } else {
               shellyEl.innerHTML = `<div style="font-size:0.78rem;color:var(--text-muted);padding:6px 0">No Shelly plugs connected. Add IP below to monitor live watts.</div>`;
             }
@@ -2114,6 +2239,7 @@
               }
               const rulesSummaryTxt = ruleParts.length > 0 ? ruleParts.join(' · ') : 'No automation rules active';
 
+              const isEss = !!rules.is_essential;
               return `
                 <div class="list-item" style="${p.is_on ? 'border-color:rgba(56,189,248,0.35)' : ''}">
                   <div class="list-item-main">
@@ -2123,9 +2249,17 @@
                         <span class="mono" style="font-size:0.75rem;font-weight:500;color:var(--text-muted)">
                           Today: ${(p.today_kwh || 0).toFixed(3)} kWh · Month: ${(p.month_kwh || 0).toFixed(2)} kWh${lastActTxt ? ` · <span style="color:var(--text-secondary)">${lastActTxt}</span>` : ''}
                         </span>
+                        <button class="pill-tag mono" onclick="setTapoEssential('${p.ip}', ${!isEss})"
+                          title="Click to toggle essential status for Holiday Mode"
+                          style="cursor:pointer;font-size:0.68rem;padding:2px 7px;border-radius:4px;margin-left:6px;transition:all 0.15s;${isEss ? 'color:var(--battery);background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35)' : 'color:var(--text-muted);background:transparent;border:1px solid var(--border)'}">
+                          ${isEss ? '🛡️ Essential' : '○ Mark Essential'}
+                        </button>
                       </div>
                       <div class="item-meta" style="margin-top:4px;color:var(--text-secondary)">
                         <strong style="color:var(--home);font-weight:600">Automation:</strong> <span class="mono">${rulesSummaryTxt}</span>
+                        <span style="margin-left:8px;font-size:0.70rem;${isEss ? 'color:var(--battery);font-weight:600' : 'color:var(--text-muted)'}">
+                          ${isEss ? '· 🛡️ Kept ON during Holiday Mode' : '· Turned OFF in Holiday Mode'}
+                        </span>
                       </div>
                     </div>
                     <div class="item-right">
@@ -2304,6 +2438,58 @@
       } finally {
         btn.textContent = 'Connect Desk Plug';
         document.getElementById('tapo-pass').value = '';
+        fetchDevices();
+      }
+    }
+
+    let currentHolidayEnabled = false;
+
+    async function toggleHolidayMode() {
+      const targetState = !currentHolidayEnabled;
+      const btnText = document.getElementById('holiday-btn-text');
+      if (btnText) btnText.textContent = targetState ? 'Activating...' : 'Deactivating...';
+      try {
+        const res = await fetch('/api/holiday/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: targetState })
+        });
+        const d = await res.json();
+        if (d && d.holiday_mode) {
+          currentHolidayEnabled = !!d.holiday_mode.enabled;
+        }
+      } catch (e) {
+        console.error('Holiday mode toggle error:', e);
+      } finally {
+        fetchDevices();
+        fetchLive();
+      }
+    }
+
+    async function setTapoEssential(ip, is_essential) {
+      try {
+        await fetch('/api/tapo/essential', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip, is_essential })
+        });
+      } catch (e) {
+        console.error('Tapo essential toggle error:', e);
+      } finally {
+        fetchDevices();
+      }
+    }
+
+    async function setShellyEssential(ip, is_essential) {
+      try {
+        await fetch('/api/shelly/essential', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip, is_essential })
+        });
+      } catch (e) {
+        console.error('Shelly essential toggle error:', e);
+      } finally {
         fetchDevices();
       }
     }
