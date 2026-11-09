@@ -113,7 +113,7 @@
       <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
           <button onclick="openChangelogModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v1.2.0</span>
+            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v1.3.0</span>
             <span>Changelog</span>
           </button>
           <span style="font-size:0.68rem;color:var(--text-muted)" class="mono">Open-Source</span>
@@ -1309,7 +1309,7 @@
           <div>
             <div class="card-title" style="display:flex;align-items:center;gap:8px">
               <span>Changelog</span>
-              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v1.2.0</span>
+              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v1.3.0</span>
             </div>
             <div class="card-subtitle">Version History & Release Notes</div>
           </div>
@@ -1318,8 +1318,24 @@
       </div>
       <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:16px">
         
-        <!-- v1.2.0 -->
+        <!-- v1.3.0 -->
         <div style="border-left:2px solid var(--accent);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.3.0 — Enhanced Solar Forecast & Yield Intelligence</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">9 Nov 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li><strong>Estimated Battery Solar Charge (+% SoC)</strong>: Calculates predicted solar surplus directed into home battery storage, showing estimated kWh and percentage SoC gain alongside direct household self-consumption.</li>
+            <li><strong>Peak Sunlight Generation Window</strong>: Real-time analysis of tomorrow's solar curve identifying the exact time window where irradiance exceeds 70% of peak generation capacity.</li>
+            <li><strong>Morning Breakeven Hour</strong>: Identifies the precise morning hour when incoming PV generation surpasses household baseline load (~130W), showing pre-solar morning drain.</li>
+            <li><strong>Financial Value & Export Revenue Projection</strong>: Estimated economic value combining avoided peak import costs (£/kWh) and surplus export earnings on dynamic wholesale tariffs.</li>
+            <li><strong>Tomorrow's Projected Solar Allocation Bar</strong>: Dynamic multi-segment breakdown visualising direct consumption, battery storage, and grid export with self-consumption efficiency percentage.</li>
+            <li><strong>Mobile-Optimised Layout</strong>: Full responsive redesign of the Solar Forecast page with fluid touch-scrolling hourly timeline and adaptive card stacking.</li>
+          </ul>
+        </div>
+
+        <!-- v1.2.0 -->
+        <div style="border-left:2px solid var(--border);padding-left:14px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
             <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.2.0 — Holiday Mode & Essential Smart Plugs</strong>
             <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">8 Nov 2026</span>
