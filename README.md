@@ -133,6 +133,27 @@ Visit `http://localhost:8050` in your browser.
 
 ## 📜 Changelog
 
+### v1.3.0 (9 Nov 2026) — Enhanced Solar Forecast & Yield Intelligence
+* **Estimated Battery Solar Charge (+% SoC)**: Predicts solar surplus allocated into battery storage with estimated kWh and % SoC gain.
+* **Peak Sunlight Generation Window**: Analyzes irradiance curve to highlight the high-production window exceeding 70% peak.
+* **Morning Breakeven Hour**: Identifies the morning hour when solar generation exceeds household baseline load (~130W).
+* **Projected Solar Allocation & Economics**: Real-time distribution breakdown across direct house use, battery storage, and export revenue.
+* **Mobile-Optimized Layout**: Responsive card restructuring with touch-scrolling hourly timeline.
+
+### v1.2.0 (8 Nov 2026) — Holiday Mode & Essential Smart Plugs
+* **1-Click Holiday Mode**: Instantly shuts down non-essential smart plugs and turns off Philips Hue lighting.
+* **Essential Plug Tagging (🛡️ Essential)**: Safeguards critical appliances (e.g. Fridge / Freezer) across Tapo and Shelly devices.
+* **Automation Suppression**: Halts automatic schedule triggers while Holiday Mode is engaged.
+
+### v1.1.2 (7 Nov 2026) — Adaptive Safety Buffer (+%)
+* Configurable percentage buffer added on top of adaptive charge target for extra reserve protection.
+
+### v1.1.1 (7 Nov 2026) — Adaptive Solar Headroom & Off-Peak Top-Up Fix
+* Dynamic solar headroom toggle with automated off-peak recovery top-up (&ge;3% drop).
+
+### v1.1.0 (6 Nov 2026) — Inverter Settings & Dual-Slot Scheduling
+* Modbus register controls for operating work modes, dual force-charge slots, and reserve limits.
+
 ### v1.0.0 (6 Nov 2026) — Initial Open-Source Release
 * Complete zero-cloud local FoxESS Modbus RTU-over-TCP integration.
 * Interactive 4-step Setup Wizard with network auto-discovery.

@@ -1168,3 +1168,124 @@ body {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ==========================================
+   SOLAR FORECAST VIEW & MOBILE RESPONSIVENESS
+   ========================================== */
+.fore-hero-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.fore-intel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.fore-card-subgrid {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.74rem;
+  flex-wrap: wrap;
+}
+
+.fore-allocation-card .metric-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.fore-allocation-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  font-size: 0.76rem;
+  margin-top: 8px;
+}
+
+.fore-allocation-legend .legend-total {
+  margin-left: auto;
+}
+
+@media (max-width: 900px) {
+  .fore-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 680px) {
+  .fore-intel-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .solar-forecast-card {
+    padding: 16px 16px;
+    border-radius: 14px;
+  }
+
+  .solar-forecast-card .metric-top {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .fore-card-subgrid {
+    margin-top: 10px;
+    padding-top: 10px;
+    gap: 6px 12px;
+    font-size: 0.72rem;
+  }
+
+  .fore-allocation-legend {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .fore-allocation-legend .legend-total {
+    margin-left: 0;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .hourly-forecast-scroll {
+    gap: 8px;
+    padding: 4px 2px 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .hourly-pill {
+    min-width: 62px;
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+
+  .hourly-pill-watts {
+    font-size: 0.78rem;
+  }
+
+  .hourly-pill-time {
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .solar-forecast-card {
+    padding: 14px 12px;
+  }
+}
+

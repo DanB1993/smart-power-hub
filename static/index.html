@@ -113,7 +113,7 @@
       <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
           <button onclick="openChangelogModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v1.2.0</span>
+            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v1.3.0</span>
             <span>Changelog</span>
           </button>
           <span style="font-size:0.68rem;color:var(--text-muted)" class="mono">Open-Source</span>
@@ -713,43 +713,183 @@
            VIEW 4: SOLAR FORECAST & IRRADIANCE
            ========================================== -->
       <main id="view-forecast" class="view">
-        <div style="display:grid;grid-template-columns:320px 1fr;gap:16px">
+        <div class="fore-hero-grid">
           <!-- Tomorrow Forecast Summary Card -->
-        <div class="solar-forecast-card">
-          <div>
-            <div class="metric-top" style="margin-bottom:8px">
-              <span class="metric-title">
-                <span class="metric-icon" style="background:var(--solar)"></span>
-                Tomorrow's Solar Outlook
-              </span>
-              <span class="pill-tag mono" id="fore-tomorrow-icon" style="font-size:0.82rem">🌤️</span>
-            </div>
-            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
-              <span class="mono" id="fore-tomorrow-yield" style="font-size:1.8rem;font-weight:700;color:var(--solar)">--.-</span>
-              <span class="metric-unit" style="font-size:1rem;color:var(--solar)">kWh</span>
-            </div>
-            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="fore-tomorrow-desc">
-              Predicted Generation · Clear Sky
-            </div>
-          </div>
-          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
-            <span>Temp <strong class="mono" id="fore-tomorrow-temps" style="color:var(--text)">--° / --°C</strong></span>
-            <span>Today Est <strong class="mono" id="fore-today-yield" style="color:var(--text-secondary)">--.- kWh</strong></span>
-          </div>
-        </div>
-          <!-- 24-Hour Solar Radiation & Weather Hourly Track -->
-        <div class="solar-forecast-card" style="overflow:hidden">
-          <div class="metric-top" style="margin-bottom:10px">
+          <div class="solar-forecast-card">
             <div>
-              <span class="metric-title">24-Hour Solar Yield & Sunlight Timeline</span>
-              <span style="font-size:0.72rem;color:var(--text-muted);margin-left:4px">Hourly forecast from Open-Meteo local irradiance model</span>
+              <div class="metric-top" style="margin-bottom:8px">
+                <span class="metric-title">
+                  <span class="metric-icon" style="background:var(--solar)"></span>
+                  Tomorrow's Solar Outlook
+                </span>
+                <span class="pill-tag mono" id="fore-tomorrow-icon" style="font-size:0.82rem">🌤️</span>
+              </div>
+              <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
+                <span class="mono" id="fore-tomorrow-yield" style="font-size:1.8rem;font-weight:700;color:var(--solar)">--.-</span>
+                <span class="metric-unit" style="font-size:1rem;color:var(--solar)">kWh</span>
+              </div>
+              <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="fore-tomorrow-desc">
+                Predicted Generation · Clear Sky
+              </div>
             </div>
-            <span class="pill-tag mono" style="font-size:0.65rem;color:var(--home)">Local Solar Track</span>
+            <div class="fore-card-subgrid">
+              <span>Temp <strong class="mono" id="fore-tomorrow-temps" style="color:var(--text)">--° / --°C</strong></span>
+              <span>Today Est <strong class="mono" id="fore-today-yield" style="color:var(--text-secondary)">--.- kWh</strong></span>
+            </div>
           </div>
-          <div class="hourly-forecast-scroll" id="forecast-hourly-container">
-            <!-- Populated via JS -->
+          <!-- 24-Hour Solar Radiation & Weather Hourly Track -->
+          <div class="solar-forecast-card" style="overflow:hidden">
+            <div class="metric-top" style="margin-bottom:10px">
+              <div>
+                <span class="metric-title">24-Hour Solar Yield & Sunlight Timeline</span>
+                <span style="font-size:0.72rem;color:var(--text-muted);margin-left:4px">Hourly forecast from Open-Meteo local irradiance model</span>
+              </div>
+              <span class="pill-tag mono" style="font-size:0.65rem;color:var(--home)">Local Solar Track</span>
+            </div>
+            <div class="hourly-forecast-scroll" id="forecast-hourly-container">
+              <!-- Populated via JS -->
+            </div>
           </div>
         </div>
+
+        <!-- Solar Intelligence & Battery Forecast Metrics -->
+        <div class="fore-intel-grid">
+          <!-- Card 1: Estimated Battery Solar Charge -->
+          <div class="solar-forecast-card">
+            <div>
+              <div class="metric-top" style="margin-bottom:8px">
+                <span class="metric-title">
+                  <span class="metric-icon" style="background:var(--battery)"></span>
+                  Est. Battery Solar Charge
+                </span>
+                <span class="pill-tag mono" id="fore-bat-soc-gain" style="color:var(--battery);border-color:rgba(16,185,129,0.3)">+--% SoC</span>
+              </div>
+              <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
+                <span class="mono" id="fore-bat-charge-kwh" style="font-size:1.6rem;font-weight:700;color:var(--battery)">--.-</span>
+                <span class="metric-unit" style="font-size:0.95rem;color:var(--battery)">kWh</span>
+              </div>
+              <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="fore-bat-charge-sub">
+                Predicted solar surplus stored in battery
+              </div>
+            </div>
+            <div class="fore-card-subgrid">
+              <span>Direct House Use: <strong class="mono" id="fore-direct-use-kwh" style="color:var(--home)">--.- kWh</strong></span>
+              <span>Capacity: <strong class="mono" style="color:var(--text-secondary)">9.84 kWh</strong></span>
+            </div>
+          </div>
+
+          <!-- Card 2: Peak Solar Generation Window -->
+          <div class="solar-forecast-card">
+            <div>
+              <div class="metric-top" style="margin-bottom:8px">
+                <span class="metric-title">
+                  <span class="metric-icon" style="background:var(--solar)"></span>
+                  Peak Sunlight Window
+                </span>
+                <span class="pill-tag mono" id="fore-peak-watts-badge" style="color:var(--solar);border-color:rgba(245,158,11,0.3)">-- W Peak</span>
+              </div>
+              <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
+                <span class="mono" id="fore-peak-window" style="font-size:1.45rem;font-weight:700;color:var(--solar)">--:-- - --:--</span>
+              </div>
+              <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="fore-peak-sub">
+                Window where irradiance exceeds 70% of peak
+              </div>
+            </div>
+            <div class="fore-card-subgrid">
+              <span>Peak Power: <strong class="mono" id="fore-peak-watts" style="color:var(--text)">-- W</strong></span>
+              <span>Peak Time: <strong class="mono" id="fore-peak-time" style="color:var(--solar)">--:--</strong></span>
+            </div>
+          </div>
+
+          <!-- Card 3: Morning Breakeven Hour -->
+          <div class="solar-forecast-card">
+            <div>
+              <div class="metric-top" style="margin-bottom:8px">
+                <span class="metric-title">
+                  <span class="metric-icon" style="background:#38bdf8"></span>
+                  Solar Breakeven Hour
+                </span>
+                <span class="pill-tag mono" style="color:#38bdf8;border-color:rgba(56,189,248,0.3)">Base Load</span>
+              </div>
+              <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
+                <span class="mono" id="fore-breakeven-clock" style="font-size:1.6rem;font-weight:700;color:#38bdf8">--:--</span>
+              </div>
+              <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="fore-breakeven-sub">
+                First hour PV exceeds learned home baseline (~130W)
+              </div>
+            </div>
+            <div class="fore-card-subgrid">
+              <span>Pre-Solar Drain: <strong class="mono" id="fore-presolar-drain" style="color:var(--text)">--.- kWh</strong></span>
+              <span>Learned Baseline: <strong class="mono" id="fore-learned-base" style="color:var(--text-secondary)">~130 W</strong></span>
+            </div>
+          </div>
+
+          <!-- Card 4: Estimated Financial Savings -->
+          <div class="solar-forecast-card">
+            <div>
+              <div class="metric-top" style="margin-bottom:8px">
+                <span class="metric-title">
+                  <span class="metric-icon" style="background:#a855f7"></span>
+                  Est. Financial Value
+                </span>
+                <span class="pill-tag mono" style="color:#a855f7;border-color:rgba(168,85,247,0.3)">Avoided Peak</span>
+              </div>
+              <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px">
+                <span class="mono" id="fore-total-value-gbp" style="font-size:1.6rem;font-weight:700;color:#a855f7">£--.--</span>
+              </div>
+              <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px" id="fore-total-value-sub">
+                Avoided grid peak import + export earnings
+              </div>
+            </div>
+            <div class="fore-card-subgrid">
+              <span>Peak Savings: <strong class="mono" id="fore-bill-savings" style="color:var(--battery)">£--.--</strong></span>
+              <span>Export Revenue: <strong class="mono" id="fore-export-revenue" style="color:#ec4899">£--.--</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Solar Flow Projection Bar & Breakdown -->
+        <div class="solar-forecast-card fore-allocation-card" style="margin-bottom:16px">
+          <div class="metric-top">
+            <div>
+              <div class="metric-title">
+                <span class="metric-icon" style="background:var(--solar)"></span>
+                Tomorrow's Projected Solar Allocation
+              </div>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:3px">Estimated distribution across direct consumption, battery storage, and grid export</div>
+            </div>
+            <span class="pill-tag mono" id="fore-self-consume-badge" style="color:var(--battery);border-color:rgba(16,185,129,0.3)">--% Self-Consumed</span>
+          </div>
+
+          <!-- Multi-segment Allocation Bar -->
+          <div style="height:14px;background:rgba(255,255,255,0.06);border-radius:7px;overflow:hidden;display:flex;margin:12px 0 10px 0;border:1px solid rgba(255,255,255,0.1)">
+            <div id="fore-bar-direct" style="height:100%;width:35%;background:var(--home);transition:width 0.4s ease" title="Direct House Load"></div>
+            <div id="fore-bar-battery" style="height:100%;width:50%;background:var(--battery);transition:width 0.4s ease" title="Battery Solar Storage"></div>
+            <div id="fore-bar-export" style="height:100%;width:15%;background:#ec4899;transition:width 0.4s ease" title="Grid Export"></div>
+          </div>
+
+          <!-- Legend with values -->
+          <div class="fore-allocation-legend">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--home)"></span>
+              <span style="color:var(--text-muted)">Direct House Load:</span>
+              <strong class="mono" id="fore-leg-direct" style="color:var(--home)">--.- kWh</strong>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--battery)"></span>
+              <span style="color:var(--text-muted)">Battery Storage:</span>
+              <strong class="mono" id="fore-leg-battery" style="color:var(--battery)">--.- kWh</strong>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ec4899"></span>
+              <span style="color:var(--text-muted)">Grid Export:</span>
+              <strong class="mono" id="fore-leg-export" style="color:#ec4899">--.- kWh</strong>
+            </div>
+            <div class="legend-total" style="display:flex;align-items:center;gap:6px">
+              <span style="color:var(--text-muted)">Total Forecast Yield:</span>
+              <strong class="mono" id="fore-leg-total" style="color:var(--solar)">--.- kWh</strong>
+            </div>
+          </div>
         </div>
       </main>
 
@@ -1186,7 +1326,7 @@
           <div>
             <div class="card-title" style="display:flex;align-items:center;gap:8px">
               <span>Changelog</span>
-              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v1.2.0</span>
+              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v1.3.0</span>
             </div>
             <div class="card-subtitle">Version History & Release Notes</div>
           </div>
@@ -1195,8 +1335,24 @@
       </div>
       <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:16px">
         
-        <!-- v1.2.0 -->
+        <!-- v1.3.0 -->
         <div style="border-left:2px solid var(--accent);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.3.0 — Enhanced Solar Forecast & Yield Intelligence</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">9 Nov 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li><strong>Estimated Battery Solar Charge (+% SoC)</strong>: Calculates predicted solar surplus directed into home battery storage, showing estimated kWh and percentage SoC gain alongside direct household self-consumption.</li>
+            <li><strong>Peak Sunlight Generation Window</strong>: Real-time analysis of tomorrow's solar curve identifying the exact time window where irradiance exceeds 70% of peak generation capacity.</li>
+            <li><strong>Morning Breakeven Hour</strong>: Identifies the precise morning hour when incoming PV generation surpasses household baseline load (~130W), showing pre-solar morning drain.</li>
+            <li><strong>Financial Value & Export Revenue Projection</strong>: Estimated economic value combining avoided peak import costs (£/kWh) and surplus export earnings on dynamic wholesale tariffs.</li>
+            <li><strong>Tomorrow's Projected Solar Allocation Bar</strong>: Dynamic multi-segment breakdown visualising direct consumption, battery storage, and grid export with self-consumption efficiency percentage.</li>
+            <li><strong>Mobile-Optimised Layout</strong>: Full responsive redesign of the Solar Forecast page with fluid touch-scrolling hourly timeline and adaptive card stacking.</li>
+          </ul>
+        </div>
+
+        <!-- v1.2.0 -->
+        <div style="border-left:2px solid var(--border);padding-left:14px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
             <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.2.0 — Holiday Mode & Essential Smart Plugs</strong>
             <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">8 Nov 2026</span>
@@ -1600,6 +1756,59 @@
               </div>
             `).join('');
           }
+
+          // Enriched Solar Forecast & Battery Intelligence
+          const intel = d.weather.solar_intelligence || {};
+          const batChgKwh = intel.battery_charge_kwh != null ? intel.battery_charge_kwh : Math.min(d.weather.tomorrow_solar_kwh || 0, 3.5);
+          const socGainPct = intel.soc_gain_pct != null ? intel.soc_gain_pct : Math.round((batChgKwh / 9.84) * 100);
+          setText('fore-bat-charge-kwh', batChgKwh.toFixed(1));
+          setText('fore-bat-soc-gain', `+${socGainPct}% SoC`);
+
+          const directKwh = intel.direct_load_kwh != null ? intel.direct_load_kwh : Math.max(0, (d.weather.tomorrow_solar_kwh || 0) - batChgKwh);
+          const exportKwh = intel.export_kwh != null ? intel.export_kwh : 0.0;
+          const totalYldKwh = d.weather.tomorrow_solar_kwh || (directKwh + batChgKwh + exportKwh);
+          setText('fore-direct-use-kwh', `${directKwh.toFixed(1)} kWh`);
+
+          // Peak Sunlight Window
+          setText('fore-peak-window', intel.peak_window || '11:00 - 15:00');
+          setText('fore-peak-watts-badge', `${intel.peak_watts || 0} W Peak`);
+          setText('fore-peak-watts', `${intel.peak_watts || 0} W`);
+          setText('fore-peak-time', intel.peak_time || '--:--');
+
+          // Morning Breakeven Hour
+          const adaptML = (d.settings && d.settings.grid_charge_schedule && d.settings.grid_charge_schedule.adaptive && d.settings.grid_charge_schedule.adaptive.ml_prediction) || {};
+          const breakevenHr = intel.breakeven_time || adaptML.first_solar_breakeven_hour || '09:00';
+          const preDrain = adaptML.morning_pre_solar_kwh != null ? adaptML.morning_pre_solar_kwh : 0.4;
+          setText('fore-breakeven-clock', breakevenHr);
+          setText('fore-presolar-drain', `${preDrain.toFixed(1)} kWh`);
+
+          // Financial Value
+          const billSav = intel.bill_savings_gbp != null ? intel.bill_savings_gbp : 0.0;
+          const expRev = intel.export_credit_gbp != null ? intel.export_credit_gbp : 0.0;
+          const totVal = intel.total_value_gbp != null ? intel.total_value_gbp : (billSav + expRev);
+          setText('fore-total-value-gbp', `£${totVal.toFixed(2)}`);
+          setText('fore-bill-savings', `£${billSav.toFixed(2)}`);
+          setText('fore-export-revenue', `£${expRev.toFixed(2)}`);
+
+          // Solar Flow Breakdown Bar & Percentages
+          const selfConsumePct = intel.self_consumption_pct != null ? intel.self_consumption_pct : 100;
+          setText('fore-self-consume-badge', `${selfConsumePct}% Self-Consumed`);
+          setText('fore-leg-direct', `${directKwh.toFixed(1)} kWh`);
+          setText('fore-leg-battery', `${batChgKwh.toFixed(1)} kWh`);
+          setText('fore-leg-export', `${exportKwh.toFixed(1)} kWh`);
+          setText('fore-leg-total', `${totalYldKwh.toFixed(1)} kWh`);
+
+          const denom = Math.max(0.1, totalYldKwh);
+          const dirPct = Math.min(100, Math.max(0, (directKwh / denom) * 100));
+          const batPct = Math.min(100, Math.max(0, (batChgKwh / denom) * 100));
+          const expPct = Math.min(100, Math.max(0, 100 - dirPct - batPct));
+
+          const barDir = document.getElementById('fore-bar-direct');
+          const barBat = document.getElementById('fore-bar-battery');
+          const barExp = document.getElementById('fore-bar-export');
+          if (barDir) barDir.style.width = `${dirPct}%`;
+          if (barBat) barBat.style.width = `${batPct}%`;
+          if (barExp) barExp.style.width = `${expPct}%`;
         }
 
         // 7. Battery Grid Charge Schedule
