@@ -133,6 +133,12 @@ Visit `http://localhost:8050` in your browser.
 
 ## 📜 Changelog
 
+### v1.3.1 (9 Nov 2026) — Overview Redesign & Electric Blue Accent (#3b82f6)
+* **Electric Blue Accent**: Applied high-contrast `#3b82f6` for primary CTAs, active badges, and focus rings.
+* **Defined Card Surfaces**: Elevated deep glass cards (`rgba(18, 23, 37, 0.82)`) with crisp outlines and hover glows.
+* **Domain Top Accent Borders**: Added 3px top borders across the 5 KPI cards for instant subsystem identification.
+* **Section Grouping**: Segmented the overview into clear visual zones with glowing title badges and divider lines.
+
 ### v1.3.0 (9 Nov 2026) — Enhanced Solar Forecast & Yield Intelligence
 * **Estimated Battery Solar Charge (+% SoC)**: Predicts solar surplus allocated into battery storage with estimated kWh and % SoC gain.
 * **Peak Sunlight Generation Window**: Analyzes irradiance curve to highlight the high-production window exceeding 70% peak.

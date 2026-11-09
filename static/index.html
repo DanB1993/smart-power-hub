@@ -113,7 +113,7 @@
       <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
           <button onclick="openChangelogModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-            <span class="mono" style="background:rgba(129,140,248,0.15);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid rgba(129,140,248,0.3)">v1.3.0</span>
+            <span class="mono" style="background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid var(--accent-border)">v1.3.1</span>
             <span>Changelog</span>
           </button>
           <span style="font-size:0.68rem;color:var(--text-muted)" class="mono">Open-Source</span>
@@ -1326,7 +1326,7 @@
           <div>
             <div class="card-title" style="display:flex;align-items:center;gap:8px">
               <span>Changelog</span>
-              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(129,140,248,0.15);color:var(--accent);border:1px solid rgba(129,140,248,0.3)">v1.3.0</span>
+              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)">v1.3.1</span>
             </div>
             <div class="card-subtitle">Version History & Release Notes</div>
           </div>
@@ -1335,8 +1335,23 @@
       </div>
       <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:16px">
         
-        <!-- v1.3.0 -->
+        <!-- v1.3.1 -->
         <div style="border-left:2px solid var(--accent);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.3.1 — Overview Redesign & Electric Blue Accent (#3b82f6)</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">9 Nov 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li><strong>Electric Blue System Accent (<span class="mono" style="color:var(--accent)">#3b82f6</span>)</strong>: Established a modern, high-tech electric blue brand accent for primary CTAs, active highlights, and card boundary borders.</li>
+            <li><strong>Sharper Card Definitions & Elevated Surfaces</strong>: Replaced translucent flat cards with deep glassmorphism cards featuring solid boundaries, depth drop-shadows, and electric blue hover outlines.</li>
+            <li><strong>Subsystem Domain Top Accent Borders</strong>: Added 3px visual indicator bars across the 5 hero KPI cards (Amber for Solar, Emerald for Battery, Cyan for Home Load, Indigo for Grid, and Green-Cyan gradient for Octopus Savings).</li>
+            <li><strong>Sectional Visual Hierarchy</strong>: Grouped the dashboard overview into clean demarcated zones with glowing badges and divider lines (<em>Live Power & Energy Storage</em>, <em>Intelligent Energy Optimization</em>, and <em>System Insights & Market Arbitrage</em>).</li>
+            <li><strong>Inset Summary Framing</strong>: Structured the bottom telemetry and market summary cards with clear header lines separating subtitles from real-time live metrics.</li>
+          </ul>
+        </div>
+
+        <!-- v1.3.0 -->
+        <div style="border-left:2px solid var(--border);padding-left:14px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
             <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.3.0 — Enhanced Solar Forecast & Yield Intelligence</strong>
             <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">9 Nov 2026</span>
