@@ -11,4 +11,3 @@ bin/tailwindcss
 .env*
 !docker-compose.yml
 config.json
-
