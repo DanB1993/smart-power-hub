@@ -180,245 +180,262 @@
            VIEW 1: OVERVIEW (HERO KPIS + ESSENTIALS)
            ========================================== -->
       <main id="view-overview" class="view active">
-        <!-- 4-Card KPI Row -->
-      <section class="metrics-row">
-        <!-- Solar PV -->
-        <div class="card">
-          <div class="metric-top">
-            <span class="metric-title">
-              <span class="metric-icon" style="background:var(--solar)"></span>
-              Solar Generation
-            </span>
-            <span class="pill-tag mono" id="kpi-pv-pct">0%</span>
-          </div>
-          <div class="metric-number mono" style="color:var(--solar)">
-            <span id="kpi-pv-w">0</span><span class="metric-unit">W</span>
-          </div>
-          <div class="bar-bg">
-            <div class="bar-fill" id="kpi-pv-bar" style="width:0%;background:var(--solar)"></div>
-          </div>
-          <div class="metric-footer">
-            <span>Today <strong class="mono" id="kpi-pv-today">0.0 kWh</strong></span>
-            <span></span>
-          </div>
+        <!-- Section: Live Power Flow & Storage KPIs -->
+        <div class="overview-section-title">
+          <span class="section-icon">⚡</span>
+          <span>Live Power & Energy Storage</span>
+          <span class="section-line"></span>
         </div>
 
-        <!-- Battery -->
-        <div class="card">
-          <div class="metric-top">
-            <span class="metric-title">
-              <span class="metric-icon" style="background:var(--battery)"></span>
-              Battery Storage
-            </span>
-            <span class="pill-tag mono" id="kpi-bat-dir">Idle</span>
-          </div>
-          <div class="metric-number mono" style="color:var(--battery);display:flex;align-items:baseline;justify-content:space-between">
-            <div><span id="kpi-bat-soc">0</span><span class="metric-unit">%</span></div>
-            <div class="mono" id="kpi-bat-eta" style="font-size:0.75rem;font-weight:600;color:var(--text-secondary)">Holding</div>
-          </div>
-          <div class="bar-bg">
-            <div class="bar-fill" id="kpi-bat-bar" style="width:0%;background:var(--battery)"></div>
-          </div>
-          <div class="metric-footer">
-            <span>Flow <strong class="mono" id="kpi-bat-w">0 W</strong></span>
-            <span id="kpi-bat-eta-sub" style="color:var(--text-muted);font-size:0.72rem">Min Reserve <strong class="mono" id="kpi-bat-min">10%</strong></span>
-          </div>
-        </div>
-
-        <!-- Home Load -->
-        <div class="card">
-          <div class="metric-top">
-            <span class="metric-title">
-              <span class="metric-icon" style="background:var(--home)"></span>
-              Home Load
-            </span>
-            <span class="pill-tag mono" id="kpi-self-pill">0% Green</span>
-          </div>
-          <div class="metric-number mono" style="color:var(--home)">
-            <span id="kpi-load-w">0</span><span class="metric-unit">W</span>
-          </div>
-          <div class="bar-bg">
-            <div class="bar-fill" id="kpi-load-bar" style="width:0%;background:var(--home)"></div>
-          </div>
-          <div class="metric-footer">
-            <span>Today <strong class="mono" id="kpi-load-today">0.0 kWh</strong></span>
-            <span>Est. Yr <strong class="mono" id="kpi-load-yearly" style="color:var(--text)" title="Projected annual consumption based on daily usage">3,500 kWh</strong></span>
-          </div>
-        </div>
-
-        <!-- Grid -->
-        <div class="card">
-          <div class="metric-top">
-            <span class="metric-title">
-              <span class="metric-icon" style="background:var(--grid)"></span>
-              Grid Power
-            </span>
-            <span class="pill-tag mono" id="kpi-grid-badge">Idle</span>
-          </div>
-          <div class="metric-number mono" id="kpi-grid-color" style="color:var(--grid)">
-            <span id="kpi-grid-w">0</span><span class="metric-unit">W</span>
-          </div>
-          <div class="bar-bg">
-            <div class="bar-fill" id="kpi-grid-bar" style="width:0%;background:var(--grid)"></div>
-          </div>
-          <div class="metric-footer">
-            <span>Import <strong class="mono" id="kpi-grid-in">0.0 kWh</strong></span>
-            <span>Export <strong class="mono" id="kpi-grid-out">0.0 kWh</strong></span>
-          </div>
-        </div>
-
-        <!-- Octopus Tariff Savings & Cost -->
-        <div class="card">
-          <div class="metric-top">
-            <span class="metric-title" data-tooltip="Financial savings from solar self-consumption and battery shifting on Octopus Go vs standard grid rate (26p/kWh)">
-              <span class="metric-icon" style="background:#10b981"></span>
-              Octopus Savings
-            </span>
-            <span class="pill-tag mono" id="kpi-savings-rate-tag" data-tooltip="Live savings rate based on currently avoided grid peak costs">+0.0p/h</span>
-          </div>
-          <div class="metric-number mono" style="color:#10b981;display:flex;align-items:baseline;justify-content:space-between">
-            <div data-tooltip="Money saved today compared to standard 26p flat electricity tariff">
-              <span style="font-size:1.15rem;vertical-align:top;margin-right:2px">£</span><span id="kpi-saved-today">0.00</span>
-              <span style="font-size:0.75rem;font-weight:500;color:var(--text-muted);margin-left:4px">saved</span>
+        <!-- 5-Card KPI Row with domain accents -->
+        <section class="metrics-row">
+          <!-- Solar PV -->
+          <div class="card card-solar">
+            <div class="metric-top">
+              <span class="metric-title">
+                <span class="metric-icon" style="background:var(--solar)"></span>
+                Solar Generation
+              </span>
+              <span class="pill-tag mono" id="kpi-pv-pct">0%</span>
             </div>
-            <div style="font-size:0.78rem;color:var(--text-secondary)" data-tooltip="Cumulative estimated savings from solar generation and battery load shifting">
-              Lifetime: <strong class="mono" id="kpi-saved-lifetime" style="color:#10b981">£0.00</strong>
+            <div class="metric-number mono" style="color:var(--solar)">
+              <span id="kpi-pv-w">0</span><span class="metric-unit">W</span>
+            </div>
+            <div class="bar-bg">
+              <div class="bar-fill" id="kpi-pv-bar" style="width:0%;background:var(--solar)"></div>
+            </div>
+            <div class="metric-footer">
+              <span>Today <strong class="mono" id="kpi-pv-today">0.0 kWh</strong></span>
+              <span></span>
             </div>
           </div>
-          <div class="bar-bg">
-            <div class="bar-fill" id="kpi-saved-bar" style="width:100%;background:linear-gradient(90deg, #10b981, #06b6d4)"></div>
-          </div>
-          <div class="metric-footer">
-            <span data-tooltip="Total electricity cost today, including overnight 9.4p charging and daily 48.9p standing charge">
-              Today Cost <strong class="mono" id="kpi-cost-today" style="color:var(--text)">£0.00</strong>
-            </span>
-            <span data-tooltip="Current electricity burn rate based on live house consumption and active tariff">
-              Burn <strong class="mono" id="kpi-cost-live" style="color:var(--text-secondary)">0.0p/h</strong>
-            </span>
-          </div>
-        </div>
-      </section>
 
-        <div style="margin-top:20px">
-          <!-- Smart Appliance Recommendation Advisory Banner -->
-      <section class="card" id="appliance-advisory-card" style="margin-bottom:20px;padding:16px 20px;background:var(--surface);border-color:rgba(56,189,248,0.2)">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-          <div style="display:flex;align-items:center;gap:14px">
-            <div id="adv-icon" style="font-size:1.5rem;width:42px;height:42px;border-radius:12px;background:var(--surface-elevated);display:flex;align-items:center;justify-content:center;border:1px solid var(--border)">☀️</div>
-            <div>
-              <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:0.92rem;font-weight:600" id="adv-title">Smart Appliance Planner</span>
-                <span class="pill-tag mono" id="adv-badge" style="font-size:0.7rem;color:#38bdf8;border-color:rgba(56,189,248,0.3)">Calculating...</span>
+          <!-- Battery -->
+          <div class="card card-battery">
+            <div class="metric-top">
+              <span class="metric-title">
+                <span class="metric-icon" style="background:var(--battery)"></span>
+                Battery Storage
+              </span>
+              <span class="pill-tag mono" id="kpi-bat-dir">Idle</span>
+            </div>
+            <div class="metric-number mono" style="color:var(--battery);display:flex;align-items:baseline;justify-content:space-between">
+              <div><span id="kpi-bat-soc">0</span><span class="metric-unit">%</span></div>
+              <div class="mono" id="kpi-bat-eta" style="font-size:0.75rem;font-weight:600;color:var(--text-secondary)">Holding</div>
+            </div>
+            <div class="bar-bg">
+              <div class="bar-fill" id="kpi-bat-bar" style="width:0%;background:var(--battery)"></div>
+            </div>
+            <div class="metric-footer">
+              <span>Flow <strong class="mono" id="kpi-bat-w">0 W</strong></span>
+              <span id="kpi-bat-eta-sub" style="color:var(--text-muted);font-size:0.72rem">Min Reserve <strong class="mono" id="kpi-bat-min">10%</strong></span>
+            </div>
+          </div>
+
+          <!-- Home Load -->
+          <div class="card card-home">
+            <div class="metric-top">
+              <span class="metric-title">
+                <span class="metric-icon" style="background:var(--home)"></span>
+                Home Load
+              </span>
+              <span class="pill-tag mono" id="kpi-self-pill">0% Green</span>
+            </div>
+            <div class="metric-number mono" style="color:var(--home)">
+              <span id="kpi-load-w">0</span><span class="metric-unit">W</span>
+            </div>
+            <div class="bar-bg">
+              <div class="bar-fill" id="kpi-load-bar" style="width:0%;background:var(--home)"></div>
+            </div>
+            <div class="metric-footer">
+              <span>Today <strong class="mono" id="kpi-load-today">0.0 kWh</strong></span>
+              <span>Est. Yr <strong class="mono" id="kpi-load-yearly" style="color:var(--text)" title="Projected annual consumption based on daily usage">3,500 kWh</strong></span>
+            </div>
+          </div>
+
+          <!-- Grid -->
+          <div class="card card-grid">
+            <div class="metric-top">
+              <span class="metric-title">
+                <span class="metric-icon" style="background:var(--grid)"></span>
+                Grid Power
+              </span>
+              <span class="pill-tag mono" id="kpi-grid-badge">Idle</span>
+            </div>
+            <div class="metric-number mono" id="kpi-grid-color" style="color:var(--grid)">
+              <span id="kpi-grid-w">0</span><span class="metric-unit">W</span>
+            </div>
+            <div class="bar-bg">
+              <div class="bar-fill" id="kpi-grid-bar" style="width:0%;background:var(--grid)"></div>
+            </div>
+            <div class="metric-footer">
+              <span>Import <strong class="mono" id="kpi-grid-in">0.0 kWh</strong></span>
+              <span>Export <strong class="mono" id="kpi-grid-out">0.0 kWh</strong></span>
+            </div>
+          </div>
+
+          <!-- Octopus Tariff Savings & Cost -->
+          <div class="card card-savings">
+            <div class="metric-top">
+              <span class="metric-title" data-tooltip="Financial savings from solar self-consumption and battery shifting on Octopus Go vs standard grid rate (26p/kWh)">
+                <span class="metric-icon" style="background:#10b981"></span>
+                Octopus Savings
+              </span>
+              <span class="pill-tag mono" id="kpi-savings-rate-tag" data-tooltip="Live savings rate based on currently avoided grid peak costs">+0.0p/h</span>
+            </div>
+            <div class="metric-number mono" style="color:#10b981;display:flex;align-items:baseline;justify-content:space-between">
+              <div data-tooltip="Money saved today compared to standard 26p flat electricity tariff">
+                <span style="font-size:1.15rem;vertical-align:top;margin-right:2px">£</span><span id="kpi-saved-today">0.00</span>
+                <span style="font-size:0.75rem;font-weight:500;color:var(--text-muted);margin-left:4px">saved</span>
               </div>
-              <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:3px" id="adv-action">Evaluating solar curve & Octopus Go tariff...</div>
+              <div style="font-size:0.78rem;color:var(--text-secondary)" data-tooltip="Cumulative estimated savings from solar generation and battery load shifting">
+                Lifetime: <strong class="mono" id="kpi-saved-lifetime" style="color:#10b981">£0.00</strong>
+              </div>
+            </div>
+            <div class="bar-bg">
+              <div class="bar-fill" id="kpi-saved-bar" style="width:100%;background:linear-gradient(90deg, #10b981, #06b6d4)"></div>
+            </div>
+            <div class="metric-footer">
+              <span data-tooltip="Total electricity cost today, including overnight 9.4p charging and daily 48.9p standing charge">
+                Today Cost <strong class="mono" id="kpi-cost-today" style="color:var(--text)">£0.00</strong>
+              </span>
+              <span data-tooltip="Current electricity burn rate based on live house consumption and active tariff">
+                Burn <strong class="mono" id="kpi-cost-live" style="color:var(--text-secondary)">0.0p/h</strong>
+              </span>
             </div>
           </div>
-          <div class="mono" style="font-size:0.78rem;color:var(--text-muted);text-align:right" id="adv-savings-note">
-            Optimised for Octopus Go
+        </section>
+
+        <!-- Section: Intelligent Energy Planning -->
+        <div class="overview-section-title">
+          <span class="section-icon">💡</span>
+          <span>Intelligent Energy Optimization</span>
+          <span class="section-line"></span>
+        </div>
+
+        <!-- Smart Appliance Recommendation Advisory Banner -->
+        <section class="card card-accent" id="appliance-advisory-card" style="margin-bottom:20px;padding:18px 22px;background:linear-gradient(180deg, rgba(59,130,246,0.06), rgba(18,23,37,0.85));border-color:rgba(59,130,246,0.3)">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+            <div style="display:flex;align-items:center;gap:14px">
+              <div id="adv-icon" style="font-size:1.5rem;width:44px;height:44px;border-radius:12px;background:rgba(59,130,246,0.15);display:flex;align-items:center;justify-content:center;border:1px solid rgba(59,130,246,0.3);box-shadow:0 0 14px rgba(59,130,246,0.2)">☀️</div>
+              <div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:0.95rem;font-weight:700;color:var(--text)" id="adv-title">Smart Appliance Planner</span>
+                  <span class="pill-tag mono" id="adv-badge" style="font-size:0.7rem;color:var(--accent);border-color:var(--accent-border);background:var(--accent-soft)">Calculating...</span>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:3px" id="adv-action">Evaluating solar curve & Octopus Go tariff...</div>
+              </div>
+            </div>
+            <div class="mono" style="font-size:0.78rem;color:var(--text-muted);text-align:right" id="adv-savings-note">
+              Optimised for Octopus Go
+            </div>
           </div>
+
+          <!-- Appliance Run Matrix (Dishwasher, Washing Machine, Tumble Dryer) -->
+          <div id="adv-appliance-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08)">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </section>
+
+        <!-- Section: System Telemetry & Market Arbitrage -->
+        <div class="overview-section-title">
+          <span class="section-icon">📊</span>
+          <span>System Insights & Market Arbitrage</span>
+          <span class="section-line"></span>
         </div>
 
-        <!-- Appliance Run Matrix (Dishwasher, Washing Machine, Tumble Dryer) -->
-        <div id="adv-appliance-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
-          <!-- Populated dynamically via JS -->
-        </div>
-      </section>
-        </div>
-
-        <!-- 3-Column Summary Cards -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:16px;margin-top:20px">
-          <div class="card">
-            <div class="card-header">
+        <!-- 3-Column Summary Cards with crisp definition -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:16px;margin-bottom:20px">
+          <div class="card" style="border-top:3px solid var(--home)">
+            <div class="card-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:12px;margin-bottom:12px">
               <div>
                 <div class="card-title">Live System Flow</div>
                 <div class="card-subtitle">Inverter bus routing</div>
               </div>
               <button class="btn-add" style="font-size:0.72rem;padding:4px 10px" onclick="switchView('flow')">Open Full Flow ↗</button>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
               <div>
-                <div style="font-size:0.75rem;color:var(--text-muted)">Solar PV</div>
-                <div class="mono" style="font-size:1.3rem;font-weight:700;color:var(--solar)" id="overview-summary-pv">0 W</div>
+                <div style="font-size:0.74rem;color:var(--text-muted)">Solar PV</div>
+                <div class="mono" style="font-size:1.35rem;font-weight:700;color:var(--solar)" id="overview-summary-pv">0 W</div>
               </div>
               <div>
-                <div style="font-size:0.75rem;color:var(--text-muted)">Battery SoC</div>
-                <div class="mono" style="font-size:1.3rem;font-weight:700;color:var(--battery)" id="overview-summary-soc">0%</div>
+                <div style="font-size:0.74rem;color:var(--text-muted)">Battery SoC</div>
+                <div class="mono" style="font-size:1.35rem;font-weight:700;color:var(--battery)" id="overview-summary-soc">0%</div>
               </div>
               <div>
-                <div style="font-size:0.75rem;color:var(--text-muted)">Grid Net</div>
-                <div class="mono" style="font-size:1.3rem;font-weight:700;color:var(--grid)" id="overview-summary-grid">0 W</div>
+                <div style="font-size:0.74rem;color:var(--text-muted)">Grid Net</div>
+                <div class="mono" style="font-size:1.35rem;font-weight:700;color:var(--grid)" id="overview-summary-grid">0 W</div>
               </div>
             </div>
           </div>
 
-          <div class="card">
-            <div class="card-header">
+          <div class="card" style="border-top:3px solid #ec4899">
+            <div class="card-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:12px;margin-bottom:12px">
               <div>
                 <div class="card-title">Agile Outgoing Export</div>
                 <div class="card-subtitle">Live wholesale arbitrage</div>
               </div>
               <button class="btn-add" style="font-size:0.72rem;padding:4px 10px" onclick="switchView('agile')">View Tariffs ↗</button>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
               <div>
-                <div style="font-size:0.75rem;color:var(--text-muted)">Live Rate</div>
-                <div class="mono" style="font-size:1.3rem;font-weight:700;color:#ec4899" id="overview-summary-agile-rate">--.-p</div>
+                <div style="font-size:0.74rem;color:var(--text-muted)">Live Rate</div>
+                <div class="mono" style="font-size:1.35rem;font-weight:700;color:#ec4899" id="overview-summary-agile-rate">--.-p</div>
               </div>
               <div>
-                <div style="font-size:0.75rem;color:var(--text-muted)">Peak Window</div>
+                <div style="font-size:0.74rem;color:var(--text-muted)">Peak Window</div>
                 <div class="mono" style="font-size:0.95rem;font-weight:600;color:var(--text)" id="overview-summary-agile-peak">16:00 - 19:00</div>
               </div>
               <div>
-                <div style="font-size:0.75rem;color:var(--text-muted)">Shadow Earned</div>
-                <div class="mono" style="font-size:1.3rem;font-weight:700;color:var(--text)" id="overview-summary-agile-earned">£0.00</div>
+                <div style="font-size:0.74rem;color:var(--text-muted)">Shadow Earned</div>
+                <div class="mono" style="font-size:1.35rem;font-weight:700;color:var(--text)" id="overview-summary-agile-earned">£0.00</div>
               </div>
             </div>
           </div>
 
-          <div class="card">
-            <div class="card-header">
+          <div class="card" style="border-top:3px solid var(--solar)">
+            <div class="card-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:12px;margin-bottom:12px">
               <div>
                 <div class="card-title">Solar Generation Outlook</div>
                 <div class="card-subtitle">Next 24-48 hours</div>
               </div>
               <button class="btn-add" style="font-size:0.72rem;padding:4px 10px" onclick="switchView('forecast')">Solar Irradiance ↗</button>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
               <div>
-                <div style="font-size:0.75rem;color:var(--text-muted)">Tomorrow Yield</div>
-                <div class="mono" style="font-size:1.3rem;font-weight:700;color:var(--solar)" id="overview-summary-tomorrow-yield">--.- kWh</div>
+                <div style="font-size:0.74rem;color:var(--text-muted)">Tomorrow Yield</div>
+                <div class="mono" style="font-size:1.35rem;font-weight:700;color:var(--solar)" id="overview-summary-tomorrow-yield">--.- kWh</div>
               </div>
               <div>
-                <div style="font-size:0.75rem;color:var(--text-muted)">Weather</div>
-                <div style="font-size:1.1rem;font-weight:600;color:var(--text)" id="overview-summary-weather-desc">Clear ☀️</div>
+                <div style="font-size:0.74rem;color:var(--text-muted)">Weather</div>
+                <div style="font-size:1.15rem;font-weight:600;color:var(--text)" id="overview-summary-weather-desc">Clear ☀️</div>
               </div>
             </div>
           </div>
         </div>
 
-        <div style="margin-top:20px">
-          <!-- Energy Savings Optimizer Card -->
-      <section class="card" style="margin-top:20px;background:linear-gradient(180deg, rgba(129,140,248,0.07), var(--surface));border-color:rgba(129,140,248,0.28)">
-        <div class="card-header" style="margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:12px">
-            <div style="width:38px;height:38px;border-radius:10px;background:rgba(129,140,248,0.18);display:flex;align-items:center;justify-content:center;color:#818cf8;font-size:1.2rem;box-shadow:0 0 12px rgba(129,140,248,0.2)">⚡</div>
-            <div>
-              <div class="card-title" id="ai-insight-title" style="display:flex;align-items:center;gap:8px;font-size:0.95rem">
-                Energy Optimization & Savings
+        <!-- Energy Savings Optimizer Card with Electric Blue Highlights -->
+        <section class="card card-accent" style="margin-bottom:20px;background:linear-gradient(180deg, rgba(59,130,246,0.07), rgba(18,23,37,0.85));border-color:rgba(59,130,246,0.3)">
+          <div class="card-header" style="margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:12px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;border-radius:10px;background:rgba(59,130,246,0.18);display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:1.25rem;box-shadow:0 0 14px rgba(59,130,246,0.25);border:1px solid rgba(59,130,246,0.35)">⚡</div>
+              <div>
+                <div class="card-title" id="ai-insight-title" style="display:flex;align-items:center;gap:8px;font-size:0.95rem">
+                  Energy Optimization & Savings
+                </div>
+                <div class="card-subtitle" id="ai-insight-sub">Real-time battery bridging, solar forecast & Octopus Go tariff calculations</div>
               </div>
-              <div class="card-subtitle" id="ai-insight-sub">Real-time battery bridging, solar forecast & Octopus Go tariff calculations</div>
             </div>
+            <button class="btn-refresh" id="btn-trigger-ai" onclick="triggerAiGeneration()" style="background:var(--surface-elevated);border:1px solid var(--accent-border);color:var(--accent);font-size:0.78rem;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all 0.15s">
+              <span id="ai-btn-icon">⚡</span>
+              <span id="ai-btn-txt">Recalculate</span>
+            </button>
           </div>
-          <button class="btn-refresh" id="btn-trigger-ai" onclick="triggerAiGeneration()" style="background:var(--surface-elevated);border:1px solid var(--border);color:var(--text);font-size:0.78rem;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all 0.15s">
-            <span id="ai-btn-icon">⚡</span>
-            <span id="ai-btn-txt">Recalculate</span>
-          </button>
-        </div>
-        <div id="ai-bullets-container" style="display:flex;flex-direction:column;gap:10px;font-size:0.86rem;color:var(--text);line-height:1.5;padding:6px 2px">
-          <div style="color:var(--text-secondary)">Calculating real-time savings & battery optimization...</div>
-        </div>
-      </section>
-        </div>
+          <div id="ai-bullets-container" style="display:flex;flex-direction:column;gap:10px;font-size:0.86rem;color:var(--text);line-height:1.5;padding:6px 2px">
+            <div style="color:var(--text-secondary)">Calculating real-time savings & battery optimization...</div>
+          </div>
+        </section>
       </main>
 
       <!-- ==========================================
