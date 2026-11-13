@@ -230,6 +230,10 @@
               <span>Flow <strong class="mono" id="kpi-bat-w">0 W</strong></span>
               <span id="kpi-bat-eta-sub" style="color:var(--text-muted);font-size:0.72rem">Min Reserve <strong class="mono" id="kpi-bat-min">10%</strong></span>
             </div>
+            <div id="bat-bms-throttle-banner" style="display:none;margin-top:8px;padding:5px 8px;border-radius:6px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);font-size:0.7rem;color:#f59e0b;display:none;align-items:center;gap:6px">
+              <span>⚠️</span>
+              <span id="bat-bms-throttle-text">BMS Charge Rate Throttled</span>
+            </div>
           </div>
 
           <!-- Home Load -->
@@ -1655,6 +1659,25 @@
         setText('kpi-bat-w', batRawW < -10 ? `+${batAbsW} W` : (batRawW > 10 ? `-${batAbsW} W` : 'Idle'));
         document.getElementById('kpi-bat-bar').style.width = `${Math.min(100, soc)}%`;
         setText('kpi-bat-min', `${d.battery.min_soc_pct}%`);
+
+        // Check for BMS charge current throttling
+        const bmsThrottleEl = document.getElementById('bat-bms-throttle-banner');
+        const bmsThrottleTxt = document.getElementById('bat-bms-throttle-text');
+        if (bmsThrottleEl && bmsThrottleTxt) {
+          const bmsMaxA = d.battery.bms_max_charge_a || 40;
+          const userMaxA = (d.settings && d.settings.max_charge_current_a) || 40;
+          const gridNetW = d.power.grid_net_w; // negative = export
+          const isExporting = gridNetW < -30;
+          const isCharging = batRawW < -50;
+          // Show alert if BMS is limiting below user setting (< 15A) and we have surplus spilling to export
+          if (bmsMaxA <= 10.0 && isCharging && isExporting) {
+            bmsThrottleEl.style.display = 'flex';
+            bmsThrottleTxt.textContent = `BMS Thermal/SoC Cap: Capped at ${bmsMaxA.toFixed(1)}A (~${Math.round(bmsMaxA * (d.battery.voltage_v || 135))}W). Spilling ${Math.abs(gridNetW)}W surplus to grid.`;
+            bmsThrottleEl.title = `The battery BMS has limited charge current to ${bmsMaxA}A (Pack: ${d.battery.temp_c}°C, ${d.battery.voltage_v}V). Surplus solar cannot be absorbed and is being exported.`;
+          } else {
+            bmsThrottleEl.style.display = 'none';
+          }
+        }
 
         // 3. Home Load
         const loadW = d.power.load_w;
