@@ -1710,7 +1710,6 @@
         }
 
         // 4. Grid
-        const gridNetW = d.power.grid_net_w;
         const gridAbsW = Math.abs(gridNetW);
         setText('kpi-grid-w', gridAbsW);
         setText('kpi-grid-badge', gridNetW > 15 ? 'Importing' : (gridNetW < -15 ? 'Exporting' : 'Balanced'));
