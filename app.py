@@ -2258,9 +2258,80 @@ def enforce_inverter_night_charge_cutoff():
                 print(f"[FoxESS Auto-Charge] Top-Up Triggered: SoC dropped to {current_soc}% (<= target {target_soc}% - {topup_drop}%). Resuming force charge.")
                 set_foxess_force_charge_schedule(enabled=True)
     else:
-        # Outside off-peak window: Ensure schedule is re-enabled for upcoming night cycle
-        if not p1_enabled:
-            set_foxess_force_charge_schedule(enabled=True)
+        # Outside off-peak & prep windows (daytime / evening):
+        # Crucial for FoxESS firmware: when force charge schedule is enabled in registers 41001-41006 outside
+        # the window, the inverter firmware can hold the battery in schedule-standby mode, causing daytime
+        # surplus solar to be exported to the grid instead of charging the battery.
+        # We ensure force charge schedule is disabled during the day until the night prep window begins.
+        if p1_enabled:
+            print("[FoxESS Auto-Charge] Daytime active: Disabling force charge schedule so solar charges battery freely.")
+            set_foxess_force_charge_schedule(enabled=False)
+
+
+def enforce_daytime_solar_battery_charging():
+    """Watchdog for FoxESS solar-to-battery charging.
+    If daytime surplus solar is being exported to the grid while battery SoC is below 98%
+    and battery charging power is negligible (< 50W), the inverter has locked or been set to feed-in
+    priority/schedule hold. This automatically clears the schedule and restores Self-Use mode (41000=0)."""
+    now = datetime.now()
+    cur_mins = now.hour * 60 + now.minute
+
+    try:
+        start_str = app_config.get("tariff", {}).get("off_peak_start", "00:30")
+        end_str = app_config.get("tariff", {}).get("off_peak_end", "05:30")
+        sh, sm = [int(x) for x in start_str.split(":")]
+        eh, em = [int(x) for x in end_str.split(":")]
+        start_mins = sh * 60 + sm
+        end_mins = eh * 60 + em
+    except Exception:
+        start_mins = 30
+        end_mins = 330
+
+    if start_mins < end_mins:
+        in_offpeak = (start_mins <= cur_mins < end_mins)
+    else:
+        in_offpeak = (cur_mins >= start_mins) or (cur_mins < end_mins)
+
+    prep_start = (start_mins - 30) % 1440
+    if prep_start < start_mins:
+        in_prep = (prep_start <= cur_mins < start_mins)
+    else:
+        in_prep = (cur_mins >= prep_start) or (cur_mins < start_mins)
+
+    # Only run during daytime (not off-peak or prep)
+    if in_offpeak or in_prep:
+        return
+
+    with lock:
+        pv_w = latest_data.get("solar", {}).get("pv_power_w", 0)
+        load_w = latest_data.get("home", {}).get("load_power_w", 0)
+        grid_w = latest_data.get("grid", {}).get("grid_power_w", 0)  # negative = export
+        bat_w = latest_data.get("battery", {}).get("battery_power_w", 0)  # positive = charging, negative = discharging
+        soc = latest_data.get("battery", {}).get("soc_pct", 100)
+        work_mode = latest_data.get("settings", {}).get("work_mode", 0)
+        sched = latest_data.get("settings", {}).get("grid_charge_schedule", {})
+        p1_enabled = sched.get("period1", {}).get("enabled", False)
+
+    surplus_w = pv_w - load_w
+    export_w = abs(grid_w) if grid_w < -50 else 0
+
+    # Detection condition:
+    # 1. We have clear solar surplus (PV > Load + 150W)
+    # 2. Battery is not full (SoC < 98%)
+    # 3. We are exporting significant solar (> 100W)
+    # 4. Battery is NOT absorbing it (bat_w < 50W, i.e. 0W or discharging)
+    if surplus_w > 150 and soc < 98 and export_w > 100 and bat_w < 50:
+        print(
+            f"[FoxESS Solar Guard] Anomaly detected: PV={pv_w}W, Load={load_w}W, Export={export_w}W, "
+            f"Bat SoC={soc}%, Bat Flow={bat_w}W. Battery should be charging from solar surplus! Self-healing..."
+        )
+        if p1_enabled:
+            set_foxess_force_charge_schedule(enabled=False)
+        if work_mode != 0:
+            set_foxess_work_mode(0)
+        # Ensure max charge current allows charging (set to 40A, max SoC 100)
+        set_foxess_battery_reserves(min_soc=10, max_soc=100, max_charge_a=40.0)
+
 
 
 def get_tapo_credentials():
@@ -3514,6 +3585,8 @@ def poller_loop():
             evaluate_tapo_automation()
             # Enforce automatic battery cutoff at target SoC during 00:30-05:30 off-peak
             enforce_inverter_night_charge_cutoff()
+            # Daytime watchdog to ensure solar surplus charges battery instead of exporting
+            enforce_daytime_solar_battery_charging()
         except Exception as e:
             print(f"[Maintenance Tasks Error] {e}")
 
