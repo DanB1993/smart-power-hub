@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.1] - 2026-11-15
+
+### Added
+- **Devices Page Network Scan**: Added `🔍 Scan for Devices` and `🔄 Scan Plugs` buttons in the Devices & Lighting view backed by `/api/devices/scan` to discover and auto-register new Tapo smart plugs on demand.
+- **BMS Charge Throttle Alert**: Added an amber `BMS Throttled` status pill and explanatory banner on the Battery Storage KPI card whenever the battery BMS clamps charge current (e.g. cold temperature or top-end SoC taper) and spills surplus solar to the grid.
+- **Daytime Solar-to-Battery Watchdog**: Added `enforce_daytime_solar_battery_charging()` to automatically detect daytime solar export anomalies while battery SoC is below 98% and restore Self-Use mode / clear lingering force-charge schedules.
+
+### Fixed
+- **Daytime Solar Export Lock**: Fixed `enforce_inverter_night_charge_cutoff()` re-enabling the Period 1 force-charge schedule during daytime hours, which caused FoxESS firmware to hold the battery in standby and export surplus solar.
+- **Tapo Subnet Discovery Timeout**: Paced UDP port 20002 probes across the active local subnet in `scan_tapo_subnet()` to prevent Linux kernel socket `sendto` timeouts during device discovery.
+
+---
+
 ## [1.1.2] - 2026-11-07
 
 ### Added
