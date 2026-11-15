@@ -1360,6 +1360,9 @@
             <li><strong>Subsystem Domain Top Accent Borders</strong>: Added 3px visual indicator bars across the 5 hero KPI cards (Amber for Solar, Emerald for Battery, Cyan for Home Load, Indigo for Grid, and Green-Cyan gradient for Octopus Savings).</li>
             <li><strong>Sectional Visual Hierarchy</strong>: Grouped the dashboard overview into clean demarcated zones with glowing badges and divider lines (<em>Live Power & Energy Storage</em>, <em>Intelligent Energy Optimization</em>, and <em>System Insights & Market Arbitrage</em>).</li>
             <li><strong>Inset Summary Framing</strong>: Structured the bottom telemetry and market summary cards with clear header lines separating subtitles from real-time live metrics.</li>
+            <li><strong>Daytime Solar-to-Battery Watchdog &amp; Schedule Fix</strong>: Stopped <code>enforce_inverter_night_charge_cutoff()</code> from re-arming the Period 1 force-charge schedule during daytime hours, and added <code>enforce_daytime_solar_battery_charging()</code> to automatically clear schedule holds and restore Self-Use mode if surplus solar exports while battery SoC &lt; 98%.</li>
+            <li><strong>BMS Charge Throttle Alert</strong>: Added an amber <em>BMS Throttled</em> status pill and explanatory banner on the Battery Storage card whenever the BMS clamps charge current (cold weather or top-end SoC taper) and spills surplus solar to the grid.</li>
+            <li><strong>Devices Page Network Scan</strong>: Added <em>Scan for Devices</em> and <em>Scan Plugs</em> buttons backed by <code>/api/devices/scan</code> with paced UDP subnet discovery to find and auto-register new Tapo smart plugs.</li>
           </ul>
         </div>
 
