@@ -2396,31 +2396,29 @@ def add_tapo_known_ip(ip):
 
 
 def scan_tapo_subnet():
-    """Sweep local subnets (192.168.86.x, 192.168.1.x, etc.) on UDP port 20002 to auto-discover any Tapo plugs on the LAN."""
+    """Sweep the active local subnet(s) on UDP port 20002 to auto-discover any Tapo plugs on the LAN."""
+    from discovery import get_local_subnet
     subnets = set()
-    # Check current known IPs first
-    for ip in get_tapo_known_ips():
-        parts = ip.split(".")
-        if len(parts) == 4:
-            subnets.add(".".join(parts[:3]))
-
-    # Add inverter subnet and common home subnets
+    subnets.add(get_local_subnet())
     if INVERTER_HOST:
         parts = INVERTER_HOST.split(".")
         if len(parts) == 4:
             subnets.add(".".join(parts[:3]))
-    subnets.add("192.168.86")
-    subnets.add("192.168.1")
-    subnets.add("192.168.0")
 
     probe = bytes.fromhex("020000010000000000000000463cb5d3")
     found_ips = []
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.settimeout(0.8)
+    s.settimeout(2.0)
     try:
         for prefix in subnets:
             for i in range(1, 255):
-                s.sendto(probe, (f"{prefix}.{i}", 20002))
+                try:
+                    s.sendto(probe, (f"{prefix}.{i}", 20002))
+                except Exception:
+                    pass
+                if i % 25 == 0:
+                    time.sleep(0.01)
+        s.settimeout(0.3)
         deadline = time.time() + 2.0
         while time.time() < deadline:
             try:
@@ -2428,7 +2426,7 @@ def scan_tapo_subnet():
                 if len(data) > 16 and addr[0] not in found_ips:
                     found_ips.append(addr[0])
             except socket.timeout:
-                break
+                continue
     except Exception as e:
         print(f"[Tapo Auto-Discovery Warning] {e}")
     finally:
