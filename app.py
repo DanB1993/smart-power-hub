@@ -2396,16 +2396,32 @@ def add_tapo_known_ip(ip):
 
 
 def scan_tapo_subnet():
-    """Sweep 192.168.86.1..254 on UDP port 20002 to auto-discover any new Tapo plugs on the LAN."""
-    prefix = ".".join(TAPO_DEFAULT_IP.split(".")[:3])
+    """Sweep local subnets (192.168.86.x, 192.168.1.x, etc.) on UDP port 20002 to auto-discover any Tapo plugs on the LAN."""
+    subnets = set()
+    # Check current known IPs first
+    for ip in get_tapo_known_ips():
+        parts = ip.split(".")
+        if len(parts) == 4:
+            subnets.add(".".join(parts[:3]))
+
+    # Add inverter subnet and common home subnets
+    if INVERTER_HOST:
+        parts = INVERTER_HOST.split(".")
+        if len(parts) == 4:
+            subnets.add(".".join(parts[:3]))
+    subnets.add("192.168.86")
+    subnets.add("192.168.1")
+    subnets.add("192.168.0")
+
     probe = bytes.fromhex("020000010000000000000000463cb5d3")
     found_ips = []
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.settimeout(0.6)
+    s.settimeout(0.8)
     try:
-        for i in range(1, 255):
-            s.sendto(probe, (f"{prefix}.{i}", 20002))
-        deadline = time.time() + 1.2
+        for prefix in subnets:
+            for i in range(1, 255):
+                s.sendto(probe, (f"{prefix}.{i}", 20002))
+        deadline = time.time() + 2.0
         while time.time() < deadline:
             try:
                 data, addr = s.recvfrom(2048)
@@ -4010,6 +4026,14 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             is_essential = bool(body.get("is_essential", False))
             updated = save_tapo_automation_rules(ip, {"is_essential": is_essential})
             self.send_json({"ok": True, "ip": ip, "is_essential": is_essential, "rules": updated})
+            return
+
+        if parsed.path == "/api/devices/scan":
+            tapo_found = scan_tapo_subnet()
+            poll_tapo_once()
+            poll_shelly_once()
+            poll_hue_once()
+            self.send_json({"ok": True, "tapo_found": tapo_found})
             return
 
         if parsed.path == "/api/holiday/toggle":

@@ -917,6 +917,10 @@
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:12px">
+              <button id="btn-scan-devices" class="btn-add" style="padding:8px 14px;font-size:0.85rem;background:var(--surface-elevated);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;gap:6px" onclick="scanNetworkDevices()">
+                <span id="scan-devices-icon">🔍</span>
+                <span id="scan-devices-text">Scan for Devices</span>
+              </button>
               <button id="btn-toggle-holiday" class="btn-add" style="padding:8px 16px;font-size:0.85rem;background:var(--accent);display:flex;align-items:center;gap:6px" onclick="toggleHolidayMode()">
                 <span id="holiday-btn-icon">🌴</span>
                 <span id="holiday-btn-text">Turn ON Holiday Mode</span>
@@ -992,7 +996,12 @@
             <div class="card-title">TP-Link Tapo Smart Plugs</div>
             <div class="card-subtitle">Hardware energy meters (KLAP v2) · Automated in background</div>
           </div>
-          <span class="pill-tag mono" id="tapo-status-badge" style="display:none"></span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="btn-add" id="btn-tapo-scan-sub" style="font-size:0.75rem;padding:4px 10px;background:var(--surface-elevated);border-color:rgba(56,189,248,0.3);color:var(--home)" onclick="scanNetworkDevices()">
+              <span>🔄 Scan Plugs</span>
+            </button>
+            <span class="pill-tag mono" id="tapo-status-badge" style="display:none"></span>
+          </div>
         </div>
         <div id="tapo-plugs-container"></div>
         <div id="tapo-auth-box" style="display:none;margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--bg);border:1px solid rgba(56,189,248,0.25)">
@@ -2491,6 +2500,40 @@
         body: JSON.stringify({ ip, is_on })
       });
       fetchDevices();
+    }
+
+    async function scanNetworkDevices() {
+      const btn = document.getElementById('btn-scan-devices');
+      const icon = document.getElementById('scan-devices-icon');
+      const text = document.getElementById('scan-devices-text');
+      const subBtn = document.getElementById('btn-tapo-scan-sub');
+
+      if (btn) btn.disabled = true;
+      if (subBtn) subBtn.disabled = true;
+      if (icon) icon.textContent = '⏳';
+      if (text) text.textContent = 'Scanning subnet...';
+      if (subBtn) subBtn.innerHTML = '<span>⏳ Scanning...</span>';
+
+      try {
+        const res = await fetch('/api/devices/scan', { method: 'POST' });
+        const d = await res.json();
+        const found = (d.tapo_found && d.tapo_found.length) ? d.tapo_found.length : 0;
+        if (text) text.textContent = found > 0 ? `Found ${found} plug(s)` : 'Scan complete';
+        setTimeout(() => {
+          if (text) text.textContent = 'Scan for Devices';
+        }, 3000);
+      } catch (e) {
+        if (text) text.textContent = 'Scan error';
+        console.error(e);
+      } finally {
+        if (icon) icon.textContent = '🔍';
+        if (btn) btn.disabled = false;
+        if (subBtn) {
+          subBtn.disabled = false;
+          subBtn.innerHTML = '<span>🔄 Scan Plugs</span>';
+        }
+        fetchDevices();
+      }
     }
 
     async function addShellyPlug() {
