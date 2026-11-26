@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import hashlib
 import json
 import math
 import os
@@ -33,6 +34,8 @@ app_config = load_config()
 INVERTER_HOST = os.environ.get("INVERTER_HOST", app_config.get("inverter", {}).get("host", "192.168.1.100"))
 INVERTER_PORT = int(os.environ.get("INVERTER_PORT", str(app_config.get("inverter", {}).get("port", 502))))
 INVERTER_UNIT = int(os.environ.get("INVERTER_UNIT", str(app_config.get("inverter", {}).get("unit_id", 247))))
+FOXESS_API_KEY = os.environ.get("FOXESS_API_KEY", app_config.get("inverter", {}).get("foxess_api_key", ""))
+FOXESS_DEVICE_SN = os.environ.get("FOXESS_DEVICE_SN", app_config.get("inverter", {}).get("serial", ""))
 BATTERY_CAPACITY_KWH = float(app_config.get("battery", {}).get("gross_capacity_kwh", 9.84))
 BATTERY_USABLE_KWH = float(app_config.get("battery", {}).get("usable_capacity_kwh", 8.86))
 ADAPTIVE_HEADROOM_ENABLED = bool(app_config.get("battery", {}).get("adaptive_headroom_enabled", True))
@@ -47,6 +50,11 @@ OCTOPUS_PRODUCT_CODE = os.environ.get("OCTOPUS_PRODUCT", app_config.get("tariff"
 OCTOPUS_TARIFF_CODE = os.environ.get("OCTOPUS_TARIFF", app_config.get("tariff", {}).get("import_tariff_code", "E-1R-GO-FIX-12M-26-10-14-H"))
 OCTOPUS_EXPORT_RATE_P_KWH = float(os.environ.get("OCTOPUS_EXPORT_RATE", str(app_config.get("tariff", {}).get("fixed_export_rate_p_kwh", 12.0))))
 OCTOPUS_EXPORT_ACTIVE = os.environ.get("OCTOPUS_EXPORT_ACTIVE", "false").lower() == "true"
+AUTO_EXPORT_ENABLED = bool(app_config.get("tariff", {}).get("auto_export_enabled", False))
+AUTO_EXPORT_MIN_RATE_P = float(app_config.get("tariff", {}).get("auto_export_min_rate_p", 20.0))
+AUTO_EXPORT_SAFETY_BUFFER_KWH = float(app_config.get("tariff", {}).get("auto_export_safety_buffer_kwh", 1.5))
+auto_export_active = False
+auto_export_last_cloud_sync_ts = 0.0
 LATITUDE = float(os.environ.get("LATITUDE", str(app_config.get("location", {}).get("latitude", 51.5074))))
 LONGITUDE = float(os.environ.get("LONGITUDE", str(app_config.get("location", {}).get("longitude", -0.1278))))
 TAPO_DEFAULT_IP = os.environ.get("TAPO_IP", "192.168.1.200")
@@ -2092,6 +2100,104 @@ def set_foxess_work_mode(mode_code):
         return False
 
 
+def set_foxess_remote_power(enabled, power_w=0, timeout_s=120):
+    """Control FoxESS H1-G2 Remote Power Control (Registers 44000-44002) via Modbus FC06.
+    44000: Remote Enable (0=disabled, 1=enabled)
+    44001: Watchdog Timeout (seconds)
+    44002: Active Power Setpoint (signed int16 Watts; positive = discharge/export, negative = charge)
+    """
+    try:
+        sock = socket.create_connection((INVERTER_HOST, INVERTER_PORT), timeout=4.5)
+        en_val = 1 if enabled else 0
+        to_val = max(30, min(3600, int(timeout_s)))
+        pwr_val = max(-3680, min(3680, int(power_w))) & 0xFFFF
+        # Write timeout & power first, then enable/disable (individual FC06 writes for H1-G2 compatibility)
+        writes = [(44001, to_val), (44002, pwr_val), (44000, en_val)] if enabled else [(44000, 0), (44002, 0)]
+        for idx, (reg, val) in enumerate(writes):
+            payload = struct.pack(">HHHBBHH", 92 + idx, 0, 6, INVERTER_UNIT, 6, reg, val)
+            sock.sendall(payload)
+            resp = sock.recv(16)
+            if len(resp) >= 8 and (resp[7] & 0x80):
+                print(f"[FoxESS Remote Power Warning] Reg {reg} Modbus exception code {resp[8] if len(resp) > 8 else '?'}")
+                sock.close()
+                return False
+            time.sleep(0.2)
+        sock.close()
+        return True
+    except Exception as e:
+        print(f"[FoxESS Remote Power Write Warning] {e}")
+        return False
+
+
+def set_foxess_cloud_force_discharge(enabled, fd_pwr=3600, fd_soc=20):
+    """Enable or disable Force Discharge via the FoxESS Cloud Open API (/op/v0/device/scheduler/enable).
+    When enabled=True, schedules a 35-minute rolling ForceDischarge segment starting now.
+    When enabled=False, restores SelfUse across 00:00-23:59.
+    """
+    token = FOXESS_API_KEY or app_config.get("inverter", {}).get("foxess_api_key", "")
+    sn = FOXESS_DEVICE_SN or app_config.get("inverter", {}).get("serial", "") or static_device_info.get("serial", "")
+    if not token or not sn:
+        print("[FoxESS Cloud API Warning] Missing foxess_api_key or inverter serial.")
+        return False
+    try:
+        path = "/op/v0/device/scheduler/enable"
+        ts = str(int(time.time() * 1000))
+        raw = path + r"\r\n" + token + r"\r\n" + ts
+        sig = hashlib.md5(raw.encode("utf-8")).hexdigest()
+        now_dt = datetime.now()
+        if enabled:
+            end_dt = now_dt + timedelta(minutes=35)
+            if end_dt.day != now_dt.day:
+                end_h, end_m = 23, 59
+            else:
+                end_h, end_m = end_dt.hour, end_dt.minute
+            groups = [{
+                "enable": 1,
+                "startHour": now_dt.hour,
+                "startMinute": now_dt.minute,
+                "endHour": end_h,
+                "endMinute": end_m,
+                "workMode": "ForceDischarge",
+                "minSocOnGrid": 10,
+                "fdSoc": int(fd_soc),
+                "fdPwr": int(fd_pwr),
+            }]
+        else:
+            groups = [{
+                "enable": 1,
+                "startHour": 0,
+                "startMinute": 0,
+                "endHour": 23,
+                "endMinute": 59,
+                "workMode": "SelfUse",
+                "minSocOnGrid": 10,
+                "fdSoc": 10,
+                "fdPwr": int(fd_pwr),
+            }]
+        req = urllib.request.Request(
+            "https://www.foxesscloud.com" + path,
+            data=json.dumps({"deviceSN": sn, "groups": groups}).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "token": token,
+                "timestamp": ts,
+                "signature": sig,
+                "lang": "en",
+                "User-Agent": "smart-power-dashboard/1.3",
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            resp = json.loads(r.read().decode("utf-8"))
+        if resp.get("errno") == 0:
+            return True
+        print(f"[FoxESS Cloud API Warning] errno={resp.get('errno')} msg={resp.get('msg')}")
+        return False
+    except Exception as e:
+        print(f"[FoxESS Cloud API Error] {e}")
+        return False
+
+
 def set_foxess_battery_reserves(min_soc, max_soc, min_soc_on_grid=None, max_charge_a=None, max_discharge_a=None):
     """Write battery safety thresholds and current limits (Registers 41007-41011) via Modbus FC16."""
     try:
@@ -2298,32 +2404,33 @@ def enforce_daytime_solar_battery_charging():
     else:
         in_prep = (cur_mins >= prep_start) or (cur_mins < start_mins)
 
-    # Only run during daytime (not off-peak or prep)
-    if in_offpeak or in_prep:
+    # Only run during daytime (not off-peak or prep) and not during intentional Agile Auto-Export
+    if in_offpeak or in_prep or auto_export_active:
         return
 
     with lock:
-        pv_w = latest_data.get("solar", {}).get("pv_power_w", 0)
-        load_w = latest_data.get("home", {}).get("load_power_w", 0)
-        grid_w = latest_data.get("grid", {}).get("grid_power_w", 0)  # negative = export
-        bat_w = latest_data.get("battery", {}).get("battery_power_w", 0)  # positive = charging, negative = discharging
+        if latest_data.get("status") != "online":
+            return
+        pv_w = latest_data.get("power", {}).get("pv_total_w", 0)
+        load_w = latest_data.get("power", {}).get("load_w", 0)
+        export_w = latest_data.get("grid", {}).get("export_w", 0)
+        bat_charge_w = latest_data.get("battery", {}).get("charge_w", 0)
         soc = latest_data.get("battery", {}).get("soc_pct", 100)
-        work_mode = latest_data.get("settings", {}).get("work_mode", 0)
+        work_mode = latest_data.get("settings", {}).get("work_mode_code", 0)
         sched = latest_data.get("settings", {}).get("grid_charge_schedule", {})
         p1_enabled = sched.get("period1", {}).get("enabled", False)
 
     surplus_w = pv_w - load_w
-    export_w = abs(grid_w) if grid_w < -50 else 0
 
     # Detection condition:
     # 1. We have clear solar surplus (PV > Load + 150W)
     # 2. Battery is not full (SoC < 98%)
     # 3. We are exporting significant solar (> 100W)
-    # 4. Battery is NOT absorbing it (bat_w < 50W, i.e. 0W or discharging)
-    if surplus_w > 150 and soc < 98 and export_w > 100 and bat_w < 50:
+    # 4. Battery is NOT absorbing it (bat_charge_w < 50W, i.e. 0W or discharging)
+    if surplus_w > 150 and soc < 98 and export_w > 100 and bat_charge_w < 50:
         print(
             f"[FoxESS Solar Guard] Anomaly detected: PV={pv_w}W, Load={load_w}W, Export={export_w}W, "
-            f"Bat SoC={soc}%, Bat Flow={bat_w}W. Battery should be charging from solar surplus! Self-healing..."
+            f"Bat SoC={soc}%, Bat Charge={bat_charge_w}W. Battery should be charging from solar surplus! Self-healing..."
         )
         if p1_enabled:
             set_foxess_force_charge_schedule(enabled=False)
@@ -2331,6 +2438,80 @@ def enforce_daytime_solar_battery_charging():
             set_foxess_work_mode(0)
         # Ensure max charge current allows charging (set to 40A, max SoC 100)
         set_foxess_battery_reserves(min_soc=10, max_soc=100, max_charge_a=40.0)
+
+
+def enforce_agile_auto_export():
+    """Automatically trigger Force Discharge during high-rate Agile Outgoing slots
+    when Bridging Analytics confirms enough spare capacity above the safety buffer to reach off-peak."""
+    global auto_export_active, auto_export_last_cloud_sync_ts
+    now = datetime.now()
+    cur_mins = now.hour * 60 + now.minute
+
+    try:
+        start_str = app_config.get("tariff", {}).get("off_peak_start", "00:30")
+        end_str = app_config.get("tariff", {}).get("off_peak_end", "05:30")
+        sh, sm = [int(x) for x in start_str.split(":")]
+        eh, em = [int(x) for x in end_str.split(":")]
+        start_mins = sh * 60 + sm
+        end_mins = eh * 60 + em
+    except Exception:
+        start_mins = 30
+        end_mins = 330
+
+    if start_mins < end_mins:
+        in_offpeak = (start_mins <= cur_mins < end_mins)
+    else:
+        in_offpeak = (cur_mins >= start_mins) or (cur_mins < end_mins)
+
+    prep_start = (start_mins - 30) % 1440
+    if prep_start < start_mins:
+        in_prep = (prep_start <= cur_mins < start_mins)
+    else:
+        in_prep = (cur_mins >= prep_start) or (cur_mins < start_mins)
+
+    with lock:
+        soc = latest_data.get("battery", {}).get("soc_pct", 0)
+        work_mode = latest_data.get("system_state", {}).get("work_mode_code", 0)
+        curr_export_p = latest_octopus.get("agile_outgoing", {}).get("current_export_p_kwh", 0.0)
+
+    # Call outside `with lock:` because calculate_daily_financials() acquires `lock` internally
+    financials = calculate_daily_financials()
+    bridging = financials.get("bridging_analytics", {}) if isinstance(financials, dict) else {}
+    surplus_kwh = float(bridging.get("surplus_kwh_at_offpeak", 0.0))
+
+    if not AUTO_EXPORT_ENABLED or in_offpeak or in_prep:
+        if auto_export_active:
+            print("[Agile Auto-Export] Stopping Force Discharge (disabled or off-peak/prep window) -> Restoring Self-Use.")
+            set_foxess_cloud_force_discharge(False)
+            set_foxess_work_mode(0)
+            auto_export_active = False
+            auto_export_last_cloud_sync_ts = time.time()
+        return
+
+    if not auto_export_active:
+        # Start conditions: rate >= min_rate AND surplus > safety_buffer AND soc > 25%
+        if curr_export_p >= AUTO_EXPORT_MIN_RATE_P and surplus_kwh >= AUTO_EXPORT_SAFETY_BUFFER_KWH and soc > 25:
+            print(
+                f"[Agile Auto-Export] Triggering Cloud Force Discharge (3600W)! Rate={curr_export_p}p >= {AUTO_EXPORT_MIN_RATE_P}p, "
+                f"Surplus={surplus_kwh:.2f} kWh >= {AUTO_EXPORT_SAFETY_BUFFER_KWH} kWh, SoC={soc}%."
+            )
+            if set_foxess_cloud_force_discharge(True, fd_pwr=3600, fd_soc=20):
+                auto_export_active = True
+                auto_export_last_cloud_sync_ts = time.time()
+    else:
+        # Stop conditions with hysteresis: rate drops below min_rate OR surplus drops below 0.5 kWh OR soc <= 20%
+        if curr_export_p < AUTO_EXPORT_MIN_RATE_P or surplus_kwh <= 0.5 or soc <= 20:
+            print(
+                f"[Agile Auto-Export] Stopping Force Discharge (Rate={curr_export_p}p, Surplus={surplus_kwh:.2f} kWh, SoC={soc}%) -> Restoring Self-Use."
+            )
+            set_foxess_cloud_force_discharge(False)
+            set_foxess_work_mode(0)
+            auto_export_active = False
+            auto_export_last_cloud_sync_ts = time.time()
+        elif time.time() - auto_export_last_cloud_sync_ts >= 1200:
+            # Extend rolling 35-min ForceDischarge window every 20 minutes while peak export continues
+            if set_foxess_cloud_force_discharge(True, fd_pwr=3600, fd_soc=20):
+                auto_export_last_cloud_sync_ts = time.time()
 
 
 
@@ -3601,6 +3782,8 @@ def poller_loop():
             enforce_inverter_night_charge_cutoff()
             # Daytime watchdog to ensure solar surplus charges battery instead of exporting
             enforce_daytime_solar_battery_charging()
+            # Agile Outgoing Auto-Export arbitrage
+            enforce_agile_auto_export()
         except Exception as e:
             print(f"[Maintenance Tasks Error] {e}")
 
@@ -3667,6 +3850,15 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 octo_copy = dict(latest_octopus)
                 weather_copy = dict(latest_weather)
                 adapt_copy = dict(latest_adaptive)
+
+            if isinstance(octo_copy.get("agile_outgoing"), dict):
+                octo_copy["agile_outgoing"] = dict(octo_copy["agile_outgoing"])
+                octo_copy["agile_outgoing"]["auto_export"] = {
+                    "enabled": AUTO_EXPORT_ENABLED,
+                    "active": auto_export_active,
+                    "min_rate_p": AUTO_EXPORT_MIN_RATE_P,
+                    "safety_buffer_kwh": AUTO_EXPORT_SAFETY_BUFFER_KWH,
+                }
 
             # Ensure solar intelligence is always computed and up to date
             try:
@@ -4024,6 +4216,29 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             is_essential = bool(body.get("is_essential", False))
             updated = save_tapo_automation_rules(ip, {"is_essential": is_essential})
             self.send_json({"ok": True, "ip": ip, "is_essential": is_essential, "rules": updated})
+            return
+
+        if parsed.path == "/api/agile/auto_export":
+            global AUTO_EXPORT_ENABLED, AUTO_EXPORT_MIN_RATE_P, AUTO_EXPORT_SAFETY_BUFFER_KWH
+            if "enabled" in body:
+                AUTO_EXPORT_ENABLED = bool(body["enabled"])
+            if "min_rate_p" in body:
+                AUTO_EXPORT_MIN_RATE_P = max(10.0, float(body["min_rate_p"]))
+            if "safety_buffer_kwh" in body:
+                AUTO_EXPORT_SAFETY_BUFFER_KWH = max(0.5, float(body["safety_buffer_kwh"]))
+
+            app_config.setdefault("tariff", {})["auto_export_enabled"] = AUTO_EXPORT_ENABLED
+            app_config["tariff"]["auto_export_min_rate_p"] = AUTO_EXPORT_MIN_RATE_P
+            app_config["tariff"]["auto_export_safety_buffer_kwh"] = AUTO_EXPORT_SAFETY_BUFFER_KWH
+            save_config(app_config)
+            enforce_agile_auto_export()
+            self.send_json({
+                "ok": True,
+                "enabled": AUTO_EXPORT_ENABLED,
+                "active": auto_export_active,
+                "min_rate_p": AUTO_EXPORT_MIN_RATE_P,
+                "safety_buffer_kwh": AUTO_EXPORT_SAFETY_BUFFER_KWH,
+            })
             return
 
         if parsed.path == "/api/devices/scan":

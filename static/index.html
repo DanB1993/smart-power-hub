@@ -113,7 +113,7 @@
       <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
           <button onclick="openChangelogModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-            <span class="mono" style="background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid var(--accent-border)">v1.3.1</span>
+            <span class="mono" style="background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid var(--accent-border)">v1.3.2</span>
             <span>Changelog</span>
           </button>
           <span style="font-size:0.68rem;color:var(--text-muted)" class="mono">Open-Source</span>
@@ -392,7 +392,7 @@
                 <div class="mono" style="font-size:0.95rem;font-weight:600;color:var(--text)" id="overview-summary-agile-peak">16:00 - 19:00</div>
               </div>
               <div>
-                <div style="font-size:0.74rem;color:var(--text-muted)">Shadow Earned</div>
+                <div style="font-size:0.74rem;color:var(--text-muted)">Export Earned</div>
                 <div class="mono" style="font-size:1.35rem;font-weight:700;color:var(--text)" id="overview-summary-agile-earned">£0.00</div>
               </div>
             </div>
@@ -579,6 +579,32 @@
           </div>
         </div>
 
+        <!-- Auto-Export Arbitrage Control Card -->
+        <div class="card" style="margin-bottom:16px;padding:14px 18px;border-color:rgba(16,185,129,0.25);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-weight:700;font-size:0.9rem;color:var(--text);display:flex;align-items:center;gap:8px">
+              <span>⚡ Automated Agile Peak Export</span>
+              <span class="pill-tag mono" id="auto-export-status-pill" style="font-size:0.68rem;color:var(--text-muted);border-color:var(--border)">Disabled</span>
+            </div>
+            <div style="font-size:0.76rem;color:var(--text-secondary);margin-top:2px">
+              Automatically switches to Force Discharge when Agile rate &ge; Min Rate and Bridging surplus &ge; Safety Buffer, then restores Self-Use.
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:4px">
+              <span style="font-size:0.72rem;color:var(--text-secondary)">Min Rate:</span>
+              <input type="number" id="auto-export-min-rate" class="field-input mono" value="20" min="10" max="100" step="1" style="width:58px;font-size:0.8rem;text-align:center" />
+              <span style="font-size:0.72rem;color:var(--text-muted)">p</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px">
+              <span style="font-size:0.72rem;color:var(--text-secondary)">Buffer:</span>
+              <input type="number" id="auto-export-buffer" class="field-input mono" value="1.5" min="0.5" max="6.0" step="0.5" style="width:58px;font-size:0.8rem;text-align:center" />
+              <span style="font-size:0.72rem;color:var(--text-muted)">kWh</span>
+            </div>
+            <button class="btn-add" id="btn-auto-export-toggle" onclick="toggleAutoExport()" style="font-size:0.78rem;padding:6px 12px">Enable Auto-Export</button>
+          </div>
+        </div>
+
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
           <!-- Octopus Agile Outgoing Shadow Export Tile -->
           <div class="solar-forecast-card" style="background:linear-gradient(180deg, rgba(236,72,153,0.06), var(--surface));border-color:rgba(236,72,153,0.25)">
@@ -619,7 +645,7 @@
             <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.74rem">
               <span>Peak <strong class="mono" id="agile-peak-rate" style="color:#ec4899">--.-p</strong></span>
               <span>Realized <strong class="mono" id="agile-realized-rate" style="color:#38bdf8">--.-p/kWh</strong></span>
-              <span>Shadow Earned <strong class="mono" id="agile-shadow-earned" style="color:var(--text)">£0.00</strong></span>
+              <span>Export Earned <strong class="mono" id="agile-shadow-earned" style="color:var(--text)">£0.00</strong></span>
             </div>
           </div>
 
@@ -1339,7 +1365,7 @@
           <div>
             <div class="card-title" style="display:flex;align-items:center;gap:8px">
               <span>Changelog</span>
-              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)">v1.3.1</span>
+              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)">v1.3.2</span>
             </div>
             <div class="card-subtitle">Version History & Release Notes</div>
           </div>
@@ -1348,8 +1374,21 @@
       </div>
       <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:16px">
         
-        <!-- v1.3.1 -->
+        <!-- v1.3.2 -->
         <div style="border-left:2px solid var(--accent);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.3.2 — FoxESS H1-G2 Cloud Auto-Export &amp; Watchdog Fixes</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">26 Nov 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li><strong>FoxESS Cloud Open API Force Discharge</strong>: Added <code>set_foxess_cloud_force_discharge()</code> using <code>/op/v0/device/scheduler/enable</code> (rolling 35-minute windows with 20-minute refresh) plus <code>set_foxess_remote_power()</code> (<code>44000–44002</code>) for FoxESS H1-G2 compatibility.</li>
+            <li><strong>Agile Auto-Export Bridging Fix</strong>: Fixed <code>enforce_agile_auto_export()</code> reading a nonexistent <code>calculate_bridging_analytics()</code> helper by pulling <code>bridging_analytics</code> from <code>calculate_daily_financials()</code> outside the lock.</li>
+            <li><strong>Daytime Solar Guard Watchdog Fix</strong>: Fixed <code>enforce_daytime_solar_battery_charging()</code> dictionary key lookups (<code>power.pv_total_w</code>, <code>power.load_w</code>, <code>grid.export_w</code>, <code>battery.charge_w</code>, <code>settings.work_mode_code</code>) and added an online-status guard.</li>
+          </ul>
+        </div>
+
+        <!-- v1.3.1 -->
+        <div style="border-left:2px solid var(--border);padding-left:14px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
             <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.3.1 — Overview Redesign & Electric Blue Accent (#3b82f6)</strong>
             <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">9 Nov 2026</span>
@@ -1989,6 +2028,37 @@
         // 8. Octopus Agile Outgoing Live Tracker
         if (d.octopus && d.octopus.agile_outgoing) {
           const agile = d.octopus.agile_outgoing;
+          if (agile.auto_export) {
+            const ae = agile.auto_export;
+            window._autoExportEnabled = !!ae.enabled;
+            const pill = document.getElementById('auto-export-status-pill');
+            const btn = document.getElementById('btn-auto-export-toggle');
+            const rateIn = document.getElementById('auto-export-min-rate');
+            const bufIn = document.getElementById('auto-export-buffer');
+            if (rateIn && document.activeElement !== rateIn) rateIn.value = ae.min_rate_p;
+            if (bufIn && document.activeElement !== bufIn) bufIn.value = ae.safety_buffer_kwh;
+            if (pill) {
+              if (ae.active) {
+                pill.textContent = 'Exporting Now';
+                pill.style.color = '#ec4899';
+                pill.style.borderColor = 'rgba(236,72,153,0.45)';
+              } else if (ae.enabled) {
+                pill.textContent = 'Armed (Idle)';
+                pill.style.color = 'var(--battery)';
+                pill.style.borderColor = 'rgba(16,185,129,0.4)';
+              } else {
+                pill.textContent = 'Disabled';
+                pill.style.color = 'var(--text-muted)';
+                pill.style.borderColor = 'var(--border)';
+              }
+            }
+            if (btn) {
+              btn.textContent = ae.enabled ? 'Disable Auto-Export' : 'Enable Auto-Export';
+              btn.style.background = ae.enabled ? 'rgba(239,68,68,0.18)' : '';
+              btn.style.color = ae.enabled ? '#f87171' : '';
+              btn.style.borderColor = ae.enabled ? 'rgba(239,68,68,0.4)' : '';
+            }
+          }
           latestAgileData = agile;
           setText('agile-live-rate', `${(agile.current_export_p_kwh || 15.0).toFixed(1)}p`);
           setText('agile-peak-rate', `${(agile.peak_rate_today_p_kwh || 30.0).toFixed(1)}p`);
@@ -2867,6 +2937,24 @@
       } finally {
         btn.textContent = originalText;
         btn.disabled = false;
+      }
+    }
+
+    async function toggleAutoExport() {
+      const rateIn = document.getElementById('auto-export-min-rate');
+      const bufIn = document.getElementById('auto-export-buffer');
+      const nextEnabled = !window._autoExportEnabled;
+      const min_rate_p = rateIn ? parseFloat(rateIn.value) || 20.0 : 20.0;
+      const safety_buffer_kwh = bufIn ? parseFloat(bufIn.value) || 1.5 : 1.5;
+      try {
+        await fetch('/api/agile/auto_export', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: nextEnabled, min_rate_p, safety_buffer_kwh })
+        });
+        fetchLive();
+      } catch (e) {
+        console.error(e);
       }
     }
 

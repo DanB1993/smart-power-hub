@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.2] - 2026-11-26
+
+### Added
+- **FoxESS Cloud Open API Force Discharge**: Added `set_foxess_cloud_force_discharge()` using `/op/v0/device/scheduler/enable` (with rolling 35-minute windows and 20-minute refresh cadence) plus `set_foxess_remote_power()` (`44000–44002`) for FoxESS H1-G2 inverter compatibility.
+
+### Fixed
+- **Daytime Solar Guard Watchdog**: Fixed `enforce_daytime_solar_battery_charging()` dictionary key mismatches (`power.pv_total_w`, `power.load_w`, `grid.export_w`, `battery.charge_w`, `settings.work_mode_code`) and added an online-status guard so daytime solar-to-battery self-healing works as intended.
+- **Agile Auto-Export Bridging Lookup**: Fixed `enforce_agile_auto_export()` calling a nonexistent `calculate_bridging_analytics()` helper by reading `bridging_analytics` from `calculate_daily_financials()` outside `lock`.
+
+---
+
 ## [1.3.1] - 2026-11-15
 
 ### Added
