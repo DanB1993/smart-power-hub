@@ -113,7 +113,7 @@
       <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
           <button onclick="openChangelogModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-            <span class="mono" style="background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid var(--accent-border)">v1.3.2</span>
+            <span class="mono" style="background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid var(--accent-border)">v1.3.3</span>
             <span>Changelog</span>
           </button>
           <span style="font-size:0.68rem;color:var(--text-muted)" class="mono">Open-Source</span>
@@ -1365,7 +1365,7 @@
           <div>
             <div class="card-title" style="display:flex;align-items:center;gap:8px">
               <span>Changelog</span>
-              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)">v1.3.2</span>
+              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)">v1.3.3</span>
             </div>
             <div class="card-subtitle">Version History & Release Notes</div>
           </div>
@@ -1374,8 +1374,19 @@
       </div>
       <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:16px">
         
-        <!-- v1.3.2 -->
+        <!-- v1.3.3 -->
         <div style="border-left:2px solid var(--accent);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.3.3 — Read-Only Lighting Telemetry</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">26 Nov 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li><strong>Removed Hue Light &amp; Room Toggles</strong>: Replaced interactive Hue light/room toggle switches and brightness dimmer sliders with clean read-only status pills while preserving live lighting power monitoring.</li>
+          </ul>
+        </div>
+
+        <!-- v1.3.2 -->
+        <div style="border-left:2px solid var(--border);padding-left:14px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
             <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.3.2 — FoxESS H1-G2 Cloud Auto-Export &amp; Watchdog Fixes</strong>
             <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">26 Nov 2026</span>
@@ -2454,10 +2465,7 @@
                 <div class="room-tile-name">${r.name}</div>
                 <div class="room-tile-sub mono">${r.watts.toFixed(1)} W · ${r.light_ids.length} light${r.light_ids.length > 1 ? 's' : ''}</div>
               </div>
-              <label class="toggle">
-                <input type="checkbox" ${r.any_on ? 'checked' : ''} onchange="toggleHueRoom('${r.id}', this.checked)" />
-                <span class="toggle-track"></span>
-              </label>
+              <span class="mono" style="font-size:0.7rem;padding:2px 8px;border-radius:999px;background:${r.any_on ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.05)'};color:${r.any_on ? 'var(--hue)' : 'var(--text-muted)'}">${r.any_on ? 'On' : 'Off'}</span>
             </div>
           `).join('');
         }
@@ -2477,16 +2485,8 @@
                 </div>
                 <div class="item-right">
                   <span class="watt-readout mono" style="${l.on ? 'color:var(--hue)' : ''}">${l.watts.toFixed(1)} W</span>
-                  <label class="toggle">
-                    <input type="checkbox" ${l.on ? 'checked' : ''} onchange="toggleHueLight('${l.id}', this.checked)" />
-                    <span class="toggle-track"></span>
-                  </label>
+                  <span class="mono" style="font-size:0.7rem;padding:2px 8px;border-radius:999px;background:${l.on ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.05)'};color:${l.on ? 'var(--hue)' : 'var(--text-muted)'}">${l.on ? `On · ${l.bri_pct}%` : 'Off'}</span>
                 </div>
-              </div>
-              <div class="dimmer-row">
-                <span class="mono" style="font-size:0.7rem;color:var(--text-muted);width:42px">${l.bri_pct}%</span>
-                <input type="range" min="1" max="254" value="${l.on ? l.bri : 1}" class="dimmer-slider"
-                  onchange="setHueBrightness('${l.id}', this.value)" />
               </div>
             </div>
           `).join('');
@@ -2528,21 +2528,6 @@
 
     function closeHueModal() {
       document.getElementById('hue-modal').classList.remove('open');
-    }
-
-    async function toggleHueLight(id, on) {
-      await fetch('/api/hue/light', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, on }) });
-      fetchDevices();
-    }
-
-    async function setHueBrightness(id, bri) {
-      await fetch('/api/hue/light', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, bri: Number(bri) }) });
-      fetchDevices();
-    }
-
-    async function toggleHueRoom(id, on) {
-      await fetch('/api/hue/room', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, on }) });
-      fetchDevices();
     }
 
     async function toggleAppliance(id, is_on) {

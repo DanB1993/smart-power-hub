@@ -1,4 +1,4 @@
-# ⚡ Smart Power OS (v1.3.2)
+# ⚡ Smart Power OS (v1.3.3)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
