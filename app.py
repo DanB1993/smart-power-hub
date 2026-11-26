@@ -60,7 +60,8 @@ LONGITUDE = float(os.environ.get("LONGITUDE", str(app_config.get("location", {})
 TAPO_DEFAULT_IP = os.environ.get("TAPO_IP", "192.168.1.200")
 TAPO_ENV_USER = os.environ.get("TAPO_USERNAME", "")
 TAPO_ENV_PASS = os.environ.get("TAPO_PASSWORD", "")
-POLL_INTERVAL = float(os.environ.get("POLL_INTERVAL", "10"))
+_cfg_poll = app_config.get("inverter", {}).get("poll_interval_sec")
+POLL_INTERVAL = max(5.0, min(300.0, float(_cfg_poll if _cfg_poll is not None else os.environ.get("POLL_INTERVAL", "10"))))
 HTTP_PORT = int(os.environ.get("HTTP_PORT", "8050"))
 DB_PATH = os.environ.get("DB_PATH", "/data/solar_history.db")
 
@@ -4122,6 +4123,24 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 "topup_enabled": ADAPTIVE_TOPUP_ENABLED,
                 "topup_drop_pct": ADAPTIVE_TOPUP_DROP_PCT
             })
+            return
+
+        if parsed.path == "/api/inverter/poll_interval":
+            global POLL_INTERVAL
+            try:
+                poll_interval_sec = max(5, min(300, int(round(float(body.get("poll_interval_sec", 10))))))
+            except Exception:
+                self.send_json({"ok": False, "error": "Invalid poll_interval_sec"}, status=400)
+                return
+
+            POLL_INTERVAL = float(poll_interval_sec)
+            app_config.setdefault("inverter", {})["poll_interval_sec"] = poll_interval_sec
+            save_config(app_config)
+
+            with lock:
+                latest_data["poll_interval_sec"] = POLL_INTERVAL
+
+            self.send_json({"ok": True, "poll_interval_sec": poll_interval_sec})
             return
 
         if parsed.path == "/api/shelly/toggle":
