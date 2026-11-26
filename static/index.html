@@ -113,7 +113,7 @@
       <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
           <button onclick="openChangelogModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-            <span class="mono" style="background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid var(--accent-border)">v1.3.1</span>
+            <span class="mono" style="background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid var(--accent-border)">v1.3.2</span>
             <span>Changelog</span>
           </button>
           <span style="font-size:0.68rem;color:var(--text-muted)" class="mono">Open-Source</span>
@@ -1365,7 +1365,7 @@
           <div>
             <div class="card-title" style="display:flex;align-items:center;gap:8px">
               <span>Changelog</span>
-              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)">v1.3.1</span>
+              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)">v1.3.2</span>
             </div>
             <div class="card-subtitle">Version History & Release Notes</div>
           </div>
@@ -1374,8 +1374,21 @@
       </div>
       <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:16px">
         
-        <!-- v1.3.1 -->
+        <!-- v1.3.2 -->
         <div style="border-left:2px solid var(--accent);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.3.2 — FoxESS H1-G2 Cloud Auto-Export &amp; Watchdog Fixes</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">26 Nov 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li><strong>FoxESS Cloud Open API Force Discharge</strong>: Added <code>set_foxess_cloud_force_discharge()</code> using <code>/op/v0/device/scheduler/enable</code> (rolling 35-minute windows with 20-minute refresh) plus <code>set_foxess_remote_power()</code> (<code>44000–44002</code>) for FoxESS H1-G2 compatibility.</li>
+            <li><strong>Agile Auto-Export Bridging Fix</strong>: Fixed <code>enforce_agile_auto_export()</code> reading a nonexistent <code>calculate_bridging_analytics()</code> helper by pulling <code>bridging_analytics</code> from <code>calculate_daily_financials()</code> outside the lock.</li>
+            <li><strong>Daytime Solar Guard Watchdog Fix</strong>: Fixed <code>enforce_daytime_solar_battery_charging()</code> dictionary key lookups (<code>power.pv_total_w</code>, <code>power.load_w</code>, <code>grid.export_w</code>, <code>battery.charge_w</code>, <code>settings.work_mode_code</code>) and added an online-status guard.</li>
+          </ul>
+        </div>
+
+        <!-- v1.3.1 -->
+        <div style="border-left:2px solid var(--border);padding-left:14px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
             <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.3.1 — Overview Redesign & Electric Blue Accent (#3b82f6)</strong>
             <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">9 Nov 2026</span>
