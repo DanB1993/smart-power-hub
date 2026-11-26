@@ -1044,9 +1044,9 @@
         </div>
       </section>
 
-      <!-- Two-Column Lists: Hue Summary + Custom Appliances -->
-      <section class="device-columns">
-        <!-- Left: Compact Hue Summary Card (opens Modal) -->
+      <!-- Hue Summary -->
+      <section class="device-columns" style="grid-template-columns:1fr">
+        <!-- Compact Hue Summary Card -->
         <div class="card" style="display:flex;flex-direction:column;justify-content:space-between">
           <div>
             <div class="card-header">
@@ -1055,30 +1055,12 @@
                 <div class="card-subtitle">4 Rooms · 7 Smart Lights (<span class="mono">192.168.1.150</span>)</div>
               </div>
             </div>
-            <!-- Compact Room Toggles inside card -->
+            <!-- Compact Room Status inside card -->
             <div class="rooms-strip" id="hue-rooms-container" style="grid-template-columns:repeat(2,1fr);margin-bottom:0"></div>
           </div>
           <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:var(--text-secondary)">
             <span>Bridge + Active Bulbs Draw</span>
             <strong class="mono" style="color:var(--hue);font-size:0.9rem" id="card-hue-summary-w">0.0 W</strong>
-          </div>
-        </div>
-
-        <!-- Right: Appliances -->
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Baseline & Tracked Appliances</div>
-              <div class="card-subtitle">Toggle active devices to estimate load share</div>
-            </div>
-          </div>
-          <div id="appliances-container"></div>
-
-          <div class="inline-form">
-            <input type="text" id="new-app-name" class="field" placeholder="Appliance name" style="flex:1.4" />
-            <input type="text" id="new-app-room" class="field" placeholder="Room" style="flex:1" />
-            <input type="number" id="new-app-watts" class="field mono" placeholder="Watts" style="width:85px" />
-            <button class="btn-add" onclick="addAppliance()">+ Add</button>
           </div>
         </div>
       </section>
@@ -1363,6 +1345,7 @@
           </div>
           <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
             <li><strong>Removed Hue Light &amp; Room Toggles</strong>: Replaced interactive Hue light/room toggle switches and brightness dimmer sliders with clean read-only status pills while preserving live lighting power monitoring.</li>
+            <li><strong>Removed Baseline &amp; Tracked Appliances</strong>: Removed the manual Baseline &amp; Tracked Appliances card from Devices &amp; Lighting.</li>
           </ul>
         </div>
 
@@ -2451,55 +2434,9 @@
           `).join('');
         }
 
-        // Appliances
-        const appEl = document.getElementById('appliances-container');
-        if (d.appliances) {
-          appEl.innerHTML = d.appliances.map(a => `
-            <div class="list-item">
-              <div class="list-item-main">
-                <div>
-                  <div class="item-name">
-                    <span>${a.name}</span>
-                    <span class="item-room-tag">${a.room}</span>
-                  </div>
-                  <div class="item-meta">Estimated draw when active: ${a.watts} W</div>
-                </div>
-                <div class="item-right">
-                  <span class="watt-readout mono" style="${a.is_on ? 'color:var(--battery)' : ''}">${a.active_watts.toFixed(0)} W</span>
-                  <label class="toggle">
-                    <input type="checkbox" ${a.is_on ? 'checked' : ''} onchange="toggleAppliance(${a.id}, this.checked)" />
-                    <span class="toggle-track green"></span>
-                  </label>
-                  <button class="btn-remove" onclick="deleteAppliance(${a.id})" title="Delete">✕</button>
-                </div>
-              </div>
-            </div>
-          `).join('');
-        }
       } catch (e) {
         console.error(e);
       }
-    }
-
-    async function toggleAppliance(id, is_on) {
-      await fetch('/api/appliances/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, is_on }) });
-      fetchDevices();
-    }
-
-    async function addAppliance() {
-      const name = document.getElementById('new-app-name').value.trim();
-      const room = document.getElementById('new-app-room').value.trim() || 'General';
-      const watts = parseFloat(document.getElementById('new-app-watts').value);
-      if (!name || isNaN(watts)) return;
-      await fetch('/api/appliances/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, room, watts }) });
-      document.getElementById('new-app-name').value = '';
-      document.getElementById('new-app-watts').value = '';
-      fetchDevices();
-    }
-
-    async function deleteAppliance(id) {
-      await fetch('/api/appliances/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-      fetchDevices();
     }
 
     async function toggleShellyPlug(ip, is_on) {

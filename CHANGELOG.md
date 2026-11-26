@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Read-Only Hue Lighting Telemetry**: Removed interactive Hue light/room toggle switches and brightness dimmer sliders from the Devices & Lighting view in favor of read-only status pills while preserving live lighting power monitoring.
+- **Removed Baseline & Tracked Appliances**: Removed the manual Baseline & Tracked Appliances card from the Devices & Lighting view.
 
 ---
 
