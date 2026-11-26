@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.4] - 2026-11-26
+
+### Added
+- **Configurable Polling Interval**: Added a Telemetry Polling Interval selector (`5s` to `5m`, default `10s`) in Settings & Inverter Control backed by `POST /api/inverter/poll_interval`, persisted to `config.json`, and synced with both the backend inverter poller loop and live frontend refresh cadence.
+
+---
+
 ## [1.3.3] - 2026-11-26
 
 ### Changed

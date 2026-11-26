@@ -113,7 +113,7 @@
       <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
           <button onclick="openChangelogModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-            <span class="mono" style="background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid var(--accent-border)">v1.3.3</span>
+            <span class="mono" style="background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid var(--accent-border)">v1.3.4</span>
             <span>Changelog</span>
           </button>
           <span style="font-size:0.68rem;color:var(--text-muted)" class="mono">Open-Source</span>
@@ -1197,6 +1197,25 @@
               </div>
             </div>
 
+            <!-- 1b. Telemetry Polling Interval -->
+            <div style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:10px;padding:14px">
+              <div style="font-weight:600;font-size:0.85rem;color:var(--text);margin-bottom:4px">Telemetry Polling Interval</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px">How often the inverter &amp; dashboard refresh live telemetry.</div>
+              <div style="display:flex;gap:8px">
+                <select id="ctrl-poll-interval" class="field-select" style="flex:1;font-size:0.85rem">
+                  <option value="5">5 seconds (High Frequency)</option>
+                  <option value="10">10 seconds (Default)</option>
+                  <option value="15">15 seconds</option>
+                  <option value="30">30 seconds</option>
+                  <option value="60">1 minute</option>
+                  <option value="120">2 minutes</option>
+                  <option value="300">5 minutes</option>
+                </select>
+                <button class="btn-add" id="btn-save-poll" onclick="savePollInterval()" style="font-size:0.78rem">Save</button>
+              </div>
+              <div id="poll-interval-status" style="font-size:0.72rem;color:var(--battery);margin-top:8px;display:none"></div>
+            </div>
+
             <!-- 2. Overnight Force-Charge Schedule -->
             <div style="background:var(--surface-elevated);border:1px solid var(--border);border-radius:10px;padding:14px">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
@@ -1321,7 +1340,7 @@
           <div>
             <div class="card-title" style="display:flex;align-items:center;gap:8px">
               <span>Changelog</span>
-              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)">v1.3.3</span>
+              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)">v1.3.4</span>
             </div>
             <div class="card-subtitle">Version History & Release Notes</div>
           </div>
@@ -1330,8 +1349,19 @@
       </div>
       <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:16px">
         
-        <!-- v1.3.3 -->
+        <!-- v1.3.4 -->
         <div style="border-left:2px solid var(--accent);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.3.4 — Configurable Polling Interval</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">26 Nov 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li><strong>Telemetry Polling Interval Setting</strong>: Added a configurable polling interval selector (<code>5s</code> to <code>5m</code>, default <code>10s</code>) in Settings &amp; Inverter Control backed by <code>/api/inverter/poll_interval</code>, persisted across restarts, and synced with the live UI refresh countdown.</li>
+          </ul>
+        </div>
+
+        <!-- v1.3.3 -->
+        <div style="border-left:2px solid var(--border);padding-left:14px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
             <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.3.3 — Read-Only Lighting Telemetry</strong>
             <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">26 Nov 2026</span>
@@ -1466,6 +1496,7 @@
   <script>
     let chartInstance = null;
     let historyHours = 6;
+    let pollIntervalSec = 10;
     let countdownSec = 10;
     let latestAgileData = null;
     let agileCurveDay = 'today'; // 'today' or 'tomorrow'
@@ -1637,6 +1668,16 @@
 
         const dot = document.getElementById('status-dot');
         dot.classList.toggle('error', d.status !== 'online');
+
+        if (d.poll_interval_sec != null) {
+          pollIntervalSec = Math.max(5, Math.min(300, Math.round(Number(d.poll_interval_sec) || 10)));
+          const pollLabel = pollIntervalSec >= 60 && pollIntervalSec % 60 === 0 ? `${pollIntervalSec / 60}m` : `${pollIntervalSec}s`;
+          setText('sidebar-status-text', `${d.status === 'online' ? 'Online' : 'Degraded'} · ${pollLabel} poll`);
+          const pollSelect = document.getElementById('ctrl-poll-interval');
+          if (pollSelect && document.activeElement !== pollSelect) {
+            pollSelect.value = String(pollIntervalSec);
+          }
+        }
 
         if (d.last_updated) {
           setText('last-updated-txt', new Date(d.last_updated).toLocaleTimeString());
@@ -2756,6 +2797,55 @@
       }
     }
 
+    async function savePollInterval() {
+      const sel = document.getElementById('ctrl-poll-interval');
+      const btn = document.getElementById('btn-save-poll');
+      const statusEl = document.getElementById('poll-interval-status');
+      if (!sel || !btn) return;
+      const val = Number(sel.value);
+      const originalText = btn.textContent;
+      btn.textContent = 'Saving...';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/inverter/poll_interval', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ poll_interval_sec: val })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          pollIntervalSec = data.poll_interval_sec;
+          countdownSec = pollIntervalSec;
+          setText('countdown', `${countdownSec}s`);
+          if (statusEl) {
+            statusEl.textContent = `Polling interval saved (${pollIntervalSec}s).`;
+            statusEl.style.color = 'var(--battery)';
+            statusEl.style.display = 'block';
+            setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
+          }
+          showCtrlStatus(`Polling interval updated to ${pollIntervalSec}s.`);
+          fetchLive();
+        } else {
+          if (statusEl) {
+            statusEl.textContent = data.error || 'Failed to update polling interval.';
+            statusEl.style.color = '#ef4444';
+            statusEl.style.display = 'block';
+          }
+          showCtrlStatus('Failed to update polling interval.', true);
+        }
+      } catch (e) {
+        if (statusEl) {
+          statusEl.textContent = `Error: ${e.message}`;
+          statusEl.style.color = '#ef4444';
+          statusEl.style.display = 'block';
+        }
+        showCtrlStatus(`Error: ${e.message}`, true);
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    }
+
     function alignScheduleWithTariff() {
       const startInput = document.getElementById('ctrl-sched-start');
       const endInput = document.getElementById('ctrl-sched-end');
@@ -2925,7 +3015,7 @@
       setInterval(() => {
         countdownSec -= 1;
         if (countdownSec <= 0) {
-          countdownSec = 10;
+          countdownSec = pollIntervalSec;
           fetchLive();
           fetchHistory();
           if (document.getElementById('view-devices').classList.contains('active')) {
