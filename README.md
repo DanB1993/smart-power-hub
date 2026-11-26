@@ -1,4 +1,4 @@
-# ⚡ Smart Power OS (v1.0.0)
+# ⚡ Smart Power OS (v1.3.2)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
@@ -37,8 +37,8 @@ Engineered for FoxESS inverters, Octopus Energy (Go, Agile, Intelligent, Tracker
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/DanB1993/smart-power-hub.git
-cd smart-power-hub
+git clone https://github.com/DanB1993/smart-power-dashboard.git
+cd smart-power-dashboard
 ```
 
 ### 2. Launch Container
@@ -63,16 +63,16 @@ You can configure the system through the **Web Setup Wizard** (`/setup`) or by s
 
 | Variable | Default | Description |
 | :--- | :--- | :--- |
-| `INVERTER_HOST` | `192.168.1.100` | Local IP address of your inverter datalogger |
+| `INVERTER_HOST` | `192.168.86.57` | Local IP address of your inverter datalogger |
 | `INVERTER_PORT` | `502` | Modbus RTU-over-TCP port |
 | `INVERTER_UNIT` | `247` | Modbus Unit Slave ID (FoxESS default is `247`) |
 | `POLL_INTERVAL` | `10` | Frequency in seconds to sample inverter telemetry |
 | `HTTP_PORT` | `8050` | Web dashboard listening port |
 | `DB_PATH` | `/data/solar_history.db` | Path to persistent SQLite telemetry history database |
-| `HUE_HOST` | `192.168.1.150` | (Optional) Philips Hue bridge IP address |
+| `HUE_HOST` | `192.168.0.182` | (Optional) Philips Hue bridge IP address |
 | `HUE_API_KEY` | *(empty)* | (Optional) Philips Hue whitelist bridge username |
-| `LATITUDE` | `51.5074` | Latitude for local solar yield irradiance forecast |
-| `LONGITUDE` | `-0.1278` | Longitude for local solar yield irradiance forecast |
+| `LATITUDE` | `51.4425` | Latitude for local solar yield irradiance forecast |
+| `LONGITUDE` | `-0.9267` | Longitude for local solar yield irradiance forecast |
 
 ---
 
@@ -110,8 +110,8 @@ You can configure the system through the **Web Setup Wizard** (`/setup`) or by s
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/DanB1993/smart-power-hub.git
-cd smart-power-hub
+git clone https://github.com/DanB1993/smart-power-dashboard.git
+cd smart-power-dashboard
 
 # Install dependencies
 pip install tapo python-kasa cryptography
@@ -132,33 +132,6 @@ Visit `http://localhost:8050` in your browser.
 ---
 
 ## 📜 Changelog
-
-### v1.3.1 (9 Nov 2026) — Overview Redesign & Electric Blue Accent (#3b82f6)
-* **Electric Blue Accent**: Applied high-contrast `#3b82f6` for primary CTAs, active badges, and focus rings.
-* **Defined Card Surfaces**: Elevated deep glass cards (`rgba(18, 23, 37, 0.82)`) with crisp outlines and hover glows.
-* **Domain Top Accent Borders**: Added 3px top borders across the 5 KPI cards for instant subsystem identification.
-* **Section Grouping**: Segmented the overview into clear visual zones with glowing title badges and divider lines.
-
-### v1.3.0 (9 Nov 2026) — Enhanced Solar Forecast & Yield Intelligence
-* **Estimated Battery Solar Charge (+% SoC)**: Predicts solar surplus allocated into battery storage with estimated kWh and % SoC gain.
-* **Peak Sunlight Generation Window**: Analyzes irradiance curve to highlight the high-production window exceeding 70% peak.
-* **Morning Breakeven Hour**: Identifies the morning hour when solar generation exceeds household baseline load (~130W).
-* **Projected Solar Allocation & Economics**: Real-time distribution breakdown across direct house use, battery storage, and export revenue.
-* **Mobile-Optimized Layout**: Responsive card restructuring with touch-scrolling hourly timeline.
-
-### v1.2.0 (8 Nov 2026) — Holiday Mode & Essential Smart Plugs
-* **1-Click Holiday Mode**: Instantly shuts down non-essential smart plugs and turns off Philips Hue lighting.
-* **Essential Plug Tagging (🛡️ Essential)**: Safeguards critical appliances (e.g. Fridge / Freezer) across Tapo and Shelly devices.
-* **Automation Suppression**: Halts automatic schedule triggers while Holiday Mode is engaged.
-
-### v1.1.2 (7 Nov 2026) — Adaptive Safety Buffer (+%)
-* Configurable percentage buffer added on top of adaptive charge target for extra reserve protection.
-
-### v1.1.1 (7 Nov 2026) — Adaptive Solar Headroom & Off-Peak Top-Up Fix
-* Dynamic solar headroom toggle with automated off-peak recovery top-up (&ge;3% drop).
-
-### v1.1.0 (6 Nov 2026) — Inverter Settings & Dual-Slot Scheduling
-* Modbus register controls for operating work modes, dual force-charge slots, and reserve limits.
 
 ### v1.0.0 (6 Nov 2026) — Initial Open-Source Release
 * Complete zero-cloud local FoxESS Modbus RTU-over-TCP integration.

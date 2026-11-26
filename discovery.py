@@ -14,7 +14,7 @@ DEFAULT_CONFIG = {
     "inverter": {
         "brand": "foxess",
         "model": "H1-3.7-E-G2-WL",
-        "host": "192.168.1.100",
+        "host": "192.168.86.57",
         "port": 502,
         "unit_id": 247,
         "rated_power_w": 3700,
@@ -48,19 +48,19 @@ DEFAULT_CONFIG = {
         "account_number": "",
     },
     "location": {
-        "latitude": 51.5074,
-        "longitude": -0.1278,
+        "latitude": 51.4425,
+        "longitude": -0.9267,
         "city": "Reading",
     },
     "devices": {
         "hue": {
             "enabled": True,
-            "host": "192.168.1.150",
-            "api_key": "",
+            "host": "192.168.0.182",
+            "api_key": "bDOYJFQoNi8qNgZmToKOZeHJG5CeBfUqf5tZwyi-",
         },
         "tapo": {
             "enabled": True,
-            "known_ips": ["192.168.1.200"],
+            "known_ips": ["192.168.86.103"],
         },
     },
 }
