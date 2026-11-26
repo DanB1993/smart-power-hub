@@ -113,7 +113,7 @@
       <div class="sidebar-foot" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
           <button onclick="openChangelogModal()" style="background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;display:flex;align-items:center;gap:4px;transition:color 0.15s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-muted)'">
-            <span class="mono" style="background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid var(--accent-border)">v1.3.2</span>
+            <span class="mono" style="background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:4px;border:1px solid var(--accent-border)">v1.3.3</span>
             <span>Changelog</span>
           </button>
           <span style="font-size:0.68rem;color:var(--text-muted)" class="mono">Open-Source</span>
@@ -310,37 +310,6 @@
           </div>
         </section>
 
-        <!-- Section: Intelligent Energy Planning -->
-        <div class="overview-section-title">
-          <span class="section-icon">💡</span>
-          <span>Intelligent Energy Optimization</span>
-          <span class="section-line"></span>
-        </div>
-
-        <!-- Smart Appliance Recommendation Advisory Banner -->
-        <section class="card card-accent" id="appliance-advisory-card" style="margin-bottom:20px;padding:18px 22px;background:linear-gradient(180deg, rgba(59,130,246,0.06), rgba(18,23,37,0.85));border-color:rgba(59,130,246,0.3)">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-            <div style="display:flex;align-items:center;gap:14px">
-              <div id="adv-icon" style="font-size:1.5rem;width:44px;height:44px;border-radius:12px;background:rgba(59,130,246,0.15);display:flex;align-items:center;justify-content:center;border:1px solid rgba(59,130,246,0.3);box-shadow:0 0 14px rgba(59,130,246,0.2)">☀️</div>
-              <div>
-                <div style="display:flex;align-items:center;gap:10px">
-                  <span style="font-size:0.95rem;font-weight:700;color:var(--text)" id="adv-title">Smart Appliance Planner</span>
-                  <span class="pill-tag mono" id="adv-badge" style="font-size:0.7rem;color:var(--accent);border-color:var(--accent-border);background:var(--accent-soft)">Calculating...</span>
-                </div>
-                <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:3px" id="adv-action">Evaluating solar curve & Octopus Go tariff...</div>
-              </div>
-            </div>
-            <div class="mono" style="font-size:0.78rem;color:var(--text-muted);text-align:right" id="adv-savings-note">
-              Optimised for Octopus Go
-            </div>
-          </div>
-
-          <!-- Appliance Run Matrix (Dishwasher, Washing Machine, Tumble Dryer) -->
-          <div id="adv-appliance-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08)">
-            <!-- Populated dynamically via JS -->
-          </div>
-        </section>
-
         <!-- Section: System Telemetry & Market Arbitrage -->
         <div class="overview-section-title">
           <span class="section-icon">📊</span>
@@ -438,6 +407,30 @@
           </div>
           <div id="ai-bullets-container" style="display:flex;flex-direction:column;gap:10px;font-size:0.86rem;color:var(--text);line-height:1.5;padding:6px 2px">
             <div style="color:var(--text-secondary)">Calculating real-time savings & battery optimization...</div>
+          </div>
+
+          <!-- Smart Appliance Planner (merged from Intelligent Energy Optimization) -->
+          <div id="appliance-advisory-card" style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div id="adv-icon" style="font-size:1.3rem;width:38px;height:38px;border-radius:10px;background:rgba(59,130,246,0.14);display:flex;align-items:center;justify-content:center;border:1px solid rgba(59,130,246,0.28)">☀️</div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <span style="font-size:0.9rem;font-weight:700;color:var(--text)" id="adv-title">Smart Appliance Planner</span>
+                    <span class="pill-tag mono" id="adv-badge" style="font-size:0.7rem;color:var(--accent);border-color:var(--accent-border);background:var(--accent-soft)">Calculating...</span>
+                  </div>
+                  <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:2px" id="adv-action">Evaluating solar curve & Octopus Go tariff...</div>
+                </div>
+              </div>
+              <div class="mono" style="font-size:0.78rem;color:var(--text-muted);text-align:right" id="adv-savings-note">
+                Optimised for Octopus Go
+              </div>
+            </div>
+
+            <!-- Appliance Run Matrix (Dishwasher, Washing Machine, Tumble Dryer) -->
+            <div id="adv-appliance-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;margin-top:12px">
+              <!-- Populated dynamically via JS -->
+            </div>
           </div>
         </section>
       </main>
@@ -1044,9 +1037,9 @@
         </div>
       </section>
 
-      <!-- Two-Column Lists: Hue Summary + Custom Appliances -->
-      <section class="device-columns">
-        <!-- Left: Compact Hue Summary Card (opens Modal) -->
+      <!-- Hue Summary -->
+      <section class="device-columns" style="grid-template-columns:1fr">
+        <!-- Compact Hue Summary Card -->
         <div class="card" style="display:flex;flex-direction:column;justify-content:space-between">
           <div>
             <div class="card-header">
@@ -1054,34 +1047,13 @@
                 <div class="card-title">Philips Hue Lighting</div>
                 <div class="card-subtitle">4 Rooms · 7 Smart Lights (<span class="mono">192.168.1.150</span>)</div>
               </div>
-              <button class="btn-add" style="border-color:rgba(250,204,21,0.4);color:var(--hue)" onclick="openHueModal()">
-                Light Controls ↗
-              </button>
             </div>
-            <!-- Compact Room Toggles inside card -->
+            <!-- Compact Room Status inside card -->
             <div class="rooms-strip" id="hue-rooms-container" style="grid-template-columns:repeat(2,1fr);margin-bottom:0"></div>
           </div>
           <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:var(--text-secondary)">
             <span>Bridge + Active Bulbs Draw</span>
             <strong class="mono" style="color:var(--hue);font-size:0.9rem" id="card-hue-summary-w">0.0 W</strong>
-          </div>
-        </div>
-
-        <!-- Right: Appliances -->
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Baseline & Tracked Appliances</div>
-              <div class="card-subtitle">Toggle active devices to estimate load share</div>
-            </div>
-          </div>
-          <div id="appliances-container"></div>
-
-          <div class="inline-form">
-            <input type="text" id="new-app-name" class="field" placeholder="Appliance name" style="flex:1.4" />
-            <input type="text" id="new-app-room" class="field" placeholder="Room" style="flex:1" />
-            <input type="number" id="new-app-watts" class="field mono" placeholder="Watts" style="width:85px" />
-            <button class="btn-add" onclick="addAppliance()">+ Add</button>
           </div>
         </div>
       </section>
@@ -1340,22 +1312,6 @@
     </div>
   </div>
 
-  <!-- Philips Hue Light Controls Modal -->
-  <div class="modal-backdrop" id="hue-modal" onclick="if(event.target===this)closeHueModal()">
-    <div class="modal-dialog">
-      <div class="modal-head">
-        <div>
-          <div class="card-title">Philips Hue Light Controls</div>
-          <div class="card-subtitle">Individual bulb dimmers & live model power estimation</div>
-        </div>
-        <button class="btn-close-modal" onclick="closeHueModal()" title="Close">✕</button>
-      </div>
-      <div class="modal-body">
-        <div id="hue-lights-container"></div>
-      </div>
-    </div>
-  </div>
-
   <!-- Simple Changelog Modal -->
   <div class="modal-backdrop" id="changelog-modal" onclick="if(event.target===this)closeChangelogModal()">
     <div class="modal-dialog" style="max-width:540px">
@@ -1365,7 +1321,7 @@
           <div>
             <div class="card-title" style="display:flex;align-items:center;gap:8px">
               <span>Changelog</span>
-              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)">v1.3.2</span>
+              <span class="mono" style="font-size:0.75rem;padding:2px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border)">v1.3.3</span>
             </div>
             <div class="card-subtitle">Version History & Release Notes</div>
           </div>
@@ -1374,8 +1330,21 @@
       </div>
       <div class="modal-body" style="padding:16px 20px;display:flex;flex-direction:column;gap:16px">
         
-        <!-- v1.3.2 -->
+        <!-- v1.3.3 -->
         <div style="border-left:2px solid var(--accent);padding-left:14px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+            <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.3.3 — Read-Only Lighting Telemetry</strong>
+            <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">26 Nov 2026</span>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6">
+            <li><strong>Removed Hue Light &amp; Room Toggles</strong>: Replaced interactive Hue light/room toggle switches and brightness dimmer sliders with clean read-only status pills while preserving live lighting power monitoring.</li>
+            <li><strong>Removed Baseline &amp; Tracked Appliances</strong>: Removed the manual Baseline &amp; Tracked Appliances card from Devices &amp; Lighting.</li>
+            <li><strong>Merged Overview Optimization Sections</strong>: Combined the <em>Smart Appliance Planner</em> (previously under <em>Intelligent Energy Optimization</em>) into the <em>Energy Optimization &amp; Savings</em> card.</li>
+          </ul>
+        </div>
+
+        <!-- v1.3.2 -->
+        <div style="border-left:2px solid var(--border);padding-left:14px">
           <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
             <strong class="mono" style="color:var(--text);font-size:0.95rem">v1.3.2 — FoxESS H1-G2 Cloud Auto-Export &amp; Watchdog Fixes</strong>
             <span class="mono" style="font-size:0.7rem;color:var(--text-muted)">26 Nov 2026</span>
@@ -2454,116 +2423,14 @@
                 <div class="room-tile-name">${r.name}</div>
                 <div class="room-tile-sub mono">${r.watts.toFixed(1)} W · ${r.light_ids.length} light${r.light_ids.length > 1 ? 's' : ''}</div>
               </div>
-              <label class="toggle">
-                <input type="checkbox" ${r.any_on ? 'checked' : ''} onchange="toggleHueRoom('${r.id}', this.checked)" />
-                <span class="toggle-track"></span>
-              </label>
+              <span class="mono" style="font-size:0.7rem;padding:2px 8px;border-radius:999px;background:${r.any_on ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.05)'};color:${r.any_on ? 'var(--hue)' : 'var(--text-muted)'}">${r.any_on ? 'On' : 'Off'}</span>
             </div>
           `).join('');
         }
 
-        // Individual Lights
-        const lightsEl = document.getElementById('hue-lights-container');
-        if (d.hue.lights) {
-          lightsEl.innerHTML = d.hue.lights.map(l => `
-            <div class="list-item ${l.on ? 'lit' : ''}">
-              <div class="list-item-main">
-                <div>
-                  <div class="item-name">
-                    <span>${l.name}</span>
-                    <span class="item-room-tag">${l.room}</span>
-                  </div>
-                  <div class="item-meta">${l.productname} (${l.modelid}) · Max ${l.max_watts}W</div>
-                </div>
-                <div class="item-right">
-                  <span class="watt-readout mono" style="${l.on ? 'color:var(--hue)' : ''}">${l.watts.toFixed(1)} W</span>
-                  <label class="toggle">
-                    <input type="checkbox" ${l.on ? 'checked' : ''} onchange="toggleHueLight('${l.id}', this.checked)" />
-                    <span class="toggle-track"></span>
-                  </label>
-                </div>
-              </div>
-              <div class="dimmer-row">
-                <span class="mono" style="font-size:0.7rem;color:var(--text-muted);width:42px">${l.bri_pct}%</span>
-                <input type="range" min="1" max="254" value="${l.on ? l.bri : 1}" class="dimmer-slider"
-                  onchange="setHueBrightness('${l.id}', this.value)" />
-              </div>
-            </div>
-          `).join('');
-        }
-
-        // Appliances
-        const appEl = document.getElementById('appliances-container');
-        if (d.appliances) {
-          appEl.innerHTML = d.appliances.map(a => `
-            <div class="list-item">
-              <div class="list-item-main">
-                <div>
-                  <div class="item-name">
-                    <span>${a.name}</span>
-                    <span class="item-room-tag">${a.room}</span>
-                  </div>
-                  <div class="item-meta">Estimated draw when active: ${a.watts} W</div>
-                </div>
-                <div class="item-right">
-                  <span class="watt-readout mono" style="${a.is_on ? 'color:var(--battery)' : ''}">${a.active_watts.toFixed(0)} W</span>
-                  <label class="toggle">
-                    <input type="checkbox" ${a.is_on ? 'checked' : ''} onchange="toggleAppliance(${a.id}, this.checked)" />
-                    <span class="toggle-track green"></span>
-                  </label>
-                  <button class="btn-remove" onclick="deleteAppliance(${a.id})" title="Delete">✕</button>
-                </div>
-              </div>
-            </div>
-          `).join('');
-        }
       } catch (e) {
         console.error(e);
       }
-    }
-
-    function openHueModal() {
-      document.getElementById('hue-modal').classList.add('open');
-    }
-
-    function closeHueModal() {
-      document.getElementById('hue-modal').classList.remove('open');
-    }
-
-    async function toggleHueLight(id, on) {
-      await fetch('/api/hue/light', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, on }) });
-      fetchDevices();
-    }
-
-    async function setHueBrightness(id, bri) {
-      await fetch('/api/hue/light', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, bri: Number(bri) }) });
-      fetchDevices();
-    }
-
-    async function toggleHueRoom(id, on) {
-      await fetch('/api/hue/room', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, on }) });
-      fetchDevices();
-    }
-
-    async function toggleAppliance(id, is_on) {
-      await fetch('/api/appliances/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, is_on }) });
-      fetchDevices();
-    }
-
-    async function addAppliance() {
-      const name = document.getElementById('new-app-name').value.trim();
-      const room = document.getElementById('new-app-room').value.trim() || 'General';
-      const watts = parseFloat(document.getElementById('new-app-watts').value);
-      if (!name || isNaN(watts)) return;
-      await fetch('/api/appliances/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, room, watts }) });
-      document.getElementById('new-app-name').value = '';
-      document.getElementById('new-app-watts').value = '';
-      fetchDevices();
-    }
-
-    async function deleteAppliance(id) {
-      await fetch('/api/appliances/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-      fetchDevices();
     }
 
     async function toggleShellyPlug(ip, is_on) {
