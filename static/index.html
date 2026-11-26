@@ -1054,9 +1054,6 @@
                 <div class="card-title">Philips Hue Lighting</div>
                 <div class="card-subtitle">4 Rooms · 7 Smart Lights (<span class="mono">192.168.1.150</span>)</div>
               </div>
-              <button class="btn-add" style="border-color:rgba(250,204,21,0.4);color:var(--hue)" onclick="openHueModal()">
-                Light Controls ↗
-              </button>
             </div>
             <!-- Compact Room Toggles inside card -->
             <div class="rooms-strip" id="hue-rooms-container" style="grid-template-columns:repeat(2,1fr);margin-bottom:0"></div>
@@ -1337,22 +1334,6 @@
           <div id="ctrl-status-msg" style="font-size:0.75rem;color:var(--battery);margin-top:6px;display:none"></div>
         </div>
       </main>
-    </div>
-  </div>
-
-  <!-- Philips Hue Light Controls Modal -->
-  <div class="modal-backdrop" id="hue-modal" onclick="if(event.target===this)closeHueModal()">
-    <div class="modal-dialog">
-      <div class="modal-head">
-        <div>
-          <div class="card-title">Philips Hue Light Controls</div>
-          <div class="card-subtitle">Individual bulb dimmers & live model power estimation</div>
-        </div>
-        <button class="btn-close-modal" onclick="closeHueModal()" title="Close">✕</button>
-      </div>
-      <div class="modal-body">
-        <div id="hue-lights-container"></div>
-      </div>
     </div>
   </div>
 
@@ -2470,28 +2451,6 @@
           `).join('');
         }
 
-        // Individual Lights
-        const lightsEl = document.getElementById('hue-lights-container');
-        if (d.hue.lights) {
-          lightsEl.innerHTML = d.hue.lights.map(l => `
-            <div class="list-item ${l.on ? 'lit' : ''}">
-              <div class="list-item-main">
-                <div>
-                  <div class="item-name">
-                    <span>${l.name}</span>
-                    <span class="item-room-tag">${l.room}</span>
-                  </div>
-                  <div class="item-meta">${l.productname} (${l.modelid}) · Max ${l.max_watts}W</div>
-                </div>
-                <div class="item-right">
-                  <span class="watt-readout mono" style="${l.on ? 'color:var(--hue)' : ''}">${l.watts.toFixed(1)} W</span>
-                  <span class="mono" style="font-size:0.7rem;padding:2px 8px;border-radius:999px;background:${l.on ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.05)'};color:${l.on ? 'var(--hue)' : 'var(--text-muted)'}">${l.on ? `On · ${l.bri_pct}%` : 'Off'}</span>
-                </div>
-              </div>
-            </div>
-          `).join('');
-        }
-
         // Appliances
         const appEl = document.getElementById('appliances-container');
         if (d.appliances) {
@@ -2520,14 +2479,6 @@
       } catch (e) {
         console.error(e);
       }
-    }
-
-    function openHueModal() {
-      document.getElementById('hue-modal').classList.add('open');
-    }
-
-    function closeHueModal() {
-      document.getElementById('hue-modal').classList.remove('open');
     }
 
     async function toggleAppliance(id, is_on) {
